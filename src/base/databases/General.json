@@ -1,0 +1,19 @@
+{
+    "Guild_942839259876958268": {
+        "Settings": {
+            "Register": {
+                "Employee": "942847800150990858",
+                "Channel": "942846545135538216",
+                "Unregistered": "942843002391502908",
+                "UnregisteredName": "Kayıtsız",
+                "Bot": "942843083320598588",
+                "Member": "942842864923201567"
+            }
+        },
+        "Register": {
+            "Employee_744835491643260988": {
+                "Number": 19
+            }
+        }
+    }
+}
