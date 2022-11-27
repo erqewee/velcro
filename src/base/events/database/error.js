@@ -4,13 +4,14 @@ export default class extends Event {
      constructor() {
           super({
                enabled: true,
-               process: false
+               process: false,
+               database: true
           });
 
-          this.setWebhook({ URL: this.config.Data.WEBHOOKURL });
-
-          this.setName(this.Events.Discord.Error);
-
+          this.setName(this.Events.Database.Error);
+          
+          this.setWebhook({ URL: process.env.WEBHOOKURL });
+          
           this.execute = function (data) {
                console.log(data);
                return this.webhook.send({ content: `${data}` })

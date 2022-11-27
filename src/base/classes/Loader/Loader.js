@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import { Events } from "discord.js";
 
-import { LoaderCache } from "./LoaderCache.js";
+import { CommandsCache, EventsCache, HandlersCache } from "./LoaderCache.js";
 
 import { Data } from "../../../config/export.js";
 
@@ -12,54 +12,62 @@ import EventEmitter from "node:events";
 import chalk from "chalk";
 
 export class Loader extends EventEmitter {
-  constructor(client) {
+  constructor(client, databases) {
     super();
 
+    if(databases && !Array.isArray(databases)) throw new Error("Databases must be a array.");
     if (!client) throw new Error("Client isn't provided.");
 
     const storage = [];
 
     this.commands = {
-      cache: LoaderCache
+      cache: CommandsCache
     };
 
-    this.events = Events;
+    this.events = {
+      types: Events,
+      cache: EventsCache
+    };
+
+    this.handlers = {
+      types: this.events.types,
+      cache: HandlersCache
+    };
 
     this.HandlerSetup = async function () {
       const path = this.resolve("./src/base/events/handlers");
 
-      const size = [];
+      const loadedHandlers = [];
 
       try {
         await Promise.all(this.read(path).filter((file) => this.isFile(path, "/../handlers", file) && file.endsWith(".js")).map(async (file) => {
-          const handler = new (await import(`../../events/handlers/${file}`)).default;
+          const handlerBase = new (await import(`../../events/handlers/${file}`)).default;
 
-          if (handler.name) {
-            size.push(handler.name);
+          if (handlerBase?.name && handlerBase?.enabled) {
+            this.handlers.cache.set(handlerBase.name, handlerBase);
+
+            const handler = this.handlers.cache.get(handlerBase.name);
+
             client.on(handler.name, async (...args) => {
-              if (!handler?.type) {
-                return await handler.execute(...args);
-              };
-
-              if (handler.type === "Menu") {
+              if (!handler?.type) return await handler.execute(...args);
+              else if (handler.type === "Menu") {
                 if (args.map((a) => a.isSelectMenu())) return await handler.execute(...args);
-              };
-
-              if (handler.type === "Button") {
+              } else if (handler.type === "Button") {
                 if (args.map((a) => a.isButton())) return await handler.execute(...args);
-              };
-
-              if (handler.type === "Modal") {
+              } else if (handler.type === "Modal") {
                 if (args.map((a) => a.isModalSubmit())) return await handler.execute(...args);
               };
             });
 
-            this.emit("handlerLoaded", { 
-              path: path, 
-              file: file, 
-              name: handler.name, 
-              type: handler?.type, 
-              loaded: size.length
+            loadedHandlers.push(handler.name);
+
+            this.emit("handlerLoaded", {
+              path: path,
+              file: file,
+              name: handler.name,
+              type: handler?.type,
+              size: (path.length + 1),
+              loaded: ((loadedHandlers.length + 1) - 1)
             });
           };
         }));
@@ -73,51 +81,49 @@ export class Loader extends EventEmitter {
     this.EventSetup = async function () {
       const path = this.resolve("./src/base/events");
 
-      const size = [];
+      const loadedEvents = [];
 
       try {
         await Promise.all(this.read(path).filter((dir) => this.isFolder(path, dir)).map(async (dir) => {
           if (dir === "handlers") return;
 
-          await Promise.all(this.read(`${path}/${dir}`).filter((file) => this.isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
-            const event = new (await import(`../../events/${dir}/${file}`)).default;
+          const events = this.read(`${path}/${dir}`);
 
-            if (event.name) {
-              if (!event.once && !event.process) {
-                size.push(event.name);
-                client.on(event.name, async (...args) => {
-                  if (!event?.type) {
-                    return await event.execute(...args);
-                  };
+          await Promise.all(events.filter((file) => this.isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
+            const eventBase = new (await import(`../../events/${dir}/${file}`)).default;
 
-                  if (event.type === "StringMenu") {
-                    if (args.map((a) => a.isStringSelectMenu())) return await event.execute(...args);
-                  };
+            if (eventBase?.name && eventBase?.enabled) {
+              this.events.cache.set(eventBase.name, eventBase);
 
-                  if (event.type === "Button") {
-                    if (args.map((a) => a.isButton())) return await event.execute(...args);
-                  };
+              const event = this.events.cache.get(eventBase.name);
 
-                  if (event.type === "Modal") {
-                    if (args.map((a) => a.isModalSubmit())) return await event.execute(...args);
-                  };
-                });
-              } else if (event.once && !event.process) {
-                size.push(event.name);
-                client.once(event.name, async (...args) => await event.execute(...args));
-              } else if (event.process) {
-                size.push(event.name);
-                process.on(event.name, (...args) => event.execute(...args));
-              };
+              if (!event.once && !event.process && !event.database) client.on(event.name, async (...interactions) => {
+                if (!event?.type) return await event.execute(...interactions);
+                else if (event.type === "UserMenu") {
+                  if (interactions.map((interaction) => interaction.isUserSelectMenu())) return await event.execute(...interactions);
+                } else if (event.type === "StringMenu") {
+                  if (interactions.map((interaction) => interaction.isStringSelectMenu())) return await event.execute(...interactions);
+                } else if (event.type === "Button") {
+                  if (interactions.map((interaction) => interaction.isButton())) return await event.execute(...interactions);
+                } else if (event.type === "Modal") {
+                  if (interactions.map((interaction) => interaction.isModalSubmit())) return await event.execute(...interactions);
+                };
+              });
+              else if (event.once && !event.process && !event.database) client.once(event.name, async (...interactions) => await event.execute(...interactions));
+              else if (event.process) process.on(event.name, (...args) => event.execute(...args));
+              else if (event.database) databases.map((database) => database.on(event.name, async (...args) => await event.execute(...args)));
 
-              this.emit("eventLoaded", { 
-                path: path, 
-                dir: dir, 
-                file: file, 
-                name: event.name, 
-                type: event?.type, 
-                process: event.process, 
-                loaded: size.length,
+              loadedEvents.push(event.name);
+
+              this.emit("eventLoaded", {
+                path: path,
+                dir: dir,
+                file: file,
+                name: event.name,
+                type: event?.type,
+                process: event.process,
+                size: (events.length + 1),
+                loaded: ((loadedEvents.length + 1) - 1),
                 once: event.once
               });
             };
@@ -126,9 +132,9 @@ export class Loader extends EventEmitter {
 
         this.emit("eventsReady", chalk.blueBright("[Loader] Events Ready."));
       } catch (err) {
-        this.emit("error", { 
-          type: "EVENT", 
-          error: err 
+        this.emit("error", {
+          type: "EVENT",
+          error: err
         });
       };
     };
@@ -136,30 +142,40 @@ export class Loader extends EventEmitter {
     this.CommandSetup = async function () {
       const path = this.resolve("./src/base/commands");
 
-      const size = [];
+      const loadedCommands = [];
 
       try {
         await Promise.all(this.read(path).filter((dir) => this.isFolder(path, dir)).map(async (dir) => {
-          await Promise.all(this.read(`${path}/${dir}/`).filter((file) => this.isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
-            const command = new (await import(`../../commands/${dir}/${file}`)).default;
+          const commands = this.read(`${path}/${dir}/`);
 
-            if (command.data && command.enabled && !command.support) {
-              size.push(command.data.name);
-              this.commands.cache.set(command.data.name, command);
-              storage.push(command.data);
+          await Promise.all(commands.filter((file) => this.isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
+            const commandBase = new (await import(`../../commands/${dir}/${file}`)).default;
 
-              this.emit("commandLoaded", { 
-                path: path, 
-                dir: dir, 
-                file: file, 
-                name: command.data.name, 
-                loaded: size.length 
+            if (commandBase?.data) {
+              this.commands.cache.set(commandBase.data.name, commandBase);
+
+              const command = this.commands.cache.get(commandBase.data.name);
+
+              if (command.enabled && !command.support) {
+                this.commands.cache.set(command.data.name, command);
+                storage.push(command.data);
+              };
+
+              loadedCommands.push(command.data.name);
+
+              this.emit("commandLoaded", {
+                path: path,
+                dir: dir,
+                file: file,
+                name: command.data.name,
+                size: (commands.length + 1),
+                loaded: ((loadedCommands.length + 1) - 1)
               });
             };
           }));
         }));
 
-        this.emit("commandsReady", chalk.yellowBright("[Loader] Handlers Ready."));
+        this.emit("commandsReady", chalk.yellowBright("[Loader] Commands Ready."));
       } catch (err) {
         this.emit("error", { type: "COMMAND", error: err });
       };

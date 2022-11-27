@@ -8,11 +8,11 @@ export default class extends Event {
       type: "Modal"
     });
 
-    this.setName(this.events.InteractionCreate);
+    this.setName(this.Events.Discord.InteractionCreate);
 
     this.execute = async function (interaction) {
       const client = interaction.client;
-      const db = client.database.general;
+      const db = this.databases.general;
 
       const guild = client.guilds.resolve("942839259876958268");
       if (interaction.customId === "register") {

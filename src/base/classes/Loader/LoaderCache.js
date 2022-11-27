@@ -1,4 +1,9 @@
 import { CacheManager } from "../../CacheManager.js";
-const cache = new CacheManager();
+const CommandCache = new CacheManager();
+const HandlerCache = new CacheManager();
+const EventCache = new CacheManager();
 
-export const LoaderCache = cache;
+
+export const HandlersCache = HandlerCache;
+export const EventsCache = EventCache;
+export const CommandsCache = CommandCache;

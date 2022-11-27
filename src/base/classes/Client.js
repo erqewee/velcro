@@ -5,7 +5,8 @@ import express from "express";
 import { Loader } from "./Loader/Loader.js";
 import { REST } from "./REST.js";
 
-import { Database } from "./Database.js";
+import { Manager } from "../structures/Manager.js";
+const databases = new Manager().databases;
 
 const app = express();
 
@@ -35,20 +36,22 @@ export class Client extends BaseClient {
     });
 
     this.REST = new REST(this);
-    this.loader = new Loader(this);
+    this.loader = new Loader(this, [databases.economy, databases.general, databases.subscribe]);
+
+    this.setMaxListeners(100);
 
     this.connect = async function (uptimeMode) {
       if (!uptimeMode && typeof uptimeMode !== "boolean") uptimeMode = false;
 
-      this.loader.on("handlersReady", async (message) => console.log(message));
-      this.loader.on("commandsReady", async (message) => console.log(message));
-      this.loader.on("eventsReady", async (message) => console.log(message));
+      this.loader.on("handlersReady", (message) => console.log(message));
+      this.loader.on("commandsReady", (message) => console.log(message));
+      this.loader.on("eventsReady", (message) => console.log(message));
       this.loader.on("error", ({ type, error }) => console.log(`[Loader - ${type}] An error ocurred! ${error}`));
       this.loader.on("ready", (message, storage) => {
         this.REST.put(storage);
 
         console.log(message);
-        
+
         if (uptimeMode) {
           app.get("/", (request, response) => {
             response.send(`
@@ -67,12 +70,6 @@ export class Client extends BaseClient {
       });
 
       return this.loader.Setup();
-    };
-
-    this.database = {
-      economy: new Database(".\\src\\base\\databases\\Economy.json"),
-      subscribe: new Database(".\\src\\base\\databases\\Subscribe.json"),
-      general: new Database(".\\src\\base\\databases\\General.json"),
     };
 
     global.client = this;

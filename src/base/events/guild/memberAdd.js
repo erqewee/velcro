@@ -9,11 +9,11 @@ export default class extends Event {
       process: false
     });
 
-    this.setName(this.events.GuildMemberAdd);
+    this.setName(this.Events.Discord.GuildMemberAdd);
 
     this.execute = async function (m) {
       const client = this.client;
-      const db = client.database.general;
+      const db = this.databases.general;
 
       const guild = client.guilds.resolve("942839259876958268");
 

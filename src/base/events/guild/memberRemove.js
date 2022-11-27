@@ -7,13 +7,13 @@ export default class extends Event {
       process: false
     });
 
-    this.setName(this.events.GuildMemberRemove);
+    this.setName(this.Events.Discord.GuildMemberRemove);
 
     this.execute = async function (m) {
       const client = this.client;
       const user = await client.users.resolve(m.id);
 
-      const db = client.database.subscribe;
+      const db = this.databases.subscribe;
 
       const guild = await client.guilds.resolve("942839259876958268");
 

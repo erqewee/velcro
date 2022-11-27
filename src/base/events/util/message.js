@@ -7,7 +7,7 @@ export default class extends Event {
       process: false
     });
 
-    this.setName(this.events.MessageCreate);
+    this.setName(this.Events.Discord.MessageCreate);
 
     this.execute = async function (message) {
       const client = message.client;
@@ -16,10 +16,10 @@ export default class extends Event {
       if (message.attachments.size < 1) return;
 
       const member = message.member;
-      const user = await client.users.resolve(member.id);
+      const user = await client.users.fetch(member.id);
 
-      const db = client.database.subscribe;
-      const guild = await client.guilds.resolve("942839259876958268");
+      const db = this.databases.subscribe;
+      const guild = client.guilds.resolve("942839259876958268");
 
       const config = {
         employee: db.fetch(`Subscribe.Settings.EmployeeRole`),
@@ -102,7 +102,7 @@ export default class extends Event {
         };
 
         if (message.channel.id === availableChannels[0]) {
-          mention = blacklist ? null : `<@${member.id}> | <@&${config.employee}>`;
+          mention = blacklist ? `<@${member.id}>` : `<@${member.id}> | <@&${config.employee}>`;
 
           return (await client.channels.resolve(availableChannels[0])).send({ content: `${this.config.Emoji.Other.ACTIVITY} ${mention}`, embeds, components });
         };

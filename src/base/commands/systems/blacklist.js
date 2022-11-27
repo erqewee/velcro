@@ -35,7 +35,7 @@ export default class extends Command {
     );
 
     this.execute = async function ({ interaction, member: m, channel, guild, options }) {
-      const db = this.client.database.subscribe;
+      const db = this.databases.subscribe;
 
       const date = Math.floor(Date.now() / 1000);
       const formattedDate = `<t:${date}:R>`;

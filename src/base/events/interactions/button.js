@@ -8,7 +8,7 @@ export default class extends Event {
             type: "Button"
         });
 
-        this.setName(this.events.InteractionCreate);
+        this.setName(this.Events.Discord.InteractionCreate);
 
         this.execute = function (interaction) {};
     };

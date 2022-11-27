@@ -7,7 +7,7 @@ export default class extends Event {
                process: false
           });
 
-          this.setName(this.events.VoiceStateUpdate);
+          this.setName(this.Events.Discord.VoiceStateUpdate);
 
           this.execute = async function (oldState, newState) {
                if (!newState.channel) await this.connections.create((await this.channels.get("995366410056376410")).id);

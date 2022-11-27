@@ -9,7 +9,7 @@ export default class extends Event {
 
           this.setWebhook({ URL: this.config.Data.WEBHOOKURL });
 
-          this.setName(this.events.Warn);
+          this.setName(this.Events.Discord.Warn);
           
           this.execute = function (data) {
                console.log(data);

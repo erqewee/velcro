@@ -1,6 +1,10 @@
 import {
   ButtonStyle, ChannelType, PermissionsBitField,
-  EmbedBuilder, SelectMenuBuilder, ButtonBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle, ModalBuilder, AttachmentBuilder, SlashCommandBuilder
+  EmbedBuilder, StringSelectMenuBuilder, 
+  UserSelectMenuBuilder, ButtonBuilder, 
+  ActionRowBuilder, TextInputBuilder, 
+  TextInputStyle, ModalBuilder, 
+  AttachmentBuilder, SlashCommandBuilder
 } from "discord.js";
 
 import { Data, Emoji } from "../../config/export.js";
@@ -13,8 +17,9 @@ import {
   RoleManager, WebhookManager
 } from "../../api/export.js";
 
-import { LoaderCache } from "../classes/Loader/LoaderCache.js";
+import { CommandsCache, EventsCache, HandlersCache } from "../classes/Loader/LoaderCache.js";
 
+import { Database } from "../classes/Database.js";
 
 export class Manager {
   constructor() {
@@ -25,7 +30,8 @@ export class Manager {
     this.Row = ActionRowBuilder;
     this.TextInput = TextInputBuilder;
     this.Modal = ModalBuilder;
-    this.Menu = SelectMenuBuilder;
+    this.StringMenu = StringSelectMenuBuilder;
+    this.UserMenu = UserSelectMenuBuilder;
     this.Attachment = AttachmentBuilder;
 
     this.SlashCommand = SlashCommandBuilder;
@@ -52,8 +58,28 @@ export class Manager {
     this.roles = new RoleManager(this.client);
     this.webhooks = new WebhookManager();
 
-    this.commands = {
-      cache: LoaderCache
+    this.loader = {
+      commands: {
+        cache: CommandsCache
+      },
+      
+      events: {
+        cache: EventsCache
+      },
+
+      handlers: {
+        cache: HandlersCache
+      }
+    };
+
+    const Economy = new Database("../databases/Economy.json");
+    const Subscribe = new Database("../databases/Subscribe.json");
+    const General = new Database("../databases/General.json");
+
+    this.databases = {
+      economy: Economy,
+      subscribe: Subscribe,
+      general: General
     };
 
     this.pagination = async function (interaction, { embeds, buttons }) {
@@ -314,5 +340,5 @@ export class Manager {
     };
   };
 
-  static version = "v1.0.0";
+  static version = "v1.0.3";
 };

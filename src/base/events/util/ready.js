@@ -16,9 +16,9 @@ export default class extends Event {
 
     this.execute = async function () {
       const date = Math.floor(Date.now() / 1000);
-
+      
       const client = this.client;
-      const db = client.database.subscribe;
+      const db = this.databases.subscribe;
       const youtube = new YouTube(this.client, { database: db, YouTube: { channelID: "UCjtU9nHOAo6XpJCF9qb-1Ow", userID: null } });
 
       const guild = await client.guilds.resolve("942839259876958268");
@@ -86,7 +86,7 @@ export default class extends Event {
               return (await client.channels.resolve(config.log)).send({ embeds: [embed] });
             };
           });
-        }, ms("2h"));
+        }, ms("1h"));
       };
 
       function scanMembers() {

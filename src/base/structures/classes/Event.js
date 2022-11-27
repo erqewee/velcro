@@ -1,17 +1,20 @@
 import { WebhookClient as Client, Events } from "discord.js";
 import { Manager } from "../Manager.js";
 
+import { Database } from "../../classes/Database.js";
+
 export class Event extends Manager {
-  constructor(eventOptions = { name: null, enabled: true, once: false, process: false, type: null }) {
+  constructor(eventOptions = { name: null, enabled: true, once: false, process: false, type: null, database: false }) {
     super();
 
-    this.name = eventOptions.name ?? null;
-    this.enabled = eventOptions.enabled ?? true;
-    this.once = eventOptions.once ?? false;
-    this.process = eventOptions.process ?? false;
-    this.type = eventOptions.type ?? null;
+    this.name = eventOptions.name;
+    this.enabled = eventOptions.enabled;
+    this.once = eventOptions.once;
+    this.process = eventOptions.process;
+    this.type = eventOptions.type;
+    this.database = eventOptions.database;
 
-    this.events = Events;
+    this.Events = { Discord: Events, Database: Database.Events };
     this.webhook = null;
   };
 
