@@ -1,3 +1,3 @@
-import { Collection } from "@discordjs/collection";
+import { Cache } from "../api/export.js";
 
-export class CacheManager extends Collection {};
+export class CacheManager extends Cache {};

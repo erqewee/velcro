@@ -102,6 +102,8 @@ export default class extends Event {
         };
 
         if (message.channel.id === availableChannels[0]) {
+          if (this.client.user.id !== "944965150358790185") return;
+
           mention = blacklist ? `<@${member.id}>` : `<@${member.id}> | <@&${config.employee}>`;
 
           return (await client.channels.resolve(availableChannels[0])).send({ content: `${this.config.Emoji.Other.ACTIVITY} ${mention}`, embeds, components });

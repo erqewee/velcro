@@ -3,7 +3,7 @@ import { Event } from "../../structures/export.js";
 export default class extends Event {
      constructor() {
           super({
-               enabled: true,
+               enabled: false,
                process: false,
                database: true
           });

@@ -35,20 +35,23 @@ export class Client extends BaseClient {
       }
     });
 
-    this.REST = new REST(this);
-    this.loader = new Loader(this, [databases.economy, databases.general, databases.subscribe]);
+    const rest = new REST(this);
+    this.REST = rest;
+
+    const loader = new Loader(this, [databases.economy, databases.general, databases.subscribe]);
+    this.loader = loader;
 
     this.setMaxListeners(100);
 
     this.connect = async function (uptimeMode) {
-      if (!uptimeMode && typeof uptimeMode !== "boolean") uptimeMode = false;
-
-      this.loader.on("handlersReady", (message) => console.log(message));
-      this.loader.on("commandsReady", (message) => console.log(message));
-      this.loader.on("eventsReady", (message) => console.log(message));
-      this.loader.on("error", ({ type, error }) => console.log(`[Loader - ${type}] An error ocurred! ${error}`));
-      this.loader.on("ready", (message, storage) => {
-        this.REST.put(storage);
+      if (uptimeMode && typeof uptimeMode !== "boolean") uptimeMode = false;
+      
+      loader.on("handlersReady", (message) => console.log(message));
+      loader.on("commandsReady", (message) => console.log(message));
+      loader.on("eventsReady", (message) => console.log(message));
+      loader.on("error", ({ type, error, body }) => console.log(`[Loader - ${type}] An error ocurred! (${body?.file}) ${error}`));
+      loader.on("ready", (message, storage) => {
+        rest.put(storage);
 
         console.log(message);
 

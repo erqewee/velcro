@@ -1,5 +1,3 @@
-import { Manager } from "../Manager.js";
-
 import { GuildManager as BaseGuildManager } from "../Guild/GuildManager.js";
 const GuildManager = new BaseGuildManager();
 
@@ -10,7 +8,7 @@ export class RoleManager {
       if (typeof roleID !== "string") throw new TypeError("RoleID Must be a STRING!");
 
       const guild = await GuildManager.get(guildID);
-      const role = await (await client.guilds.resolve(guild.id)).roles.resolve(roleID);
+      const role = client.guilds.resolve(guild.id).roles.resolve(roleID);
 
       return role;
     };

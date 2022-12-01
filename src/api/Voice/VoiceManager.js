@@ -8,7 +8,7 @@ export class VoiceManager {
     this.create = async function (channelID) {
       if (typeof channelID !== "string") throw new TypeError("ChannelID must be a STRING!");
 
-      const channel = await client.channels.resolve(channelID);
+      const channel = client.channels.resolve(channelID);
       const connect = joinVoiceChannel({ channelId: channel.id, guildId: channel.guild.id, adapterCreator: channel.guild.voiceAdapterCreator });
 
       return connect;

@@ -1,14 +1,17 @@
-import { Manager } from "../Manager.js";
+import { API } from "../API.js";
+const api = new API();
 
 import { ChannelManager as BaseChannelManager } from "../Channel/ChannelManager.js";
 const ChannelManager = new BaseChannelManager();
+
+const { PATCH, POST, PUT, GET, DELETE } = api;
 
 export class WebhookManager {
   constructor() {
     this.get = async function (webhookID) {
       if (typeof webhookID !== "string") throw new TypeError("WebhookID must be a STRING!");
 
-      const webhook = await Manager.GET(`${Manager.config.BASE_URL}/webhooks/${webhookID}`);
+      const webhook = await GET(`${api.config.BASE_URL}/webhooks/${webhookID}`);
 
       return webhook;
     };
@@ -20,7 +23,7 @@ export class WebhookManager {
       if (typeof channelID !== "string") throw new TypeError("ChannelID must be a STRING!");
 
       const channel = await ChannelManager.get(channelID);
-      const webhook = await Manager.POST(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/channels/${channel.id}/webhooks`, {
+      const webhook = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/webhooks`, {
         name: options?.name,
         avatar: options?.avatar
       });
@@ -46,7 +49,7 @@ export class WebhookManager {
 
       const webhook = await this.get(webhookID);
 
-      const message = await Manager.POST(`${Manager.config.BASE_URL}/webhooks/${webhook.id}/${webhook.token}`, {
+      const message = await POST(`${api.config.BASE_URL}/webhooks/${webhook.id}/${webhook.token}`, {
         content: options?.content,
         embeds: options?.embeds,
         flags: options?.flags,
@@ -68,7 +71,7 @@ export class WebhookManager {
 
       const fetchWebhook = await this.get(webhook_.id);
     
-      const webhook = await Manager.DELETE(`${Manager.config.BASE_URL}/webhooks/${fetchWebhook.id}/${fetchWebhook.token}`);
+      const webhook = await DELETE(`${api.config.BASE_URL}/webhooks/${fetchWebhook.id}/${fetchWebhook.token}`);
 
       return webhook;
     };

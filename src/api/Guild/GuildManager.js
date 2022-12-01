@@ -1,4 +1,7 @@
-import { Manager } from "../Manager.js";
+import { API } from "../API.js";
+const api = new API();
+
+const { PATCH, POST, PUT, GET, DELETE } = api;
 
 import { GuildCache } from "./GuildCache.js";
 
@@ -9,7 +12,7 @@ export class GuildManager {
     this.get = async function (guildID) {
       if (typeof guildID !== "string") throw new TypeError("GuildID Must be a STRING!");
 
-      const guild = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guildID}`);
+      const guild = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
 
       return guild;
     };
@@ -17,7 +20,7 @@ export class GuildManager {
     this.map = async function () {
       if (!Array.isArray(storage)) throw new TypeError("Storage Must be a ARRAY!");
 
-      const guilds = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds`);
+      const guilds = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`);
 
       return guilds;
     };
@@ -25,7 +28,7 @@ export class GuildManager {
     this.leave = async function (guildID) {
       if (typeof guildID !== "string") throw new TypeError("GuildID Must be a STRING!");
 
-      const guild = await Manager.DELETE(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guildID}`);
+      const guild = await DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
 
       return guild;
     };
@@ -44,19 +47,21 @@ export class GuildManager {
       systemChannelId: null,
       systemChannelFlags: 0
     }) {
-      const guild = await Manager.POST(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds`, {
-        name: options?.name,
-        region: options?.region,
-        icon: options?.icon,
-        verification_level: options?.verificationLevel,
-        default_message_notifications: options?.defaultMessageNotifications,
-        explicit_content_filter: options?.explicitContentFilter,
-        roles: options?.roles,
-        channels: options?.channels,
-        afk_channel_id: options?.afkChannelId,
-        afk_timeout: options?.afkTimeout,
-        system_channel_id: options?.systemChannelId,
-        system_channel_flags: options?.systemChannelFlags
+      const guild = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`, {
+        json: {
+          name: options?.name,
+          region: options?.region,
+          icon: options?.icon,
+          verification_level: options?.verificationLevel,
+          default_message_notifications: options?.defaultMessageNotifications,
+          explicit_content_filter: options?.explicitContentFilter,
+          roles: options?.roles,
+          channels: options?.channels,
+          afk_channel_id: options?.afkChannelId,
+          afk_timeout: options?.afkTimeout,
+          system_channel_id: options?.systemChannelId,
+          system_channel_flags: options?.systemChannelFlags
+        }
       });
 
       return guild;
@@ -86,27 +91,29 @@ export class GuildManager {
     }) {
       if (typeof guildID !== "string") throw new TypeError("GuildID Must be a STRING!");
 
-      const guild = await Manager.PATCH(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guildID}`, {
-        name: options?.name,
-        region: options?.region,
-        verification_level: options?.verificationLevel,
-        default_message_notifications: options?.defaultMessageNotifications,
-        explicit_content_filter: options?.explicitContentFilter,
-        afk_channel_id: options?.afkChannelId,
-        afk_timeout: options?.afkTimeout,
-        icon: options?.icon,
-        owner_id: options?.ownerId,
-        splash: options?.splash,
-        discovery_splash: options?.discoverySplash,
-        banner: options?.banner,
-        system_channel_id: options?.systemChannelId,
-        system_channel_flags: options?.systemChannelFlags,
-        rules_channel_id: options?.rulesChannelId,
-        public_updates_channel_id: options?.publicUpdatesChannelId,
-        preferred_locale: options?.preferredLocale,
-        features: options?.features,
-        description: options?.description,
-        premium_progress_bar_enabled: options?.premiumProgressBarEnabled
+      const guild = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`, {
+        json: {
+          name: options?.name,
+          region: options?.region,
+          verification_level: options?.verificationLevel,
+          default_message_notifications: options?.defaultMessageNotifications,
+          explicit_content_filter: options?.explicitContentFilter,
+          afk_channel_id: options?.afkChannelId,
+          afk_timeout: options?.afkTimeout,
+          icon: options?.icon,
+          owner_id: options?.ownerId,
+          splash: options?.splash,
+          discovery_splash: options?.discoverySplash,
+          banner: options?.banner,
+          system_channel_id: options?.systemChannelId,
+          system_channel_flags: options?.systemChannelFlags,
+          rules_channel_id: options?.rulesChannelId,
+          public_updates_channel_id: options?.publicUpdatesChannelId,
+          preferred_locale: options?.preferredLocale,
+          features: options?.features,
+          description: options?.description,
+          premium_progress_bar_enabled: options?.premiumProgressBarEnabled
+        }
       });
 
       return guild;
@@ -115,12 +122,11 @@ export class GuildManager {
     this.cache = GuildCache;
 
     this.handleCache = async function (client_, debug) {
-      await Promise.all(client_.guilds.cache.map(async (guild) => {
+      return client_.guilds.cache.map(async (guild) => {
         if (debug) console.log(chalk.grey(`[GuildCacheManager] ${guild.name} (${guild.id}) was handled and cached.`));
 
-        this.cache.set(guild.id, guild);
-        this.cache.set(guild.name, guild);
-      }));
+        return this.cache.set(guild.id, guild);
+      });
     };
   };
 };

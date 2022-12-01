@@ -12,7 +12,7 @@ export default class extends Event {
       once: true
     });
 
-    this.setName(this.events.ClientReady);
+    this.setName(this.Events.Discord.ClientReady);
 
     this.execute = async function () {
       const date = Math.floor(Date.now() / 1000);
@@ -21,7 +21,7 @@ export default class extends Event {
       const db = this.databases.subscribe;
       const youtube = new YouTube(this.client, { database: db, YouTube: { channelID: "UCjtU9nHOAo6XpJCF9qb-1Ow", userID: null } });
 
-      const guild = await client.guilds.resolve("942839259876958268");
+      const guild = client.guilds.resolve("942839259876958268");
 
       this.channels.handleCache(this.client);
       this.guilds.handleCache(this.client);

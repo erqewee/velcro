@@ -22,7 +22,7 @@ export default class extends Event {
       member.setNickname(db.fetch(`Guild_${guild.id}.Settings.Register.UnregisteredName`));
 
       const accountDate = Math.floor((user?.createdAt ? user.createdAt : Date.now()) / 1000);
-      const check = user.createdAt < ms("30d");
+      const check = ((user.createdAt / 1000) < ms("30d"));
 
       const channel = client.channels.resolve(db.fetch(`Guild_${guild.id}.Settings.Register.Channel`));
 

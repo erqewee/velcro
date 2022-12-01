@@ -2,14 +2,27 @@
 
 | Version           | Supported          |
 | ----------------- | ------------------ |
+| Preview Release 3 | :white_check_mark: |
 | Preview Release 2 | :white_check_mark: |
-| Preview Release   | :white_check_mark: |
+| Preview Release 1 | :white_check_mark: |
 
 # Known Issues
 
-- We're looking for the issue that causes the `TypeError: Cannot read properties of null (reading 'match')` error when loading events.
+- We are investigating the issue of not detecting saved changes after using the <b><i>REBOOT</i></b> command.
+
+# Warnings
+
+> Preview Release 2 and higher versions
+
+- Database#get deprecated. Please use Database#fetch instead. (This function is removing fully in Wyvern's future versions.)
 
 # ChangeLogs
+
+> Preview Release 3 (01/01/2022)
+
+- Fixed an issue that caused `TypeError: Cannot read properties of null (reading 'match')` error while loading events.
+- Improved src/api/API.js (Manager.js has been renamed to API.js)
+- Added database events support for Loader. (All database events available in "src/base/events/databases", 'databaseCreated'' event cannot work in events folder.)
 
 > Preview Release 2 (11/27/2022)
 
@@ -28,7 +41,7 @@
        databaseDeleted<br>
        dataSaveRequest<br>
        dataSaved<br>
-       dataDeleteRequest<br>
+       dataDeleteRequest<br> 
        dataDeleted<br>
        dataSubstrackRequest<br>
        dataSubstracked<br>

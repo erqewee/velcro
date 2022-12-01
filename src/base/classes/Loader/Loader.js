@@ -15,7 +15,7 @@ export class Loader extends EventEmitter {
   constructor(client, databases) {
     super();
 
-    if(databases && !Array.isArray(databases)) throw new Error("Databases must be a array.");
+    if (databases && !Array.isArray(databases)) throw new Error("Databases must be a array.");
     if (!client) throw new Error("Client isn't provided.");
 
     const storage = [];
@@ -39,6 +39,8 @@ export class Loader extends EventEmitter {
 
       const loadedHandlers = [];
 
+      let body = null;
+
       try {
         await Promise.all(this.read(path).filter((file) => this.isFile(path, "/../handlers", file) && file.endsWith(".js")).map(async (file) => {
           const handlerBase = new (await import(`../../events/handlers/${file}`)).default;
@@ -48,33 +50,36 @@ export class Loader extends EventEmitter {
 
             const handler = this.handlers.cache.get(handlerBase.name);
 
-            client.on(handler.name, async (...args) => {
-              if (!handler?.type) return await handler.execute(...args);
-              else if (handler.type === "Menu") {
-                if (args.map((a) => a.isSelectMenu())) return await handler.execute(...args);
-              } else if (handler.type === "Button") {
-                if (args.map((a) => a.isButton())) return await handler.execute(...args);
-              } else if (handler.type === "Modal") {
-                if (args.map((a) => a.isModalSubmit())) return await handler.execute(...args);
-              };
+            client.on(handler.name, async (...interactions) => {
+              if (!handler?.type) return await handler.execute(...interactions);
+              else if (handler?.type === "StringMenu" && interactions.map((interaction) => interaction.isStringSelectMenu())) return await handler.execute(...interactions);
+              else if (handler?.type === "UserMenu" && interactions.map((interaction) => interaction.isUserSelectMenu())) return await handler.execute(...interactions);
+              else if (handler?.type === "Button" && interactions.map((interaction) => interaction.isButton())) return await handler.execute(...interactions);
+              else if (handler?.type === "Modal" && interactions.map((interaction) => interaction.isModalSubmit())) return await handler.execute(...interactions);
             });
 
             loadedHandlers.push(handler.name);
 
-            this.emit("handlerLoaded", {
+            body = {
               path: path,
               file: file,
               name: handler.name,
               type: handler?.type,
               size: (path.length + 1),
               loaded: ((loadedHandlers.length + 1) - 1)
-            });
+            };
+
+            this.emit("handlerLoaded", body);
           };
         }));
 
         this.emit("handlersReady", chalk.greenBright("[Loader] Handlers Ready."));
       } catch (err) {
-        this.emit("error", { type: "HANDLER", error: err });
+        this.emit("error", {
+          type: "HANDLER",
+          error: err,
+          body: body
+        });
       };
     };
 
@@ -82,6 +87,8 @@ export class Loader extends EventEmitter {
       const path = this.resolve("./src/base/events");
 
       const loadedEvents = [];
+
+      let body = null;
 
       try {
         await Promise.all(this.read(path).filter((dir) => this.isFolder(path, dir)).map(async (dir) => {
@@ -99,15 +106,10 @@ export class Loader extends EventEmitter {
 
               if (!event.once && !event.process && !event.database) client.on(event.name, async (...interactions) => {
                 if (!event?.type) return await event.execute(...interactions);
-                else if (event.type === "UserMenu") {
-                  if (interactions.map((interaction) => interaction.isUserSelectMenu())) return await event.execute(...interactions);
-                } else if (event.type === "StringMenu") {
-                  if (interactions.map((interaction) => interaction.isStringSelectMenu())) return await event.execute(...interactions);
-                } else if (event.type === "Button") {
-                  if (interactions.map((interaction) => interaction.isButton())) return await event.execute(...interactions);
-                } else if (event.type === "Modal") {
-                  if (interactions.map((interaction) => interaction.isModalSubmit())) return await event.execute(...interactions);
-                };
+                else if (event?.type === "UserMenu" && interactions.map((interaction) => interaction.isUserSelectMenu())) return await event.execute(...interactions);
+                else if (event?.type === "StringMenu" && interactions.map((interaction) => interaction.isStringSelectMenu())) return await event.execute(...interactions);
+                else if (event?.type === "Button" && interactions.map((interaction) => interaction.isButton())) return await event.execute(...interactions);
+                else if (event.type === "Modal" && interactions.map((interaction) => interaction.isModalSubmit())) return await event.execute(...interactions);
               });
               else if (event.once && !event.process && !event.database) client.once(event.name, async (...interactions) => await event.execute(...interactions));
               else if (event.process) process.on(event.name, (...args) => event.execute(...args));
@@ -115,7 +117,7 @@ export class Loader extends EventEmitter {
 
               loadedEvents.push(event.name);
 
-              this.emit("eventLoaded", {
+              body = {
                 path: path,
                 dir: dir,
                 file: file,
@@ -125,7 +127,9 @@ export class Loader extends EventEmitter {
                 size: (events.length + 1),
                 loaded: ((loadedEvents.length + 1) - 1),
                 once: event.once
-              });
+              };
+
+              this.emit("eventLoaded", body);
             };
           }))
         }));
@@ -134,7 +138,8 @@ export class Loader extends EventEmitter {
       } catch (err) {
         this.emit("error", {
           type: "EVENT",
-          error: err
+          error: err,
+          body: body
         });
       };
     };
@@ -143,6 +148,8 @@ export class Loader extends EventEmitter {
       const path = this.resolve("./src/base/commands");
 
       const loadedCommands = [];
+
+      let body = null;
 
       try {
         await Promise.all(this.read(path).filter((dir) => this.isFolder(path, dir)).map(async (dir) => {
@@ -163,21 +170,27 @@ export class Loader extends EventEmitter {
 
               loadedCommands.push(command.data.name);
 
-              this.emit("commandLoaded", {
+              body = {
                 path: path,
                 dir: dir,
                 file: file,
                 name: command.data.name,
                 size: (commands.length + 1),
                 loaded: ((loadedCommands.length + 1) - 1)
-              });
+              };
+
+              this.emit("commandLoaded", body);
             };
           }));
         }));
 
         this.emit("commandsReady", chalk.yellowBright("[Loader] Commands Ready."));
       } catch (err) {
-        this.emit("error", { type: "COMMAND", error: err });
+        this.emit("error", {
+          type: "COMMAND",
+          error: err,
+          body: body
+        });
       };
     };
 
@@ -186,7 +199,9 @@ export class Loader extends EventEmitter {
       this.EventSetup();
       this.CommandSetup();
 
-      return client.login(Data.Bot.TOKEN).then(() => this.emit("ready", chalk.grey("[Client] Connected to Gateway."), storage)).catch((err) => this.emit("error", { type: "BOT", error: err }));
+      let body = {};
+
+      return client.login(Data.Bot.TOKEN).then(() => this.emit("ready", chalk.grey("[Client] Connected to Gateway."), storage)).catch((err) => this.emit("error", { type: "BOT", error: err, body: body }));
     };
 
     this.isFile = function (path, dir, file) {

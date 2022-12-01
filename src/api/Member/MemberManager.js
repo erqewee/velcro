@@ -1,4 +1,7 @@
-import { Manager } from "../Manager.js";
+import { API } from "../API.js";
+const api = new API();
+
+const { PATCH, POST, PUT, GET, DELETE } = api;
 
 import { GuildManager as BaseGuildManager } from "../Guild/GuildManager.js";
 const GuildManager = new BaseGuildManager();
@@ -14,7 +17,7 @@ export class MemberManager {
       if (typeof memberID !== "string") throw new TypeError("MemberID must be a STRING!");
 
       const guild = await GuildManager.get(guildID);
-      const member = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+      const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
 
       return member;
     };
@@ -28,11 +31,13 @@ export class MemberManager {
         if (typeof memberID !== "string") throw new TypeError("MemberID must be a STRING!");
 
         const guild = await GuildManager.get(guildID);
-        const member = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+        const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
 
-        const banned = await Manager.PUT(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/bans/${member.id}`, {
-          delete_message_days: options?.deleteMessageDays,
-          delete_message_seconds: options?.deleteMessageSeconds
+        const banned = await PUT(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`, {
+          json: {
+            delete_message_days: options?.deleteMessageDays,
+            delete_message_seconds: options?.deleteMessageSeconds
+          }
         });
 
         return banned;
@@ -43,9 +48,9 @@ export class MemberManager {
         if (typeof memberID !== "string") throw new TypeError("MemberID must be a STRING!");
 
         const guild = await GuildManager.get(guildID);
-        const member = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/users/${memberID}`);
+        const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
 
-        const unbanned = await Manager.DELETE(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
+        const unbanned = await DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
 
         return unbanned;
       },
@@ -55,9 +60,9 @@ export class MemberManager {
         if (typeof memberID !== "string") throw new TypeError("MemberID must be a STRING!");
 
         const guild = await GuildManager.get(guildID);
-        const member = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/users/${memberID}`);
+        const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
 
-        const get = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
+        const get = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
 
         return get;
       },
@@ -67,7 +72,7 @@ export class MemberManager {
 
         const guild = await GuildManager.get(guildID);
 
-        const bans = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/bans`);
+        const bans = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans`);
 
         return bans;
       },
@@ -85,9 +90,9 @@ export class MemberManager {
       if (typeof memberID !== "string") throw new TypeError("MemberID must be a STRING!");
 
       const guild = await GuildManager.get(guildID);
-      const member = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+      const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
 
-      const edited = await Manager.PATCH(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/members/${member.id}`, {
+      const edited = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${member.id}`, {
         nick: options?.nick,
         roles: options?.roles,
         mute: options?.mute,
@@ -104,7 +109,7 @@ export class MemberManager {
 
       const guild = await GuildManager.get(guildID);
 
-      const members = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/members`);
+      const members = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members`);
 
       return members;
     };
@@ -117,7 +122,7 @@ export class MemberManager {
 
       const guild = await GuildManager.get(guildID);
 
-      const indexed = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/members/search`, {
+      const indexed = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/search`, {
         query: options?.query,
         limit: options?.limit
       });
@@ -128,13 +133,13 @@ export class MemberManager {
     this.cache = MemberCache;
 
     this.handleCache = async function (client_, debug) {
-      await Promise.all(client_.guilds.cache.map(async (guild) => {
-        await Promise.all(guild.members.cache.map((member) => {
+      return client_.guilds.cache.map(async (guild) => {
+        return guild.members.cache.map((member) => {
           if (debug) console.log(chalk.grey(`[MemberCacheManager] ${member.user.tag} (${member.id}) was handled and cached.`));
 
           return this.cache.set(member.id, member);
-        }));
-      }));
+        });
+      });
     };
   };
 };

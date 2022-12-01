@@ -24,11 +24,11 @@ export default class extends Command {
 
       const loader = new Loader(this.client, []);
 
-     if (command === "commands") {
+      if (command === "commands") {
         await interaction.reply(`${this.config.Emoji.State.LOADING} Rebooting commands.`);
 
         await Promise.all(loader.commands.cache.map((command_) => {
-          return loader.commands.cache.delete(command_.name);
+          return loader.commands.cache.delete(command_.data.name);
         }));
 
         loader.on("commandsReady", (message) => console.log(message));
@@ -38,6 +38,12 @@ export default class extends Command {
         });
       } else if (command === "events") {
         await interaction.reply(`${this.config.Emoji.State.LOADING} Rebooting events.`);
+
+        console.log("a")
+
+        await Promise.all(loader.events.cache.map((event) => {
+          return loader.commands.cache.delete(event.name);
+        }));
 
         loader.on("eventsReady", (message) => console.log(message));
 

@@ -1,4 +1,7 @@
-import { Manager } from "../Manager.js";
+import { API } from "../API.js";
+const api = new API();
+
+const { PATCH, POST, PUT, GET, DELETE } = api;
 
 import { GuildManager as BaseGuildManager } from "../Guild/GuildManager.js";
 const GuildManager = new BaseGuildManager();
@@ -8,7 +11,6 @@ const ChannelManager = new BaseChannelManager();
 
 import { InviteCache } from "./InviteCache.js";
 
-import chalk from "chalk";
 
 export class InviteManager {
   constructor() {
@@ -17,7 +19,7 @@ export class InviteManager {
       if (typeof inviteCode !== "string") throw new TypeError("InviteCode Must be a STRING!");
 
       const guild = await GuildManager.get(guildID);
-      const invite = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/invites/${inviteCode}`);
+      const invite = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/invites/${inviteCode}`);
 
       return invite;
     };
@@ -35,14 +37,16 @@ export class InviteManager {
 
       const channel = await ChannelManager.get(channelID);
 
-      const invite = await Manager.POST(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/channels/${channel.id}/invites`, {
-        max_age: options?.maxAge,
-        max_uses: options?.maxUses,
-        temporary: options?.temporary,
-        unique: options?.unique,
-        target_type: options?.targetType,
-        target_user_id: options?.targetUserId,
-        target_application_id: options?.targetApplicationId
+      const invite = await POST(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/channels/${channel.id}/invites`, {
+        json: {
+          max_age: options?.maxAge,
+          max_uses: options?.maxUses,
+          temporary: options?.temporary,
+          unique: options?.unique,
+          target_type: options?.targetType,
+          target_user_id: options?.targetUserId,
+          target_application_id: options?.targetApplicationId
+        }
       });
 
       return invite;
@@ -53,7 +57,7 @@ export class InviteManager {
       if (typeof inviteCode !== "string") throw new TypeError("InviteCode Must be a STRING!");
 
       const channel = await ChannelManager.get(channelID);
-      const invite = await Manager.DELETE(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/channels/${channel.id}/invites/${inviteCode}`);
+      const invite = await DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/invites/${inviteCode}`);
 
       return invite;
     };
@@ -67,7 +71,7 @@ export class InviteManager {
 
       const guild = await GuildManager.get(guildID);
 
-      const invites = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/invites`);
+      const invites = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/invites`);
 
       await invites.map((invite) => storage.push(invite.code));
 
@@ -80,14 +84,14 @@ export class InviteManager {
     this.cache = InviteCache;
 
     this.handleCache = async function (client_, debug) {
-      await Promise.all(client_.guilds.cache.map(async (guild) => {
+      return client_.guilds.cache.map(async (guild) => {
         const invite = (await this.map(guild.id)).invites;
         if (!invite) return;
 
         // if (debug) console.log(chalk.grey(`[InviteCacheManager] ${invite.guild.name} (${invite.code}) was handled and cached.`));
 
         return this.cache.set(invite.code, invite);
-      }));
+      });
     };
   };
 };

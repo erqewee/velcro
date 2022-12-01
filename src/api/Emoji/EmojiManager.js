@@ -1,4 +1,7 @@
-import { Manager } from "../Manager.js";
+import { API } from "../API.js";
+const api = new API();
+
+const { PATCH, POST, PUT, GET, DELETE } = api;
 
 import { GuildManager as BaseGuildManager } from "../Guild/GuildManager.js";
 const GuildManager = new BaseGuildManager();
@@ -14,7 +17,7 @@ export class EmojiManager {
       if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
 
       const guild = await GuildManager.get(guildID);
-      const emoji = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/emojis/${emojiID}`);
+      const emoji = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis/${emojiID}`);
 
       return emoji;
     };
@@ -45,10 +48,12 @@ export class EmojiManager {
       if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
 
       const guild = await GuildManager.get(guildID);
-      const emoji = await Manager.POST(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/emojis`, {
-        name: options?.name,
-        image: options?.image,
-        roles: options?.roles
+      const emoji = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`, {
+        json: {
+          name: options?.name,
+          image: options?.image,
+          roles: options?.roles
+        }
       });
 
       return emoji;
@@ -61,9 +66,11 @@ export class EmojiManager {
       if (typeof emojiID !== "string") throw new TypeError("EmojiID must be a STRING!");
 
       const fetchEmoji = await client.emojis.resolve(emojiID);
-      const emoji = await Manager.PATCH(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`, {
-        name: options?.name,
-        roles: options?.roles
+      const emoji = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`, {
+        json: {
+          name: options?.name,
+          roles: options?.roles
+        }
       });
 
       return emoji;
@@ -72,8 +79,8 @@ export class EmojiManager {
     this.delete = async function (emojiID) {
       if (typeof emojiID !== "string") throw new TypeError("EmojiID must be a STRING!");
 
-      const fetchEmoji = await client.emojis.resolve(emojiID);
-      const emoji = await Manager.DELETE(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`);
+      const fetchEmoji = client.emojis.resolve(emojiID);
+      const emoji = await DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`);
 
       return emoji;
     };
@@ -83,7 +90,7 @@ export class EmojiManager {
       if (!Array.isArray(storage)) throw new TypeError("Storage Must be a ARRAY!");
 
       const guild = await GuildManager.get(guildID);
-      const emojis = await Manager.GET(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/guilds/${guild.id}/emojis`);
+      const emojis = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`);
 
       return emojis;
     };
@@ -91,14 +98,13 @@ export class EmojiManager {
     this.cache = EmojiCache;
 
     this.handleCache = async function (client_, debug) {
-      await Promise.all(client_.guilds.cache.map(async (guild) => {
-        await Promise.all(guild.emojis.cache.map((emoji) => {
+      return client_.guilds.cache.map(async (guild) => {
+        return guild.emojis.cache.map((emoji) => {
           if (debug) console.log(chalk.grey(`[EmojiCacheManager] ${emoji.name} (${emoji.id}) was handled and cached.`));
 
-          this.cache.set(emoji.name, emoji);
-          this.cache.set(emoji.id, emoji);
-        }));
-      }));
+          return this.cache.set(emoji.id, emoji);
+        });
+      });
     };
   };
 };

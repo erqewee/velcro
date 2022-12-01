@@ -1,9 +1,9 @@
 import {
   ButtonStyle, ChannelType, PermissionsBitField,
-  EmbedBuilder, StringSelectMenuBuilder, 
-  UserSelectMenuBuilder, ButtonBuilder, 
-  ActionRowBuilder, TextInputBuilder, 
-  TextInputStyle, ModalBuilder, 
+  EmbedBuilder, StringSelectMenuBuilder,
+  UserSelectMenuBuilder, ButtonBuilder,
+  ActionRowBuilder, TextInputBuilder,
+  TextInputStyle, ModalBuilder,
   AttachmentBuilder, SlashCommandBuilder
 } from "discord.js";
 
@@ -20,6 +20,9 @@ import {
 import { CommandsCache, EventsCache, HandlersCache } from "../classes/Loader/LoaderCache.js";
 
 import { Database } from "../classes/Database.js";
+const Economy = new Database("../databases/Economy.json");
+const Subscribe = new Database("../databases/Subscribe.json");
+const General = new Database("../databases/General.json");
 
 export class Manager {
   constructor() {
@@ -62,7 +65,7 @@ export class Manager {
       commands: {
         cache: CommandsCache
       },
-      
+
       events: {
         cache: EventsCache
       },
@@ -71,10 +74,6 @@ export class Manager {
         cache: HandlersCache
       }
     };
-
-    const Economy = new Database("../databases/Economy.json");
-    const Subscribe = new Database("../databases/Subscribe.json");
-    const General = new Database("../databases/General.json");
 
     this.databases = {
       economy: Economy,
@@ -85,7 +84,7 @@ export class Manager {
     this.pagination = async function (interaction, { embeds, buttons }) {
       if (!embeds && !Array.isArray(embeds)) embeds = [];
       if (!buttons && !Array.isArray(buttons)) buttons = [];
-      
+
       const first = new this.Button({
         style: ButtonStyle.Secondary,
         emoji: { name: "Pagination_First", id: "1042498687533846528" },
