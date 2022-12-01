@@ -5,14 +5,13 @@ export default class extends Handler {
     super({
       enabled: true,
       once: false,
-      process: false
+      process: false,
+      type: "ChatCommand"
     });
 
     this.setName(this.Events.Discord.InteractionCreate);
 
     this.execute = async function (interaction) {
-      if (!interaction.isChatInputCommand()) return;
-
       const client = interaction.client;
       const member = interaction.member;
       const channel = interaction.channel;

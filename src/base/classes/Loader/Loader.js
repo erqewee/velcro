@@ -105,11 +105,13 @@ export class Loader extends EventEmitter {
               const event = this.events.cache.get(eventBase.name);
 
               if (!event.once && !event.process && !event.database) client.on(event.name, async (...interactions) => {
-                if (!event?.type) return await event.execute(...interactions);
-                else if (event?.type === "UserMenu" && interactions.map((interaction) => interaction.isUserSelectMenu())) return await event.execute(...interactions);
+                if (event?.type === "UserMenu" && interactions.map((interaction) => interaction.isUserSelectMenu())) return await event.execute(...interactions);
                 else if (event?.type === "StringMenu" && interactions.map((interaction) => interaction.isStringSelectMenu())) return await event.execute(...interactions);
                 else if (event?.type === "Button" && interactions.map((interaction) => interaction.isButton())) return await event.execute(...interactions);
-                else if (event.type === "Modal" && interactions.map((interaction) => interaction.isModalSubmit())) return await event.execute(...interactions);
+                else if (event?.type === "Modal" && interactions.map((interaction) => interaction.isModalSubmit())) return await event.execute(...interactions);
+                else if (event?.type === "ChatCommand" && interactions.map((interaction) => interaction.isChatInputCommand())) return await event.execute(...interactions);
+                else if (event?.type === "ContextCommand" && interactions.map((interaction) => interaction.isContextMenuCommand())) return await event.execute(...interactions);
+                else return await event.execute(...interactions);
               });
               else if (event.once && !event.process && !event.database) client.once(event.name, async (...interactions) => await event.execute(...interactions));
               else if (event.process) process.on(event.name, (...args) => event.execute(...args));
