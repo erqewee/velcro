@@ -22,7 +22,7 @@ export default class extends Event {
       member.setNickname(db.fetch(`Guild_${guild.id}.Settings.Register.UnregisteredName`));
 
       const accountDate = Math.floor((user?.createdAt ? user.createdAt : Date.now()) / 1000);
-      const check = ((user.createdAt / 1000) < ms("30d"));
+      const check = user.createdAt < ms("30d");
 
       const channel = client.channels.resolve(db.fetch(`Guild_${guild.id}.Settings.Register.Channel`));
 
@@ -59,7 +59,7 @@ export default class extends Event {
         ]
       });
 
-      const msg = await channel.send({ embeds: [embed], components: [regButton] });
+      const msg = channel ? await channel.send({ embeds: [embed], components: [regButton] }) : null;
 
       const modal = new this.Modal({
         customId: "register",
@@ -71,9 +71,9 @@ export default class extends Event {
                 customId: "messageID",
                 label: "Message ID",
                 style: this.TextInputStyle.Paragraph,
-                maxLength: Number(String(msg.id).length),
-                minLength: Number(String(msg.id).length),
-                value: msg.id
+                maxLength: Number(String(msg?.id).length),
+                minLength: Number(String(msg?.id).length),
+                value: msg ? msg.id : ""
               })
             ]
           }),
@@ -98,8 +98,8 @@ export default class extends Event {
                 customId: "memberName",
                 label: "Kullanıcı Adı",
                 style: this.TextInputStyle.Paragraph,
-                maxLength: Number(String(user.username).length * 2),
-                minLength: 2,
+                maxLength: 32,
+                minLength: 3,
                 value: user.username,
                 required: true
               })
@@ -108,7 +108,7 @@ export default class extends Event {
         ]
       });
 
-      const collector = await msg.channel.createMessageComponentCollector();
+      const collector = await msg?.channel.createMessageComponentCollector();
       collector.on("collect", async (i) => {
         if (!i.isButton()) return;
 

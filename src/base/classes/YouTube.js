@@ -10,7 +10,7 @@ import {
 } from "discord.js";
 
 export class YouTube {
-  constructor(client, options = {
+  constructor(client = null, options = {
     database: null,
     YouTube: {
       channelID: null,

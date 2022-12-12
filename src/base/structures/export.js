@@ -1,6 +1,4 @@
-import { Command } from "./classes/Command.js";
-import { Event } from "./classes/Event.js";
-import { Handler } from "./classes/Handler.js";
-import { Manager } from "./Manager.js";
-
-export { Command, Event, Handler, Manager };
+export { Command } from "./base/classes/Command.js";
+export { Event } from "./base/classes/Event.js";
+export { Handler } from "./base/classes/Handler.js";
+export { Structure } from "./base/Structure.js";

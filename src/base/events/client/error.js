@@ -7,13 +7,11 @@ export default class extends Event {
                process: false
           });
 
-          this.setWebhook({ URL: this.config.Data.WEBHOOKURL });
-
           this.setName(this.Events.Discord.Error);
 
           this.execute = function (data) {
                console.log(data);
-               return this.webhook.send({ content: `${data}` })
+               return this.setProperty({ key: "Webhook", value: { url: this.config.Data.WEBHOOKURL, message: { content: `${data}` } } });
           };
      };
 };

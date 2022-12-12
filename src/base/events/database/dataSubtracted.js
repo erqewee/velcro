@@ -8,7 +8,7 @@ export default class extends Event {
                database: true
           });
 
-          this.setName(this.Events.Database.DataSubstrackRequest);
+          this.setName(this.Events.Database.DataSubtracted);
                     
           this.execute = function (data) {
                return console.log(data);

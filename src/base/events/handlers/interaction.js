@@ -9,7 +9,7 @@ export default class extends Handler {
       type: "ChatCommand"
     });
 
-    this.setName(this.Events.Discord.InteractionCreate);
+    this.setProperty({ key: "Name", value: this.Events.Discord.InteractionCreate });
 
     this.execute = async function (interaction) {
       const client = interaction.client;
@@ -18,8 +18,9 @@ export default class extends Handler {
       const guild = interaction.guild;
 
       const command = this.loader.commands.cache.get(interaction.commandName);
+      if (!command) return;
 
-      if (command?.developer && !this.config.Data.Bot.Developers.includes(member.id)) return interaction.reply({ content: `${this.config.Emoji.State.ERROR} ${member}, Are you developer?`, ephemeral: true });
+      if (String(command?.mode).toLowerCase().includes("developer") && !this.config.Data.Bot.Developers.includes(member.id)) return interaction.reply({ content: `${this.config.Emoji.State.ERROR} ${member}, Are you \`${client.user.tag}\` developer?`, ephemeral: true });
 
       await command.execute({
         interaction: interaction,
@@ -78,13 +79,13 @@ export default class extends Handler {
 
         console.log(err);
 
-        if (!interaction.replied) await interaction.followUp({ embeds: [errorEmbed], ephemeral: true, fetchReply: true }).then(async () => {
-          return (await client.channels.resolve((await this.channels.get("1033367989183074374")).id)).send({ content: `<@&${(await this.roles.get("1031149192862777415", "1031151171202732032")).id}>`, embeds: [reportEmbed], components: [row] }).then(async (msg) => {
+        if (interaction.replied) return await interaction.followUp({ embeds: [errorEmbed], ephemeral: true, fetchReply: true }).then(async () => {
+          return client.channels.resolve((await this.channels.get("1033367989183074374")).id).send({ content: `<@&${(await this.roles.get("1031149192862777415", "1031151171202732032")).id}>`, embeds: [reportEmbed], components: [row] }).then(async (msg) => {
             await this.messages.pin(msg);
           });
         });
-        else await interaction.channel.send({ embeds: [errorEmbed], ephemeral: true, fetchReply: true }).then(async () => {
-          return (await client.channels.resolve((await this.channels.get("1033367989183074374")).id)).send({ content: `<@&${(await this.roles.get("1031149192862777415", "1031151171202732032")).id}>`, embeds: [reportEmbed], components: [row] }).then(async (msg) => {
+        else return interaction.reply({ embeds: [errorEmbed], ephemeral: true, fetchReply: true }).then(async () => {
+          return client.channels.resolve((await this.channels.get("1033367989183074374")).id).send({ content: `<@&${(await this.roles.get("1031149192862777415", "1031151171202732032")).id}>`, embeds: [reportEmbed], components: [row] }).then(async (msg) => {
             await this.messages.pin(msg);
           });
         });

@@ -7,7 +7,7 @@ import {
   AttachmentBuilder, SlashCommandBuilder
 } from "discord.js";
 
-import { Data, Emoji } from "../../config/export.js";
+import { Data, Emoji } from "../../../config/export.js";
 
 import {
   UserManager, GuildManager,
@@ -15,16 +15,16 @@ import {
   ChannelManager, InviteManager,
   VoiceManager, MemberManager,
   RoleManager, WebhookManager
-} from "../../api/export.js";
+} from "../../../api/export.js";
 
-import { CommandsCache, EventsCache, HandlersCache } from "../classes/Loader/LoaderCache.js";
+import { CommandsCache, EventsCache, HandlersCache } from "../../classes/Loader/LoaderCache.js";
 
-import { Database } from "../classes/Database.js";
-const Economy = new Database("../databases/Economy.json");
-const Subscribe = new Database("../databases/Subscribe.json");
-const General = new Database("../databases/General.json");
+import { Database } from "../../classes/Database.js";
+const Economy = new Database({ path: "./src/base", dir: "databases", name: "Economy" });
+const Subscribe = new Database({ path: "./src/base", dir: "databases", name: "Subscribe" });
+const General = new Database({ path: "./src/base", dir: "databases", name: "General" });
 
-export class Manager {
+export class Structure {
   constructor() {
     this.client = global.client;
 
@@ -61,30 +61,10 @@ export class Manager {
     this.roles = new RoleManager(this.client);
     this.webhooks = new WebhookManager();
 
-    this.loader = {
-      commands: {
-        cache: CommandsCache
-      },
+    this.loader = { commands: { cache: CommandsCache }, events: { cache: EventsCache }, handlers: { cache: HandlersCache } };
+    this.databases = { economy: Economy, subscribe: Subscribe, general: General };
 
-      events: {
-        cache: EventsCache
-      },
-
-      handlers: {
-        cache: HandlersCache
-      }
-    };
-
-    this.databases = {
-      economy: Economy,
-      subscribe: Subscribe,
-      general: General
-    };
-
-    this.pagination = async function (interaction, { embeds, buttons }) {
-      if (!embeds && !Array.isArray(embeds)) embeds = [];
-      if (!buttons && !Array.isArray(buttons)) buttons = [];
-
+    this.pagination = async function (interaction = null, { embeds = [], buttons = [] }) {
       const first = new this.Button({
         style: ButtonStyle.Secondary,
         emoji: { name: "Pagination_First", id: "1042498687533846528" },
@@ -144,31 +124,25 @@ export class Manager {
       let sendMessage;
 
       if (embeds.length === 0) {
-        if (interaction.deffered) {
-          return interaction.followUp({ embeds: [embeds[0]], components });
-        } else {
-          sendMessage = interaction.replied ? await interaction.editReply({ embeds: [embeds[0]], components }) : await interaction.reply({ embeds: [embeds[0]], components });
-        };
+        if (interaction.deferred) return interaction.followUp({ embeds: [embeds[0]], components });
+        else sendMessage = interaction.replied ? await interaction.editReply({ embeds: [embeds[0]], components }) : await interaction.reply({ embeds: [embeds[0]], components });
       };
 
       embeds = embeds.map((embed, _index) => {
         const INDEX = (_index + 1);
 
-        return embed.setFooter({ text: `Toplam: ${embeds.length} | Görüntülenen: ${INDEX} | Kalan: ${embeds.length - INDEX}`, iconURL: interaction.guild?.iconURL() });
+        return embed.setFooter({ text: `Total: ${embeds.length} | Viewing: ${INDEX} | Remaining: ${embeds.length - INDEX}`, iconURL: interaction.guild?.iconURL() });
       });
 
-      if (interaction.deffered) {
-        sendMessage = await interaction.followUp({ embeds: [embeds[0]], components });
-      } else {
-        sendMessage = interaction.replied ? await interaction.editReply({ embeds: [embeds[0]], components }) : await interaction.reply({ embeds: [embeds[0]], components });
-      };
+      if (interaction.deferred) sendMessage = await interaction.followUp({ embeds: [embeds[0]], components });
+      else sendMessage = interaction.replied ? await interaction.editReply({ embeds: [embeds[0]], components }) : await interaction.reply({ embeds: [embeds[0]], components });
 
       let filter = async (m) => {
         const components = [new ActionRowBuilder({ components: [del] })];
 
         let msg;
 
-        if (m.member.id !== interaction.member.id) msg = await interaction.followUp({ content: `${this.config.Emoji.State.ERROR} ${m.member}, Bu işlemleri gerçekleştiremezsin.`, components });
+        if (m.member.id !== interaction.member.id) msg = await interaction.followUp({ content: `${this.config.Emoji.State.ERROR} ${m.member}, You cannot interact with this buttons.`, components, ephemeral: true });
 
         await msg?.createMessageComponentCollector().on("collect", async (i) => {
           if (!i.isButton()) return;

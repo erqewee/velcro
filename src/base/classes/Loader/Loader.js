@@ -12,27 +12,16 @@ import EventEmitter from "node:events";
 import chalk from "chalk";
 
 export class Loader extends EventEmitter {
-  constructor(client, databases) {
+  constructor(client = null, databases = []) {
     super();
 
-    if (databases && !Array.isArray(databases)) throw new Error("Databases must be a array.");
     if (!client) throw new Error("Client isn't provided.");
 
     const storage = [];
 
-    this.commands = {
-      cache: CommandsCache
-    };
-
-    this.events = {
-      types: Events,
-      cache: EventsCache
-    };
-
-    this.handlers = {
-      types: this.events.types,
-      cache: HandlersCache
-    };
+    this.commands = { cache: CommandsCache };
+    this.events = { types: Events, cache: EventsCache };
+    this.handlers = { types: this.events.types, cache: HandlersCache };
 
     this.HandlerSetup = async function () {
       const path = this.resolve("./src/base/events/handlers");
@@ -51,11 +40,13 @@ export class Loader extends EventEmitter {
             const handler = this.handlers.cache.get(handlerBase.name);
 
             client.on(handler.name, async (...interactions) => {
-              if (!handler?.type) return await handler.execute(...interactions);
-              else if (handler?.type === "StringMenu" && interactions.map((interaction) => interaction.isStringSelectMenu())) return await handler.execute(...interactions);
-              else if (handler?.type === "UserMenu" && interactions.map((interaction) => interaction.isUserSelectMenu())) return await handler.execute(...interactions);
-              else if (handler?.type === "Button" && interactions.map((interaction) => interaction.isButton())) return await handler.execute(...interactions);
-              else if (handler?.type === "Modal" && interactions.map((interaction) => interaction.isModalSubmit())) return await handler.execute(...interactions);
+              if (handler?.type === "UserMenu" && interactions.map((interaction) => interaction.customId && interaction.isUserSelectMenu())) return await handler.execute(...interactions);
+              else if (handler?.type === "StringMenu" && interactions.map((interaction) => interaction.customId && interaction.isStringSelectMenu())) return await handler.execute(...interactions);
+              else if (handler?.type === "Button" && interactions.map((interaction) => interaction.customId && interaction.isButton())) return await handler.execute(...interactions);
+              else if (handler?.type === "Modal" && interactions.map((interaction) => interaction.customId && interaction.isModalSubmit())) return await handler.execute(...interactions);
+              else if (handler?.type === "ChatCommand" && interactions.map((interaction) => !interaction.customId && interaction?.isChatInputCommand && interaction?.isChatInputCommand())) return await handler.execute(...interactions);
+              else if (handler?.type === "ContextCommand" && interactions.map((interaction) => !interaction.customId && interaction?.isChatInputCommand && interaction?.isContextMenuCommand())) return await handler.execute(...interactions);
+              else return await handler.execute(...interactions);
             });
 
             loadedHandlers.push(handler.name);
@@ -73,7 +64,7 @@ export class Loader extends EventEmitter {
           };
         }));
 
-        this.emit("handlersReady", chalk.greenBright("[Loader] Handlers Ready."));
+        this.emit("handlersReady", chalk.greenBright("[Loader] Handlers Ready."), loadedHandlers);
       } catch (err) {
         this.emit("error", {
           type: "HANDLER",
@@ -104,18 +95,23 @@ export class Loader extends EventEmitter {
 
               const event = this.events.cache.get(eventBase.name);
 
-              if (!event.once && !event.process && !event.database) client.on(event.name, async (...interactions) => {
-                if (event?.type === "UserMenu" && interactions.map((interaction) => interaction.isUserSelectMenu())) return await event.execute(...interactions);
-                else if (event?.type === "StringMenu" && interactions.map((interaction) => interaction.isStringSelectMenu())) return await event.execute(...interactions);
-                else if (event?.type === "Button" && interactions.map((interaction) => interaction.isButton())) return await event.execute(...interactions);
-                else if (event?.type === "Modal" && interactions.map((interaction) => interaction.isModalSubmit())) return await event.execute(...interactions);
-                else if (event?.type === "ChatCommand" && interactions.map((interaction) => interaction.isChatInputCommand())) return await event.execute(...interactions);
-                else if (event?.type === "ContextCommand" && interactions.map((interaction) => interaction.isContextMenuCommand())) return await event.execute(...interactions);
+              if (!event.once) client.on(event.name, async (...interactions) => {
+                if (event?.type === "UserMenu" && interactions.map((interaction) => interaction.customId && interaction.isUserSelectMenu())) return await event.execute(...interactions);
+                else if (event?.type === "StringMenu" && interactions.map((interaction) => interaction.customId && interaction.isStringSelectMenu())) return await event.execute(...interactions);
+                else if (event?.type === "Button" && interactions.map((interaction) => interaction.customId && interaction.isButton())) return await event.execute(...interactions);
+                else if (event?.type === "Modal" && interactions.map((interaction) => interaction.customId && interaction.isModalSubmit())) return await event.execute(...interactions);
+                else if (event?.type === "ChatCommand" && interactions.map((interaction) => !interaction.customId && interaction?.isChatInputCommand && interaction?.isChatInputCommand())) return await event.execute(...interactions);
+                else if (event?.type === "ContextCommand" && interactions.map((interaction) => !interaction.customId && interaction?.isChatInputCommand && interaction?.isContextMenuCommand())) return await event.execute(...interactions);
                 else return await event.execute(...interactions);
               });
-              else if (event.once && !event.process && !event.database) client.once(event.name, async (...interactions) => await event.execute(...interactions));
-              else if (event.process) process.on(event.name, (...args) => event.execute(...args));
-              else if (event.database) databases.map((database) => database.on(event.name, async (...args) => await event.execute(...args)));
+              else if (event.once) client.once(event.name, async (...interactions) => await event.execute(...interactions));
+              else if (event.process) {
+                if (!event.once) process.on(event.name, (...args) => event.execute(...args));
+                else if (event.once) process.once(event.name, (...args) => event.execute(...args));
+              } else if (event.database) databases.map((database) => {
+                if (!event.once) database.on(event.name, async (...args) => await event.execute(...args));
+                else if (event.once) database.once(event.name, async (...args) => await event.execute(...args));
+              });
 
               loadedEvents.push(event.name);
 
@@ -136,7 +132,7 @@ export class Loader extends EventEmitter {
           }))
         }));
 
-        this.emit("eventsReady", chalk.blueBright("[Loader] Events Ready."));
+        this.emit("eventsReady", chalk.blueBright("[Loader] Events Ready."), loadedEvents);
       } catch (err) {
         this.emit("error", {
           type: "EVENT",
@@ -170,7 +166,7 @@ export class Loader extends EventEmitter {
                 storage.push(command.data);
               };
 
-              loadedCommands.push(command.data.name);
+              loadedCommands.push(command.data);
 
               body = {
                 path: path,
@@ -186,13 +182,17 @@ export class Loader extends EventEmitter {
           }));
         }));
 
-        this.emit("commandsReady", chalk.yellowBright("[Loader] Commands Ready."));
+        this.emit("commandsReady", chalk.yellowBright("[Loader] Commands Ready."), loadedCommands);
       } catch (err) {
         this.emit("error", {
           type: "COMMAND",
           error: err,
           body: body
         });
+      };
+
+      return {
+        commands: loadedCommands
       };
     };
 

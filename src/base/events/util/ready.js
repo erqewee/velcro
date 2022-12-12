@@ -4,19 +4,43 @@ import { YouTube } from "../../classes/YouTube.js";
 
 import ms from "ms";
 
+import { ActivityType as Type } from "discord.js";
+
 export default class extends Event {
   constructor() {
-    super({
-      enabled: true,
-      process: false,
-      once: true
+    super();
+
+    this.setProperties({
+      keys: ["Name", "Enabled", "Process", "Once"],
+      values: ["ready" /*NAME*/, true /*ENABLED*/, false /*PROCESS*/, true /*ONCE*/]
     });
 
-    this.setName(this.Events.Discord.ClientReady);
-
     this.execute = async function () {
+      console.log(`${this.client.user.tag} has been connected.`);
+
+      let activityCounter = 0;
+      let activityStatusCounter = 0;
+      let statusCounter = 0;
+
+      setInterval(() => {
+        const statuses = ["online", "idle", "dnd"];
+        const activities = [`${this.client.user.username} is coming...`, `⚡ SkyLegend is best discord server!`];
+        const activitiesTypes = [Type.Playing, Type.Listening, Type.Watching, Type.Competing];
+
+        if (statusCounter > (statuses.length - 1)) statusCounter = 0;
+        if (activityCounter > (activities.length - 1)) activityCounter = 0;
+        if (activityStatusCounter > (activitiesTypes.length - 1)) activityStatusCounter = 0;
+
+        this.client.user.setStatus(statuses[statusCounter]);
+        this.client.user.setActivity(activities[activityCounter], { type: activitiesTypes[activityStatusCounter] });
+
+        statusCounter++;
+        activityCounter++;
+        activityStatusCounter++;
+      }, 10000);
+
       const date = Math.floor(Date.now() / 1000);
-      
+
       const client = this.client;
       const db = this.databases.subscribe;
       const youtube = new YouTube(this.client, { database: db, YouTube: { channelID: "UCjtU9nHOAo6XpJCF9qb-1Ow", userID: null } });

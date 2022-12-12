@@ -7,16 +7,15 @@ export default class extends Command {
   constructor() {
     super({
       enabled: true,
-      support: false,
-      isDev: true
+      mode: "Developer"
     });
 
     this.setCommand(new this.SlashCommand()
-      .setName("reboot")
-      .setDescription("Manage bot status.")
-      .addSubcommand((c) => c.setName("commands").setDescription("Reload available commands."))
-      .addSubcommand((c) => c.setName("events").setDescription("Reload available events."))
-      .addSubcommand((c) => c.setName("handlers").setDescription("Reload available handlers."))
+        .setName("reboot")
+        .setDescription("Manage bot status.")
+        .addSubcommand((c) => c.setName("commands").setDescription("Reload available commands."))
+        .addSubcommand((c) => c.setName("events").setDescription("Reload available events."))
+        .addSubcommand((c) => c.setName("handlers").setDescription("Reload available handlers."))
     );
 
     this.execute = async function ({ interaction, member, channel, guild, options }) {
@@ -27,41 +26,42 @@ export default class extends Command {
       if (command === "commands") {
         await interaction.reply(`${this.config.Emoji.State.LOADING} Rebooting commands.`);
 
-        await Promise.all(loader.commands.cache.map((command_) => {
-          return loader.commands.cache.delete(command_.data.name);
-        }));
+        await Promise.all(loader.commands.cache.map((command_) => loader.commands.cache.delete(command_.data.name)));
 
-        loader.on("commandsReady", (message) => console.log(message));
+        loader.once("commandsReady", (message, commands) => {
+          console.log(message);
 
-        return loader.CommandSetup().then(() => {
+          this.client.REST.put([]);
+          this.client.REST.put(commands);
+
           return interaction.editReply(`${this.config.Emoji.State.SUCCESS} Rebooted commands.`);
         });
+
+        return await loader.CommandSetup();
       } else if (command === "events") {
         await interaction.reply(`${this.config.Emoji.State.LOADING} Rebooting events.`);
 
-        console.log("a")
+        await Promise.all(loader.events.cache.map((event) => loader.commands.cache.delete(event.name)));
 
-        await Promise.all(loader.events.cache.map((event) => {
-          return loader.commands.cache.delete(event.name);
-        }));
+        loader.once("eventsReady", (message) => {
+          console.log(message);
 
-        loader.on("eventsReady", (message) => console.log(message));
-
-        return loader.EventSetup().then(() => {
           return interaction.editReply(`${this.config.Emoji.State.SUCCESS} Rebooted events.`);
         });
+
+        return await loader.EventSetup();
       } else if (command === "handlers") {
         await interaction.reply(`${this.config.Emoji.State.LOADING} Rebooting handlers.`);
 
-        await Promise.all(loader.handlers.cache.map((handler) => {
-          return loader.handlers.cache.delete(handler.name);
-        }));
+        await Promise.all(loader.handlers.cache.map((handler) => loader.handlers.cache.delete(handler.name)));
 
-        loader.on("handlersReady", (message) => console.log(message));
+        loader.once("handlersReady", (message) => {
+          console.log(message);
 
-        return loader.HandlerSetup().then(() => {
           return interaction.editReply(`${this.config.Emoji.State.SUCCESS} Rebooted handlers.`);
         });
+
+        return await loader.HandlerSetup();
       };
     };
   };
