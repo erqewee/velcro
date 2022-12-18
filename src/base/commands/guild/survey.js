@@ -15,10 +15,7 @@ const choices = [
 
 export default class extends Command {
   constructor() {
-    super({
-      enabled: true,
-      support: false
-    });
+    super({ enabled: false, mode: "Global" });
 
     this.setCommand(new this.SlashCommand()
       .setName("survey")
@@ -28,7 +25,7 @@ export default class extends Command {
           .setDescription("Create new survey.")
           .addChannelOption((o) => o.setName("channel").setDescription("Set channel for a new survey.").setRequired(true).addChannelTypes(0))
           .addStringOption((o) => o.setName("description").setDescription("Set survey description.").setRequired(true).setMinLength(8).setMaxLength(4095))
-          .addStringOption((o) => o.setName("mention").setDescription("Select Mention in content.").addChoices(choices[0], choices[1]))
+          .addStringOption((o) => o.setName("mention").setDescription("Select Mention in content.").addChoices(...choices))
       )
       .addSubcommand((c) =>
         c.setName("delete")

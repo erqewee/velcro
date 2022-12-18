@@ -2,16 +2,13 @@ import { Event } from "../../structures/export.js";
 
 export default class extends Event {
      constructor() {
-          super({
-               enabled: true,
-               process: false
-          });
+          super({ enabled: true });
 
           this.setName(this.Events.Discord.Error);
 
           this.execute = function (data) {
                console.log(data);
-               return this.setProperty({ key: "Webhook", value: { url: this.config.Data.WEBHOOKURL, message: { content: `${data}` } } });
+               return this.createWebhook({ url: this.config.Data.WEBHOOKURL }).send({ content: `${data}` });
           };
      };
 };

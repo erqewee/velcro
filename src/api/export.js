@@ -11,19 +11,5 @@ import { WebhookManager } from "./Webhook/WebhookManager.js";
 
 import { CacheManager as Cache } from "./CacheManager.js";
 
-export { 
-  EmojiManager, 
-  UserManager, 
-  GuildManager, 
-  ChannelManager, 
-  MessageManager,
-  InviteManager,
-  VoiceManager,
-  MemberManager,
-  RoleManager,
-  WebhookManager
-};
-
-export {
-  Cache
-};
+export { EmojiManager, UserManager, GuildManager, ChannelManager, MessageManager, InviteManager, VoiceManager, MemberManager, RoleManager, WebhookManager };
+export { Cache };

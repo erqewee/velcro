@@ -2,11 +2,7 @@ import { Event } from "../../structures/export.js";
 
 export default class extends Event {
   constructor() {
-    super({
-      enabled: true,
-      process: false,
-      type: "Modal"
-    });
+    super({ enabled: true, type: "Modal" });
 
     this.setName(this.Events.Discord.InteractionCreate);
 

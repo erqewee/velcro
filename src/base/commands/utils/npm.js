@@ -7,10 +7,7 @@ const cache = new CacheManager();
 
 export default class extends Command {
   constructor() {
-    super({
-      enabled: false,
-      support: false
-    });
+    super({ enabled: false, mode: "Global" });
 
     this.setCommand(new this.SlashCommand()
       .setName("npm")

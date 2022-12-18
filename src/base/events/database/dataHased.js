@@ -2,16 +2,12 @@ import { Event } from "../../structures/export.js";
 
 export default class extends Event {
      constructor() {
-          super({
-               enabled: false,
-               process: false,
-               database: true
-          });
+          super({ enabled: false, modes: ["Database"] });
 
-          this.setName(this.Events.Database.DataHased);
+          this.setName(this.Events.Database.DataHashed);
                     
-          this.execute = function (data) {
-               return console.log(data);
+          this.execute = function (key, data, name) {
+               return console.log(`[Database(${name})] Data hashed. \nKey: ${key} | Data: ${data}`);
           };
      };
 };

@@ -10,10 +10,10 @@ export default class extends Event {
   constructor() {
     super();
 
-    this.setProperties({
-      keys: ["Name", "Enabled", "Process", "Once"],
-      values: ["ready" /*NAME*/, true /*ENABLED*/, false /*PROCESS*/, true /*ONCE*/]
-    });
+    this.setProperty([
+      { key: "Name", value: this.Events.Discord.ClientReady },
+      { key: "Once", value: true }
+    ]);
 
     this.execute = async function () {
       console.log(`${this.client.user.tag} has been connected.`);
@@ -68,77 +68,92 @@ export default class extends Event {
       const Embed = this.Embed;
       const configDef = this.config;
 
-      function checkSubscribes() {
-        const subscribes = db.fetch("Subscribe.Members");
-        if (!subscribes || subscribes.length < 1) return;
+      const subscribes = db.fetch("Subscribe.Members");
+      if (!subscribes || subscribes.length < 1) return;
 
-        setInterval(() => {
-          return subscribes.map(async (USER_ID) => {
-            const user = await client.users.fetch(USER_ID);
+      setInterval(() => {
+        subscribes.map(async (USER_ID) => {
+          const user = await client.users.fetch(USER_ID);
 
-            if (db.fetch(`Subscribe.Member_${user.id}`) && !guild.members.cache.get(user.id)) {
-              db.del(`Subscribe.Member_${user.id}`);
-              db.pull("Subscribe.Members", (data) => data === user.id);
+          if (db.fetch(`Subscribe.Member_${user.id}`) && !guild.members.cache.get(user.id)) {
+            db.del(`Subscribe.Member_${user.id}`);
+            db.pull("Subscribe.Members", (data) => data === user.id);
 
-              db.set(`BlackList.Member_${user.id}`, { State: true, Reason: "Automatic Process", Employee: client.user.id, Date: date });
-              db.push("BlackList.Members", user.id);
+            db.set(`BlackList.Member_${user.id}`, { State: true, Reason: "Automatic Process", Employee: client.user.id, Date: date });
+            db.push("BlackList.Members", user.id);
 
-              const embed = new Embed({
-                title: `${client.user.username} - Kara Liste | Eklendi`,
-                description: `${configDef.Emoji.State.SUCCESS} Bir kullanıcı karalisteye eklendi.`,
-                fields: [
-                  {
-                    name: `${configDef.Emoji.Other.ADMIN} Yetkili`,
-                    value: `- ${client.user}`,
-                    inline: true
-                  },
-                  {
-                    name: `${configDef.Emoji.Other.CALENDAR} Tarih`,
-                    value: `- <t:${date}:R>`,
-                    inline: true
-                  }
-                ],
-                author: {
-                  name: `${user.tag} | ${user.id}`,
-                  iconURL: guild?.iconURL()
+            const embed = new Embed({
+              title: `${client.user.username} - Kara Liste | Eklendi`,
+              description: `${configDef.Emoji.State.SUCCESS} Bir kullanıcı karalisteye eklendi.`,
+              fields: [
+                {
+                  name: `${configDef.Emoji.Other.ADMIN} Yetkili`,
+                  value: `- ${client.user}`,
+                  inline: true
                 },
-                thumbnail: {
-                  url: user?.avatarURL()
+                {
+                  name: `${configDef.Emoji.Other.CALENDAR} Tarih`,
+                  value: `- <t:${date}:R>`,
+                  inline: true
                 }
-              });
+              ],
+              author: {
+                name: `${user.tag} | ${user.id}`,
+                iconURL: guild?.iconURL()
+              },
+              thumbnail: {
+                url: user?.avatarURL()
+              }
+            });
 
-              return (await client.channels.resolve(config.log)).send({ embeds: [embed] });
-            };
-          });
-        }, ms("1h"));
-      };
+            return client.channels.resolve(config.log).send({ embeds: [embed] });
+          };
+        });
+      }, ms("1h"));
 
-      function scanMembers() {
-        setInterval(() => {
-          return guild.members.cache.map((member) => {
-            if (member.roles.highest.id === config.subscribe) member.displayName.startsWith("🔰") ? null : member.setNickname(`🔰 ${member.displayName}`);
+      setInterval(() => {
+        guild.members.cache.map((member) => {
+          if (member.roles.highest.id === config.subscribe) member.displayName.startsWith("🔰") ? null : member.setNickname(`🔰 ${member.displayName}`);
 
-            if (member.roles.cache.has(config.subscribe) && !db.fetch(`Subscribe.Member_${member.id}`)) {
-              db.set(`Subscribe.Member_${member.id}`, { Role: true, Employee: client.user.id, Date: date });
-              db.push("Subscribe.Members", member.id);
-            };
+          if (member.roles.cache.has(config.subscribe) && !db.fetch(`Subscribe.Member_${member.id}`)) {
+            db.set(`Subscribe.Member_${member.id}`, { Role: true, Employee: client.user.id, Date: date });
+            db.push("Subscribe.Members", member.id);
+          };
 
-            if (!member.roles.cache.has(config.subscribe) && db.fetch(`Subscribe.Member_${member.id}`)) {
-              db.del(`Subscribe.Member_${member.id}`);
-              db.pull("Subscribe.Members", (data) => data === member.id);
+          if (!member.roles.cache.has(config.subscribe) && db.fetch(`Subscribe.Member_${member.id}`)) {
+            db.del(`Subscribe.Member_${member.id}`);
+            db.pull("Subscribe.Members", (data) => data === member.id);
 
-              member.displayName.startsWith("🔰") ? member.setNickname(String(member.displayName).slice(1)) : null;
-            };
-          });
-        }, ms("1h"));
-      };
-
-      scanMembers();
-      checkSubscribes();
+            member.displayName.startsWith("🔰") ? member.setNickname(String(member.displayName).slice(1)) : null;
+          };
+        });
+      }, ms("1h"));
 
       setInterval(async () => {
-        return await (await youtube.checkUploads()).sendAnnounce("944681810976194620");
-      }, 5000)
+        await (await youtube.checkUploads()).sendAnnounce("944681810976194620");
+      }, 5000);
+
+      /*setInterval(() => { // Guild Status with Channels
+        const baseCategory = guild.channels.resolve("1042816887052042281");
+
+        const statusChannel = guild.channels.cache.get("995248486612226058");
+        const allChannel = guild.channels.cache.get("995366410056376410");
+
+        let onlineCount = guild.members.cache.filter((member) => member.presence?.status === "online" && !member.user.bot && !member.roles.cache.has("942843002391502908")).size;
+        let idleCount = guild.members.cache.filter((member) => member.presence?.status === "idle" && !member.user.bot && !member.roles.cache.has("942843002391502908")).size;
+        let dndCount = guild.members.cache.filter((member) => member.presence?.status === "dnd" && !member.user.bot && !member.roles.cache.has("942843002391502908")).size;
+
+        let memberCount = guild.members.cache.filter((member) => !member.user.bot).size;
+        let botCount = guild.members.cache.filter((member) => member.user.bot).size;
+        let unregCount = guild.members.cache.filter((member) => !member.user.bot && member.roles.cache.has("942843002391502908")).size;
+
+        baseCategory.setName(`👤 ${memberCount} | 📋 ${unregCount} | 🤖 ${botCount}`);
+        statusChannel.setName(`🟢 ${onlineCount} | 🌙 ${idleCount} | 🔴 ${dndCount}`);
+        allChannel.setName(`🔢 ${onlineCount + idleCount + dndCount}`);
+
+        console.log("Status updated.");
+      }, 30000);
+      */
     };
   };
 }; 

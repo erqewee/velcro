@@ -1,18 +1,30 @@
 import { WebhookClient as Client, Events } from "discord.js";
 import { Structure as EventStructure } from "../Structure.js";
 
-import { Database } from "../../../classes/Database.js";
+import { Database } from "../../../classes/Database/Database.js";
 
 export class Event extends EventStructure {
-  constructor(eventOptions = { name: null, enabled: true, once: false, process: false, type: "ChatCommand", database: false }) {
+  constructor(eventOptions = { name: null, enabled: true, modes: [null], type: "ChatCommand" }) {
     super();
 
     this.name = eventOptions.name;
     this.enabled = eventOptions.enabled;
-    this.once = eventOptions.once;
-    this.process = eventOptions.process;
     this.type = eventOptions.type;
-    this.database = eventOptions.database;
+    this.modes = eventOptions.modes;
+    
+    this.once = false;
+    this.process = false;
+    this.database = false;
+
+    eventOptions.modes?.map((m) => {
+      const mode = String(m).toLowerCase();
+
+      if (mode.includes("once")) this.setOnce();
+      else if (mode.includes("process")) this.setProcess();
+      else if (mode.includes("database")) this.setDatabase();
+
+      return eventOptions.modes.push(mode);
+    });
 
     this.Events = { Discord: Events, Database: Database.Events };
 
@@ -20,7 +32,10 @@ export class Event extends EventStructure {
   };
 
   setName(name = null) {
-    this.name = name;
+    const object = new Object(this);
+
+    if (object.hasOwnProperty("name")) this["name"] = name;
+
     return name;
   };
 
@@ -48,6 +63,14 @@ export class Event extends EventStructure {
     return state;
   };
 
+  setDatabase(state = true) {
+    const object = new Object(this);
+
+    if (object.hasOwnProperty("database")) this["database"] = state;
+
+    return state;
+  };
+
   setType(type = "ChatCommand") {
     const object = new Object(this);
 
@@ -56,97 +79,62 @@ export class Event extends EventStructure {
     return type;
   };
 
-  // setProperty is an experimental feature.
-  setProperty(propertyOptions = { key: "Enabled" || "Name" || "Once" || "Process" || "Type" || "Webhook", value: null }) {
-    const { key, value } = propertyOptions;
-    const propertyKey = key.toLowerCase();
-    let propertyType = "Boolean";
-    const propertyValue = value;
+  setProperty(propertyData = [{ key: "Enabled", value: null }, { key: "Name", value: null }, { key: "Once", value: false }, { key: "Database", value: false }, { key: "Process", value: false }, { key: "Type", value: "ChatCommand" }, { key: "Webhook", value: null }]) {
+    propertyData.map((property) => {
+      const propertyObject = new Object(property);
+      if (!propertyObject.hasOwnProperty("key") || !propertyObject.hasOwnProperty("value")) return;
 
-    if (typeof propertyValue === "boolean") propertyType = "Boolean";
-    else if (typeof propertyValue === "string") propertyType = "String";
-    else if (typeof propertyValue === "object") propertyType = "Object";
-    else if (typeof propertyValue === "undefined" || propertyValue === null) propertyType = null;
+      const key = String(property.key).toLowerCase();
+      const value = property.value;
 
-    if (propertyKey === "enabled" && propertyValue && propertyType === "Boolean") this[propertyKey] = value;
-    else if (propertyKey === "name" && propertyValue && propertyType === "String") this[propertyKey] = value;
-    else if (propertyKey === "once" && propertyValue && propertyType === "Boolean") this[propertyKey] = value;
-    else if (propertyKey === "process" && propertyValue && propertyType === "Boolean") this[propertyKey] = value;
-    else if (propertyKey === "type" && propertyValue && propertyType === "String") this[propertyKey] = value;
-    else if (propertyKey === "webhook" && propertyValue && propertyType === "Object") {
-      const propertyValueOutput = new Object(propertyValue);
+      this[key] = value;
+    });
 
-      if (propertyValueOutput.hasOwnProperty("url")) {
-        const webhook = new Client({ url: propertyValueOutput.url });
+    return { getProperty: this.getProperty };
+  };
 
-        if (propertyValueOutput.hasOwnProperty("message")) {
-          const value = new Object(propertyValueOutput.message);
+  getProperty(propertyData = [{ key: "Enabled" }, { key: "Name" }, { key: "Once" }, { key: "Process" }, { key: "Type" }, { key: "Webhook" }, { key: "Database" }]) {
+    const results = [];
 
-          if (value.hasOwnProperty("embeds") || value.hasOwnProperty("components") || value.hasOwnProperty("content")) webhook.send({ content: value?.content, embeds: value?.embeds, components: value?.components });
-        };
-      } else if (propertyValueOutput.hasOwnProperty("id") && propertyValueOutput.hasOwnProperty("token")) {
-        const webhook = new Client({ id: propertyValueOutput.id, token: propertyValueOutput.token });
+    (async () => {
+      await Promise.all(propertyData.map((property) => {
+        const propertyObject = new Object(property);
+        if (!propertyObject.hasOwnProperty("key")) return;
 
-        if (propertyValueOutput.hasOwnProperty("message")) {
-          const value = new Object(propertyValueOutput.message);
+        const key = String(property.key).toLowerCase();
+        const value = this[key];
 
-          if (value.hasOwnProperty("embeds") || value.hasOwnProperty("components") || value.hasOwnProperty("content")) webhook.send({ content: value?.content, embeds: value?.embeds, components: value?.components });
-        };
-      };
+        return results.push({ key, value });
+      }));
+    })();
+
+    const thisdefault = this;
+
+    function editProperty(propertyEditData = [{ value: null /* ENABLED */ }, { value: null /* NAME*/ }, { value: false /* ONCE */ }, { value: false /* PROCESS */ }, { value: "ChatCommand" /* TYPE */ }, { value: null /* WEBHOOK DATA */ }, { value: false /* DATABASE */ }], debug = false) {
+      propertyEditData.map((property, index) => {
+        const key = results[index].key;
+
+        const oldValue = thisdefault[key];
+        thisdefault[key] = property.value;
+        const newValue = thisdefault[key];
+
+        if (debug) console.log(`[Structure#Event?key=${key}] Value changed from '${oldValue}' to '${newValue}'`);
+      });
     };
 
-    return { propertyKey, propertyValue, propertyType };
+    return { results, editProperty };
   };
 
-  // setProperties is an experimental feature.
-  setProperties(propertyOptions = { keys: ["Enabled", "Name", "Once", "Process", "Type", "Webhook"], values: [true, null, false, false, null, null] }) {
-    const { keys, values } = propertyOptions;
+  createWebhook(options = { url: null, id: null, token: null }) {
+    const { id, token, url } = options;
 
-    return keys.map((key, index) => {
-      const value = values[index];
+    const webhook = new Client({ url, id, token });
 
-      const propertyKey = key.toLowerCase();
-      let propertyType = "Boolean";
-      const propertyValue = value;
+    function send(sendOptions = { content: "New Message!", embeds: [], components: [] }) {
+      return webhook.send({ content: sendOptions?.content, embeds: sendOptions?.embeds, components: sendOptions?.components });
+    };
 
-      this.setProperty({ key: propertyKey, value });
-
-      return { propertyKey, propertyType, propertyValue };
-    });
-  };
-
-  // getProperty is an experimental feature.
-  getProperty(propertyOptions = { key: "Enabled" || "Name" || "Once" || "Process" || "Type" || "Webhook" }) {
-    const { key } = propertyOptions;
-    const propertyKey = key.toLowerCase();
-
-    let result = null;
-
-    const object = new Object(this);
-
-    if (propertyKey === "enabled" && object.hasOwnProperty("enabled")) result = this[propertyKey];
-    else if (propertyKey === "type" && object.hasOwnProperty("type")) result = this[propertyKey];
-    else if (propertyKey === "name" && object.hasOwnProperty("name")) result = this[propertyKey];
-    else if (propertyKey === "once" && object.hasOwnProperty("once")) result = this[propertyKey];
-    else if (propertyKey === "process" && object.hasOwnProperty("process")) result = this[propertyKey];
-    else if (propertyKey === "webhook" && object.hasOwnProperty("webhook")) result = this[propertyKey];
-
-    return { result, propertyKey, object };
-  };
-
-  // getProperties is an experimental feature.
-  getProperties(propertyOptions = { keys: ["Enabled", "Mode", "Command"] }) {
-    const { keys } = propertyOptions;
-
-    const result = [];
-
-    keys.map((key) => {
-      const property = this.getProperty({ key });
-
-      return result.push({ name: property.name, object: property.object, key: property.propertyKey });
-    });
-
-    return { result, keys, setProperties: this.setProperties };
+    return { send };
   };
 
   async execute() { };

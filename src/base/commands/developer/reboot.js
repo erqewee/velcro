@@ -5,10 +5,7 @@ import { Loader } from "../../classes/Loader/Loader.js";
 
 export default class extends Command {
   constructor() {
-    super({
-      enabled: true,
-      mode: "Developer"
-    });
+    super({ enabled: false, mode: "Developer" });
 
     this.setCommand(new this.SlashCommand()
         .setName("reboot")

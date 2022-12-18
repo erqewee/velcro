@@ -8,7 +8,7 @@ export class Command extends CommandStructure {
 
     this.enabled = commandOptions.enabled;
     this.mode = commandOptions.mode;
-    this.developer = commandOptions.mode === "Developer" ? true : false;
+    this.developer = String(commandOptions.mode).toLowerCase() === "developer" ? true : false;
   };
 
   setCommand(data = {}) {
@@ -36,84 +36,44 @@ export class Command extends CommandStructure {
     return mode;
   };
 
-  // setProperty is an experimental feature.
-  setProperty(propertyOptions = { key: "Enabled" || "Mode" || "Command", value: null }) {
-    const { key, value } = propertyOptions;
-    const propertyKey = key.toLowerCase();
-    let propertyType = "Boolean";
-    const propertyValue = value;
+  setProperty(propertyData = [{ key: "Enabled", value: null }, { key: "Mode", value: "Global" }, { key: "Command", value: {} }]) {
+    propertyData.map((property) => {
+      const key = String(property.key).toLowerCase();
+      const value = property.value;
 
-    if (typeof propertyValue === "boolean") propertyType = "Boolean";
-    else if (typeof propertyValue === "string") propertyType = "String";
-    else if (typeof propertyValue === "object") propertyType = "Object";
-    else if (typeof propertyValue === "undefined" || propertyValue === null) propertyType = null;
+      this[key] = value;
+    });
 
-    if (propertyKey === "enabled" && propertyValue && propertyType === "Boolean") this[propertyKey] = value;
-    else if (propertyKey === "mode" && propertyValue && propertyType === "String") this[propertyKey] = value;
-    else if (propertyKey === "command" && propertyValue && propertyType === "Object") {
-      const object = new Object(propertyValue);
+    return { getProperty: this.getProperty };
+  };
 
-      this["data"] = object;
+  getProperty(propertyData = [{ key: "Enabled" }, { key: "Mode" }, { key: "Command" }]) {
+    const results = [];
 
-      return object;
+    (async () => {
+      await Promise.all(propertyData.map((property) => {
+        const key = String(property.key).toLowerCase();
+        const value = this[key];
+
+        return results.push({ key, value });
+      }));
+    })();
+
+    const thisdefault = this;
+
+    function editProperty(propertyEditData = [{ value: true /* ENABLED */}, { value: "Global" /* MODE */}, { value: {} /* COMMAND DATA */}], debug = false) {
+      propertyEditData.map((property, index) => {
+        const key = results[index].key;
+
+        const oldValue = thisdefault[key];
+        thisdefault[key] = property.value;
+        const newValue = thisdefault[key];
+
+        if (debug) console.log(`[Structure#Command?key=${key}] Value changed from '${oldValue}' to '${newValue}'`);
+      });
     };
 
-    return { propertyName, propertyType, propertyValue, getProperty: this.getProperty };
-  };
-
-  // setProperties is an experimental feature.
-  setProperties(propertyOptions = { keys: ["Enabled", "Mode", "Command"], values: [true, "Global", {}] }) {
-    const { keys, values } = propertyOptions;
-
-    keys.map((key, index) => {
-      const value = values[index];
-
-      const propertyKey = key.toLowerCase();
-      let propertyType = "Boolean";
-      const propertyValue = value;
-
-      if (typeof propertyValue === "boolean") propertyType = "Boolean";
-      else if (typeof propertyValue === "string") propertyType = "String";
-      else if (typeof propertyValue === "object") propertyType = "Object";
-      else if (typeof propertyValue === "undefined" || propertyValue === null) propertyType = null;
-
-      this.setProperty({ key: propertyKey, value });
-
-      return { propertyKey, propertyType, propertyValue };
-    });
-
-    return { keys, values };
-  };
-
-  // getProperty is an experimental feature.
-  getProperty(propertyOptions = { key: "Enabled" || "Mode" || "Command" }) {
-    const { key } = propertyOptions;
-    const propertyKey = key.toLowerCase();
-
-    let result = null;
-
-    const object = new Object(this);
-
-    if (propertyKey === "enabled" && object.hasOwnProperty("enabled")) result = this[propertyKey];
-    else if (propertyKey === "mode" && object.hasOwnProperty("mode")) result = this[propertyKey];
-    else if (propertyKey === "command" && object.hasOwnProperty("data")) result = this["data"];
-
-    return { result, propertyKey, object };
-  };
-
-  // getProperties is an experimental feature.
-  getProperties(propertyOptions = { keys: ["Enabled", "Mode", "Command"] }) {
-    const { keys } = propertyOptions;
-
-    const result = [];
-
-    keys.map((key) => {
-      const property = this.getProperty({ key });
-
-      return result.push({ name: property.name, object: property.object, key: property.propertyKey, result: property.result });
-    });
-
-    return { result, keys, setProperties: this.setProperties };
+    return { results, editProperty };
   };
 
   async execute() { };

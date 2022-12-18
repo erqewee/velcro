@@ -2,16 +2,12 @@ import { Event } from "../../structures/export.js";
 
 export default class extends Event {
      constructor() {
-          super({
-               enabled: false,
-               process: false,
-               database: true
-          });
+          super({ enabled: false, modes: ["Database"] });
 
           this.setName(this.Events.Database.DataPulled);
                     
-          this.execute = function (data) {
-               return console.log(data);
+          this.execute = function (key, callback, oldData, newData, name) {
+               return console.log(`[Database(${name})] Data pulled. \nKey: ${key} | (OLD) Data: ${oldData}, (NEW) Data: ${newData} | Callback: ${callback}`);
           };
      };
 };

@@ -5,6 +5,9 @@ import express from "express";
 import { Loader } from "./Loader/Loader.js";
 import { REST } from "./REST.js";
 
+import { Language } from "./Language/Core.js";
+const language = new Language();
+
 import { Structure } from "../structures/export.js";
 const databases = new Structure().databases;
 
@@ -40,50 +43,45 @@ export class Client extends BaseClient {
 
     this.setMaxListeners(0);
 
-    global.client = this;
-  };
+    this.connect = function () {
+      this.loader.on("error", ({ type, error, body }) => console.log(`[Loader] An error ocurred! In ${type}, ${error}`));
 
-  connect() {
-    const rest = this.REST;
-    const loader = this.loader;
+      this.loader.once("handlersReady", (message) => console.log(message));
+      this.loader.once("commandsReady", (message) => console.log(message));
+      this.loader.once("eventsReady", (message) => console.log(message));
 
-    loader.on("error", ({ type, error, body }) => console.log(`[Loader] An error ocurred! In ${type}, ${error}`));
+      this.loader.once("ready", async (message, storage) => {
+       // await this.REST.put([]);
+       // await this.REST.put(storage);
 
-    loader.once("handlersReady", (message) => console.log(message));
-    loader.once("commandsReady", (message) => console.log(message));
-    loader.once("eventsReady", (message) => console.log(message));
-
-    loader.once("ready", async (message, storage) => {
-      await rest.put([]);
-      await rest.put(storage);
-
-      return console.log(message);
-    });
-
-    loader.Setup();
-
-    const client = this;
-
-    function uptime(port = 80) {
-      const { port } = uptimeOptions;
-
-      app.get("/", (request, response) => {
-        response.statusCode = 200;
-
-        response.send(`
-          <title>${client.user.username}'s Home</title>
-          <h1 style="color: blue;">
-          <button onclick="location.href='${client.generateInvite({ scopes: ["bot", "applications.commands"], permissions: ["Administrator"] })}'">Invite Bot</button>
-          <br><br>
-          <button onclick="location.href='https://discord.gg/HUuXnVAjbX'">Support Server</button>
-          <br>
-          <i>${client.user.tag}</i> is a multi-purpose discord bot for <a href="https://discord.gg/ZwhgJvXqm9">SkyLegend</a>. Coded with <a href="https://www.javascript.com/">JavaScript (ESM)</a>. And we used <a href="https://nodejs.org/en/about/">NodeJS (${process.version})</a> runtime.
-          </h1>`)
+        return console.log(message);
       });
 
-      app.listen(port);
+      this.loader.Setup();
+
+      const client = this;
+
+      function uptime(port = 80) {
+        app.get("/", (request, response) => {
+          response.statusCode = 200;
+
+          response.send(`
+            <title>${client.user.username}'s Home</title>
+            <h1 style="color: blue;">
+            <button onclick="location.href='${client.generateInvite({ scopes: ["bot", "applications.commands"], permissions: ["Administrator"] })}'">Invite Bot</button>
+            <br><br>
+            <button onclick="location.href='https://discord.gg/HUuXnVAjbX'">Support Server</button>
+            <br>
+            <i>${client.user.tag}</i> is a multi-purpose discord bot for <a href="https://discord.gg/ZwhgJvXqm9">SkyLegend</a>. Coded with <a href="https://www.javascript.com/">JavaScript (ESM)</a>. And we used <a href="https://nodejs.org/en/about/">NodeJS (${process.version})</a> runtime.
+            </h1>`)
+        });
+
+        app.listen(port);
+      };
+
+      return { uptime };
     };
 
-    return { uptime };
+    global.client = this;
   };
 };

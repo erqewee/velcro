@@ -19,7 +19,7 @@ import {
 
 import { CommandsCache, EventsCache, HandlersCache } from "../../classes/Loader/LoaderCache.js";
 
-import { Database } from "../../classes/Database.js";
+import { Database } from "../../classes/Database/Database.js";
 const Economy = new Database({ path: "./src/base", dir: "databases", name: "Economy" });
 const Subscribe = new Database({ path: "./src/base", dir: "databases", name: "Subscribe" });
 const General = new Database({ path: "./src/base", dir: "databases", name: "General" });

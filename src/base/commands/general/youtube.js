@@ -11,10 +11,7 @@ const choices = [
 
 export default class extends Command {
   constructor() {
-    super({
-      enabled: true,
-      support: false
-    });
+    super({ enabled: true, mode: "Global" });
 
     this.setCommand(new this.SlashCommand()
       .setName("youtube")
@@ -22,12 +19,12 @@ export default class extends Command {
       .addSubcommand((c) =>
         c.setName("videos")
           .setDescription("Get video information about provided channel.")
-          .addStringOption((o) => o.setName("channel").setDescription("Provide channel.").addChoices(choices[0]).setRequired(true))
+          .addStringOption((o) => o.setName("channel").setDescription("Provide channel.").addChoices(...choices).setRequired(true))
       )
       .addSubcommand((c) =>
         c.setName("last")
           .setDescription("Get last video for provided channel.")
-          .addStringOption((o) => o.setName("channel").setDescription("Provide channel.").addChoices(choices[0]).setRequired(true))
+          .addStringOption((o) => o.setName("channel").setDescription("Provide channel.").addChoices(...choices).setRequired(true))
       )
     );
 

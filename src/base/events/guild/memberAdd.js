@@ -4,10 +4,7 @@ import ms from "ms";
 
 export default class extends Event {
   constructor() {
-    super({
-      enabled: true,
-      process: false
-    });
+    super({ enabled: true });
 
     this.setName(this.Events.Discord.GuildMemberAdd);
 
@@ -109,7 +106,7 @@ export default class extends Event {
       });
 
       const collector = await msg?.channel.createMessageComponentCollector();
-      collector.on("collect", async (i) => {
+      collector?.on("collect", async (i) => {
         if (!i.isButton()) return;
 
         if (i.customId === "registerBtn") {

@@ -9,9 +9,12 @@ import {
   ActionRowBuilder as Row
 } from "discord.js";
 
+import { Structure } from "../structures/export.js";
+const dbs = new Structure().databases;
+
 export class YouTube {
   constructor(client = null, options = {
-    database: null,
+    database: dbs.subscribe,
     YouTube: {
       channelID: null,
       userID: null
@@ -52,7 +55,7 @@ export class YouTube {
     };
 
     this.checkUploads = async function () {
-      if (!database.fetch("Subscribe.Settings.Videos.Posted")) database.set("Subscribe.Settings.Videos.Posted", []);
+      if (!database.has("Subscribe.Settings.Videos.Posted")) database.set("Subscribe.Settings.Videos.Posted", []);
 
       const postedVideos = database.fetch("Subscribe.Settings.Videos.Posted");
       const lastVideo = database.fetch("Subscribe.Settings.Videos.Last");

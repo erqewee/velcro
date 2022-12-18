@@ -2,14 +2,9 @@ import { Handler } from "../../structures/export.js";
 
 export default class extends Handler {
   constructor() {
-    super({
-      enabled: true,
-      once: false,
-      process: false,
-      type: "ChatCommand"
-    });
+    super({ enabled: true, type: "ChatCommand" });
 
-    this.setProperty({ key: "Name", value: this.Events.Discord.InteractionCreate });
+    this.setProperty([{ key: "Name", value: this.Events.Discord.InteractionCreate }]);
 
     this.execute = async function (interaction) {
       const client = interaction.client;
@@ -20,14 +15,18 @@ export default class extends Handler {
       const command = this.loader.commands.cache.get(interaction.commandName);
       if (!command) return;
 
-      if (String(command?.mode).toLowerCase().includes("developer") && !this.config.Data.Bot.Developers.includes(member.id)) return interaction.reply({ content: `${this.config.Emoji.State.ERROR} ${member}, Are you \`${client.user.tag}\` developer?`, ephemeral: true });
+      if (command.developer && !this.config.Data.Bot.Developers.includes(member.id)) return interaction.reply({ content: `${this.config.Emoji.State.ERROR} ${member}, Are you \`${client.user.tag}\` developer?`, ephemeral: true });
+
+      const options = interaction.options;
+      const commandName = String(options.getSubcommand(false)).toLowerCase();
 
       await command.execute({
         interaction: interaction,
-        options: interaction.options,
+        options: options,
         member: member,
         channel: channel,
-        guild: guild
+        guild: guild,
+        command: commandName
       }).catch(async (err) => {
         const errorEmbed = new this.Embed({
           title: `${this.config.Emoji.State.ERROR} An error ocurred.`,

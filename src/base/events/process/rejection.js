@@ -2,10 +2,7 @@ import { Event } from "../../structures/export.js";
 
 export default class extends Event {
      constructor() {
-          super({
-               enabled: true,
-               process: true
-          });
+          super({ enabled: true, modes: ["Process"] });
 
           this.setName("unhandledRejection");
 

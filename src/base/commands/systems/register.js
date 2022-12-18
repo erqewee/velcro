@@ -1,13 +1,8 @@
 import { Command } from "../../structures/export.js";
 
-import { CacheManager } from "../../CacheManager.js";
-
 export default class extends Command {
   constructor() {
-    super({
-      enabled: true,
-      support: false
-    });
+    super({ enabled: true, mode: "Global" });
 
     this.setCommand(new this.SlashCommand()
       .setName("register")

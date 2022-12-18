@@ -4,15 +4,17 @@ import { resolve } from "node:path";
 import { Events } from "discord.js";
 
 import { CommandsCache, EventsCache, HandlersCache } from "./LoaderCache.js";
+import { Structure } from "../../structures/export.js";
 
 import { Data } from "../../../config/export.js";
 
 import EventEmitter from "node:events";
 
 import chalk from "chalk";
+const dbs = new Structure().databases;
 
 export class Loader extends EventEmitter {
-  constructor(client = null, databases = []) {
+  constructor(client = null, databases = [dbs.economy, dbs.general, dbs.subscribe]) {
     super();
 
     if (!client) throw new Error("Client isn't provided.");
@@ -23,12 +25,14 @@ export class Loader extends EventEmitter {
     this.events = { types: Events, cache: EventsCache };
     this.handlers = { types: this.events.types, cache: HandlersCache };
 
+    this.setMaxListeners(0);
+
     this.HandlerSetup = async function () {
       const path = this.resolve("./src/base/events/handlers");
 
-      const loadedHandlers = [];
-
       let body = null;
+
+      const loadedHandlers = [];
 
       try {
         await Promise.all(this.read(path).filter((file) => this.isFile(path, "/../handlers", file) && file.endsWith(".js")).map(async (file) => {
@@ -104,14 +108,9 @@ export class Loader extends EventEmitter {
                 else if (event?.type === "ContextCommand" && interactions.map((interaction) => !interaction.customId && interaction?.isChatInputCommand && interaction?.isContextMenuCommand())) return await event.execute(...interactions);
                 else return await event.execute(...interactions);
               });
-              else if (event.once) client.once(event.name, async (...interactions) => await event.execute(...interactions));
-              else if (event.process) {
-                if (!event.once) process.on(event.name, (...args) => event.execute(...args));
-                else if (event.once) process.once(event.name, (...args) => event.execute(...args));
-              } else if (event.database) databases.map((database) => {
-                if (!event.once) database.on(event.name, async (...args) => await event.execute(...args));
-                else if (event.once) database.once(event.name, async (...args) => await event.execute(...args));
-              });
+              if (event.once) client.once(event.name, async (...interactions) => await event.execute(...interactions));
+              if (event.process) process.on(event.name, async (...args) => await event.execute(...args));
+              if (event.database) databases.map((database) => database.on(event.name, async (...args) => await event.execute(...args)));
 
               loadedEvents.push(event.name);
 
@@ -197,8 +196,10 @@ export class Loader extends EventEmitter {
     };
 
     this.Setup = function () {
-      this.HandlerSetup();
+      // databases.map((db) => db.on("dataFetchRequest", (key, val) => console.log(key, val)))
+
       this.EventSetup();
+      this.HandlerSetup();
       this.CommandSetup();
 
       let body = {};
