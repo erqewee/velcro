@@ -15,6 +15,7 @@ export default class extends Event {
       { key: "Once", value: true }
     ]);
 
+    console.log(this.getProperty([{ key: "Name" }]))
     this.execute = async function () {
       console.log(`${this.client.user.tag} has been connected.`);
 
