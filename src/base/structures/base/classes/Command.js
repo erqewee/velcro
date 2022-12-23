@@ -4,17 +4,22 @@ export class Command extends CommandStructure {
   constructor(commandOptions = { enabled: true, mode: "Global" }) {
     super();
 
+    const { enabled, mode } = commandOptions;
+
     this.data = null;
 
-    this.enabled = commandOptions.enabled;
-    this.mode = commandOptions.mode;
-    this.developer = String(commandOptions.mode).toLowerCase() === "developer" ? true : false;
+    this.enabled = false;
+    this.mode = "Global";
+    this.developer = false;
+
+    if (enabled === true) this.setEnabled();
+    if (String(mode).toLowerCase().includes("developer")) this.setMode();
   };
 
   setCommand(data = {}) {
     const object = new Object(data);
 
-    this.data = object;
+    this["data"] = object;
 
     return object;
   };
@@ -27,7 +32,7 @@ export class Command extends CommandStructure {
     return state;
   };
 
-  setMode(mode = "Global" || "Developer") {
+  setMode(mode = "Developer") {
     const object = new Object(this);
 
     if (object.hasOwnProperty("mode")) this["mode"] = mode;
@@ -36,10 +41,30 @@ export class Command extends CommandStructure {
     return mode;
   };
 
+  defineProperty(propertyData = [{ key: "newFunction", value: true }]) {
+    propertyData.map((property) => {
+      const propertyObject = new Object(property);
+      const baseObject = new Object(this);
+
+      if (!propertyObject.hasOwnProperty("key")) return;
+      if (!propertyObject.hasOwnProperty("value")) property["value"] = 0;
+
+      if (baseObject.hasOwnProperty(property["key"])) return;
+
+      const key = String(property["key"]).toLowerCase().replaceAll(" ", "_");
+      const value = property["value"];
+
+      this[key] = value;
+    });
+  };
+
   setProperty(propertyData = [{ key: "Enabled", value: null }, { key: "Mode", value: "Global" }, { key: "Command", value: {} }]) {
     propertyData.map((property) => {
-      const key = String(property.key).toLowerCase();
-      const value = property.value;
+      const data = new Object(property);
+      if (!data.hasOwnProperty("key") || !data.hasOwnProperty("value")) return;
+
+      const key = String(property["key"]).toLowerCase();
+      const value = property["value"];
 
       this[key] = value;
     });
@@ -52,22 +77,22 @@ export class Command extends CommandStructure {
 
     (async () => {
       await Promise.all(propertyData.map((property) => {
-        const key = String(property.key).toLowerCase();
+        const key = String(property["key"]).toLowerCase();
         const value = this[key];
 
         return results.push({ key, value });
       }));
     })();
 
-    const thisdefault = this;
+    const base = this;
 
-    function editProperty(propertyEditData = [{ value: true /* ENABLED */}, { value: "Global" /* MODE */}, { value: {} /* COMMAND DATA */}], debug = false) {
+    function editProperty(propertyEditData = [{ value: true /* ENABLED */ }, { value: "Global" /* MODE */ }, { value: {} /* COMMAND DATA */ }], debug = false) {
       propertyEditData.map((property, index) => {
-        const key = results[index].key;
+        const key = results[index]["key"];
 
-        const oldValue = thisdefault[key];
-        thisdefault[key] = property.value;
-        const newValue = thisdefault[key];
+        const oldValue = base[key];
+        base[key] = property["value"];
+        const newValue = base[key];
 
         if (debug) console.log(`[Structure#Command?key=${key}] Value changed from '${oldValue}' to '${newValue}'`);
       });

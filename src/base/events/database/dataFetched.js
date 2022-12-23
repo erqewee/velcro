@@ -6,8 +6,8 @@ export default class extends Event {
 
           this.setName(this.Events.Database.DataFetched);
                     
-          this.execute = function (key, data, name) {
-               return console.log(`[Database(${name})] Data fetched. \nKey: ${key} | Data: ${data}`);
+          this.execute = function (key, data, available, name) {
+               return console.log(`[Database(${name})] Data fetched. \nKey: ${key} | Data: ${available ? data : "No data."}`);
           };
      };
 };

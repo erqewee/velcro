@@ -9,7 +9,7 @@
   "type": "module",
   "module": "ESNext",
   "keywords": [],
-  "author": "",
+  "author": "Erqewee",
   "license": "ISC",
   "dependencies": {
     "@discordjs/collection": "^1.3.0",
@@ -17,27 +17,16 @@
     "bufferutil": "^4.0.7",
     "chalk": "^5.2.0",
     "child_process": "^1.0.2",
-    "discord.js": "14.7.2-dev.1671209916-18b3a19.0",
+    "discord.js": "14.8.0-dev.1671710685-429dbcc.0",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "fast-glob": "^3.2.12",
     "get-intrinsic": "^1.1.3",
     "got": "^12.5.3",
-    "i18next": "^22.4.5",
-    "i18next-fs-backend": "^2.1.0",
     "ms": "^2.1.3",
     "rss-converter": "^1.1.6",
     "rss-parser": "^3.12.0",
     "utf-8-validate": "^5.0.10",
     "wio.db": "^4.0.22"
-  },
-  "resolutions": {
-    "@discordjs/builders": "1.4.1-dev.1671209916-18b3a19.0",
-    "@discordjs/formatters": "0.1.1-dev.1671209918-18b3a19.0"
-  },
-  "devDependencies": {
-    "@types/node": "^18.11.15",
-    "ts-node": "^10.9.1",
-    "typescript": "5.0.0-dev.20221127"
   }
 }

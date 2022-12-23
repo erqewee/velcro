@@ -1,4 +1,2 @@
-import { Client } from "./base/classes/Client.js";
-const client = new Client();
-
-client.connect().uptime();
+import { Client } from "./base/export.js";
+new Client().connect().uptime();

@@ -17,6 +17,8 @@ import {
   RoleManager, WebhookManager
 } from "../../../api/export.js";
 
+import { Checker } from "../../classes/Checker.js";
+
 import { CommandsCache, EventsCache, HandlersCache } from "../../classes/Loader/LoaderCache.js";
 
 import { Database } from "../../classes/Database/Database.js";
@@ -44,12 +46,6 @@ export class Structure {
     this.ButtonStyle = ButtonStyle;
     this.Permissions = PermissionsBitField.Flags;
 
-    this.config = {
-      Data: Data,
-      Emoji: Emoji
-    };
-
-
     this.guilds = new GuildManager();
     this.emojis = new EmojiManager(this.client);
     this.messages = new MessageManager();
@@ -61,110 +57,164 @@ export class Structure {
     this.roles = new RoleManager(this.client);
     this.webhooks = new WebhookManager();
 
+    this.checker = new Checker();
+
     this.loader = { commands: { cache: CommandsCache }, events: { cache: EventsCache }, handlers: { cache: HandlersCache } };
     this.databases = { economy: Economy, subscribe: Subscribe, general: General };
+    this.config = { Data, Emoji };
+  };
 
-    this.pagination = async function (interaction = null, { embeds = [], buttons = [] }) {
-      const first = new this.Button({
-        style: ButtonStyle.Secondary,
-        emoji: { name: "Pagination_First", id: "1042498687533846528" },
-        customId: "0",
-      });
+  time(unixCode = Date.now(), format = "R", options = { onlyNumberOutput: false }) {
+    const { onlyNumberOutput: OnO } = options;
 
-      const prev = new this.Button({
-        style: ButtonStyle.Primary,
-        emoji: { name: "Pagination_Previous", id: "1042498269013622844" },
-        customId: "1",
-      });
+    const formattedTime = Math.floor(unixCode / 1000);
 
-      const del = new this.Button({
-        style: ButtonStyle.Danger,
-        emoji: { name: "Pagination_Delete", id: "1042498264517312582" },
-        customId: "2",
-      });
+    let dateFormat = `<t:${formattedTime}:${format}>`;
 
-      const next = new this.Button({
-        style: ButtonStyle.Primary,
-        emoji: { name: "Pagination_Next", id: "1042498266765471814" },
-        customId: "3",
-      });
+    if (format === "t") dateFormat = `<t:${formattedTime}:${format}>`;
+    else if (format === "T") dateFormat = `<t:${formattedTime}:${format}>`;
+    else if (format === "d") dateFormat = `<t:${formattedTime}:${format}>`;
+    else if (format === "D") dateFormat = `<t:${formattedTime}:${format}>`;
+    else if (format === "f") dateFormat = `<t:${formattedTime}:${format}>`;
+    else if (format === "F") dateFormat = `<t:${formattedTime}:${format}>`;
 
-      const last = new this.Button({
-        style: ButtonStyle.Secondary,
-        emoji: { name: "Pagination_Last", id: "1042498633532186695" },
-        customId: "4",
-      });
+    let output = dateFormat;
+    if (OnO) output = formattedTime;
 
-      const buttonsRow = new this.Row({
-        components: [first, prev, del, next, last]
-      });
+    return output;
+  };
 
-      let currentPage = 0;
+  code(text = "console.log('Hello World!');", blockType = "js") {
+    const content = String(text);
+    let type = String(blockType).trim();
 
-      const disableFirst = ButtonBuilder.from(first).setDisabled(true).setStyle(ButtonStyle.Danger);
-      const disableLast = ButtonBuilder.from(last).setDisabled(true).setStyle(ButtonStyle.Danger);
-      const disablePrev = ButtonBuilder.from(prev).setDisabled(true).setStyle(ButtonStyle.Danger);
-      const disableNext = ButtonBuilder.from(next).setDisabled(true).setStyle(ButtonStyle.Danger);
+    const output = `\`\`\`${type}\n${content}\`\`\``;
 
-      const styledDelete = ButtonBuilder.from(del).setStyle(ButtonStyle.Success);
+    return output;
+  };
 
-      const components = [
-        new ActionRowBuilder({
-          components: [
-            currentPage === 0 ? disableFirst : first,
-            currentPage === 0 ? disablePrev : prev,
-            currentPage === 0 || embeds.length - 1 ? styledDelete : del,
-            currentPage === embeds.length - 1 ? disableNext : next,
-            currentPage === embeds.length - 1 ? disableLast : last
-          ]
-        })
-      ];
-      components.concat(buttons);
+  async pagination(interaction = null, { embeds = [], buttons = [] }) {
+    const first = new this.Button({
+      style: ButtonStyle.Secondary,
+      emoji: { name: "Pagination_First", id: "1042498687533846528" },
+      customId: "0",
+    });
 
-      let sendMessage;
+    const prev = new this.Button({
+      style: ButtonStyle.Primary,
+      emoji: { name: "Pagination_Previous", id: "1042498269013622844" },
+      customId: "1",
+    });
 
-      if (embeds.length === 0) {
-        if (interaction.deferred) return interaction.followUp({ embeds: [embeds[0]], components });
-        else sendMessage = interaction.replied ? await interaction.editReply({ embeds: [embeds[0]], components }) : await interaction.reply({ embeds: [embeds[0]], components });
-      };
+    const del = new this.Button({
+      style: ButtonStyle.Danger,
+      emoji: { name: "Pagination_Delete", id: "1042498264517312582" },
+      customId: "2",
+    });
 
-      embeds = embeds.map((embed, _index) => {
-        const INDEX = (_index + 1);
+    const next = new this.Button({
+      style: ButtonStyle.Primary,
+      emoji: { name: "Pagination_Next", id: "1042498266765471814" },
+      customId: "3",
+    });
 
-        return embed.setFooter({ text: `Total: ${embeds.length} | Viewing: ${INDEX} | Remaining: ${embeds.length - INDEX}`, iconURL: interaction.guild?.iconURL() });
-      });
+    const last = new this.Button({
+      style: ButtonStyle.Secondary,
+      emoji: { name: "Pagination_Last", id: "1042498633532186695" },
+      customId: "4",
+    });
 
-      if (interaction.deferred) sendMessage = await interaction.followUp({ embeds: [embeds[0]], components });
+    const buttonsRow = new this.Row({
+      components: [first, prev, del, next, last]
+    });
+
+    let currentPage = 0;
+
+    const disableFirst = ButtonBuilder.from(first).setDisabled(true).setStyle(ButtonStyle.Danger);
+    const disableLast = ButtonBuilder.from(last).setDisabled(true).setStyle(ButtonStyle.Danger);
+    const disablePrev = ButtonBuilder.from(prev).setDisabled(true).setStyle(ButtonStyle.Danger);
+    const disableNext = ButtonBuilder.from(next).setDisabled(true).setStyle(ButtonStyle.Danger);
+
+    const styledDelete = ButtonBuilder.from(del).setStyle(ButtonStyle.Success);
+
+    const components = [
+      new ActionRowBuilder({
+        components: [
+          currentPage === 0 ? disableFirst : first,
+          currentPage === 0 ? disablePrev : prev,
+          currentPage === 0 || embeds.length - 1 ? styledDelete : del,
+          currentPage === embeds.length - 1 ? disableNext : next,
+          currentPage === embeds.length - 1 ? disableLast : last
+        ]
+      })
+    ];
+    components.concat(buttons);
+
+    let sendMessage;
+
+    if (embeds.length === 0) {
+      if (interaction.deferred) return interaction.followUp({ embeds: [embeds[0]], components });
       else sendMessage = interaction.replied ? await interaction.editReply({ embeds: [embeds[0]], components }) : await interaction.reply({ embeds: [embeds[0]], components });
+    };
 
-      let filter = async (m) => {
-        const components = [new ActionRowBuilder({ components: [del] })];
+    embeds = embeds.map((embed, _index) => {
+      const INDEX = (_index + 1);
 
-        let msg;
+      return embed.setFooter({ text: `Total: ${embeds.length} | Viewing: ${INDEX} | Remaining: ${embeds.length - INDEX}`, iconURL: interaction.guild?.iconURL() });
+    });
 
-        if (m.member.id !== interaction.member.id) msg = await interaction.followUp({ content: `${this.config.Emoji.State.ERROR} ${m.member}, You cannot interact with this buttons.`, components, ephemeral: true });
+    if (interaction.deferred) sendMessage = await interaction.followUp({ embeds: [embeds[0]], components });
+    else sendMessage = interaction.replied ? await interaction.editReply({ embeds: [embeds[0]], components }) : await interaction.reply({ embeds: [embeds[0]], components });
 
-        await msg?.createMessageComponentCollector().on("collect", async (i) => {
-          if (!i.isButton()) return;
+    let filter = async (m) => {
+      const components = [new ActionRowBuilder({ components: [del] })];
 
-          await i.deferUpdate().catch(() => { });
+      let msg;
 
-          if (i.customId === "2") msg.delete();
-        });
+      if (m.member.id !== interaction.member.id) msg = await interaction.followUp({ content: `${this.config.Emoji.State.ERROR} ${m.member}, You cannot interact with this buttons.`, components, ephemeral: true });
 
-        return m.member.id === interaction.member.id;
-      };
-
-      const collector = await sendMessage.createMessageComponentCollector({ filter });
-
-      collector.on("collect", async (i) => {
+      await msg?.createMessageComponentCollector().on("collect", async (i) => {
         if (!i.isButton()) return;
 
         await i.deferUpdate().catch(() => { });
 
-        switch (i.customId) {
-          case "0": {
-            currentPage = 0;
+        if (i.customId === "2") msg.delete();
+      });
+
+      return m.member.id === interaction.member.id;
+    };
+
+    const collector = await sendMessage.createMessageComponentCollector({ filter });
+
+    collector.on("collect", async (i) => {
+      if (!i.isButton()) return;
+
+      await i.deferUpdate().catch(() => { });
+
+      switch (i.customId) {
+        case "0": {
+          currentPage = 0;
+
+          const components = [
+            new ActionRowBuilder({
+              components: [
+                currentPage === 0 ? disableFirst : first,
+                currentPage === 0 ? disablePrev : prev,
+                currentPage === 0 ? styledDelete : del,
+                currentPage === embeds.length - 1 ? disableNext : next,
+                currentPage === embeds.length - 1 ? disableLast : last
+              ]
+            })
+          ];
+          components.concat(buttons);
+
+          await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
+
+          break;
+        };
+        case "1": {
+          if (currentPage !== 0) {
+            currentPage--;
 
             const components = [
               new ActionRowBuilder({
@@ -180,102 +230,43 @@ export class Structure {
             components.concat(buttons);
 
             await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
-
-            break;
-          };
-          case "1": {
-            if (currentPage !== 0) {
-              currentPage--;
-
-              const components = [
-                new ActionRowBuilder({
-                  components: [
-                    currentPage === 0 ? disableFirst : first,
-                    currentPage === 0 ? disablePrev : prev,
-                    currentPage === 0 ? styledDelete : del,
-                    currentPage === embeds.length - 1 ? disableNext : next,
-                    currentPage === embeds.length - 1 ? disableLast : last
-                  ]
-                })
-              ];
-              components.concat(buttons);
-
-              await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
-            } else {
-              currentPage = (embeds.length - 1);
-
-              const components = [
-                new ActionRowBuilder({
-                  components: [
-                    currentPage === 0 ? disableFirst : first,
-                    currentPage === 0 ? disablePrev : prev,
-                    currentPage === 0 ? styledDelete : del,
-                    currentPage === embeds.length - 1 ? disableNext : next,
-                    currentPage === embeds.length - 1 ? disableLast : last
-                  ]
-                })
-              ];
-              components.concat(buttons);
-
-              await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
-            };
-
-            break;
-          };
-          case "2": {
-            components[0].components.map((btn) => {
-              btn.setDisabled(true);
-              btn.setStyle(this.ButtonStyle.Secondary)
-            });
-
-            await sendMessage.edit({
-              embeds: [embeds[currentPage]],
-              components
-            }).catch(() => { });
-
-            break;
-          };
-          case "3": {
-            if (currentPage < (embeds.length - 1)) {
-              currentPage++;
-
-              const components = [
-                new ActionRowBuilder({
-                  components: [
-                    currentPage === 0 ? disableFirst : first,
-                    currentPage === 0 ? disablePrev : prev,
-                    currentPage === embeds.length - 1 ? styledDelete : del,
-                    currentPage === embeds.length - 1 ? disableNext : next,
-                    currentPage === embeds.length - 1 ? disableLast : last
-                  ]
-                })
-              ];
-              components.concat(buttons);
-
-              await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
-            } else {
-              currentPage = 0;
-
-              const components = [
-                new ActionRowBuilder({
-                  components: [
-                    currentPage === 0 ? disableFirst : first,
-                    currentPage === 0 ? disablePrev : prev,
-                    currentPage === 0 || embeds.length - 1 ? styledDelete : del,
-                    currentPage === embeds.length - 1 ? disableNext : next,
-                    currentPage === embeds.length - 1 ? disableLast : last
-                  ]
-                })
-              ];
-              components.concat(buttons);
-
-              await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
-            };
-
-            break;
-          };
-          case "4": {
+          } else {
             currentPage = (embeds.length - 1);
+
+            const components = [
+              new ActionRowBuilder({
+                components: [
+                  currentPage === 0 ? disableFirst : first,
+                  currentPage === 0 ? disablePrev : prev,
+                  currentPage === 0 ? styledDelete : del,
+                  currentPage === embeds.length - 1 ? disableNext : next,
+                  currentPage === embeds.length - 1 ? disableLast : last
+                ]
+              })
+            ];
+            components.concat(buttons);
+
+            await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
+          };
+
+          break;
+        };
+        case "2": {
+          components[0].components.map((btn) => {
+            btn.setDisabled(true);
+            btn.setStyle(this.ButtonStyle.Secondary)
+          });
+
+          await sendMessage.edit({
+            embeds: [embeds[currentPage]],
+            components
+          }).catch(() => { });
+
+          break;
+        };
+        case "3": {
+          if (currentPage < (embeds.length - 1)) {
+            currentPage++;
 
             const components = [
               new ActionRowBuilder({
@@ -291,26 +282,63 @@ export class Structure {
             components.concat(buttons);
 
             await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
+          } else {
+            currentPage = 0;
 
-            break;
+            const components = [
+              new ActionRowBuilder({
+                components: [
+                  currentPage === 0 ? disableFirst : first,
+                  currentPage === 0 ? disablePrev : prev,
+                  currentPage === 0 || embeds.length - 1 ? styledDelete : del,
+                  currentPage === embeds.length - 1 ? disableNext : next,
+                  currentPage === embeds.length - 1 ? disableLast : last
+                ]
+              })
+            ];
+            components.concat(buttons);
+
+            await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
           };
 
-          default: null;
+          break;
         };
+        case "4": {
+          currentPage = (embeds.length - 1);
+
+          const components = [
+            new ActionRowBuilder({
+              components: [
+                currentPage === 0 ? disableFirst : first,
+                currentPage === 0 ? disablePrev : prev,
+                currentPage === embeds.length - 1 ? styledDelete : del,
+                currentPage === embeds.length - 1 ? disableNext : next,
+                currentPage === embeds.length - 1 ? disableLast : last
+              ]
+            })
+          ];
+          components.concat(buttons);
+
+          await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
+
+          break;
+        };
+
+        default: null;
+      };
+    });
+
+    collector.on("end", async () => {
+      components[0].components.map((btn) => {
+        btn.setDisabled(true);
+        btn.setStyle(this.ButtonStyle.Secondary);
       });
 
-      collector.on("end", async () => {
-        components[0].components.map((btn) => {
-          btn.setDisabled(true);
-          btn.setStyle(this.ButtonStyle.Secondary);
-        });
-
-        await sendMessage.edit({
-          embeds: [embeds[0]],
-          components
-        }).catch(() => { });
-      });
-    };
+      await sendMessage.edit({
+        embeds: [embeds[0]],
+        components
+      }).catch(() => { });
+    });
   };
 
   static version = "v1.0.3";

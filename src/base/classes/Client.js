@@ -6,7 +6,7 @@ import { Loader } from "./Loader/Loader.js";
 import { REST } from "./REST.js";
 
 import { Language } from "./Language/Core.js";
-const language = new Language();
+const language = new Language({ languagesDir: "./src/base/languages" });
 
 import { Structure } from "../structures/export.js";
 const databases = new Structure().databases;
@@ -44,6 +44,9 @@ export class Client extends BaseClient {
     this.setMaxListeners(0);
 
     this.connect = function () {
+      language.handleCache();
+      language.on("ready", () => console.log(language.translate("welcomer", "tr")))
+      
       this.loader.on("error", ({ type, error, body }) => console.log(`[Loader] An error ocurred! In ${type}, ${error}`));
 
       this.loader.once("handlersReady", (message) => console.log(message));
@@ -51,8 +54,8 @@ export class Client extends BaseClient {
       this.loader.once("eventsReady", (message) => console.log(message));
 
       this.loader.once("ready", async (message, storage) => {
-       // await this.REST.put([]);
-       // await this.REST.put(storage);
+        // await this.REST.put([]);
+        // await this.REST.put(storage);
 
         return console.log(message);
       });

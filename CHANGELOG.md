@@ -2,21 +2,45 @@
 
 | Version           | Supported           |
 | ----------------- | ------------------- |
+| Beta Release 1    | :white_check_mark:  |
 | Preview Release 5 | :white_check_mark:  |
 | Preview Release 4 | :white_check_mark:  |
-| Preview Release 3 | :white_check_mark:  |
+| Preview Release 3 | :x:                 |
 | Preview Release 2 | :x:                 |
 | Preview Release 1 | :x:                 |
 
 # Known Issues
 
+- [NEW] We are investigating a bug where using the 'handleCache' function in the language system caused languages to be cached but returned "undefined" in the 'translate' function.
 - We are investigating the issue not detecting saved changes after using the <b><i>REBOOT</i></b> command.
 
 # Warnings
 
-- We strongly recommend that you upgrade your version to 'Preview Release 3' or 'Higher' for better performance.
+- We strongly recommend that you upgrade your version to 'Preview Release 4' or 'Higher' for better performance.
 
-# ChangeLogs
+# Patch Notes
+
+> Beta Release 1 (12/23/2022)
+
+- [NOTE] This release or higher will be released to Wyvern as soon as possible. (Before Beta Release 4 or lower release arrives)
+
+- <details>
+    <summary>Added Checker</summary>
+    <i>Includes new functions. (Integrated with Structures.)</i>
+  </details>
+- <details>
+    <summary>Added Exporter</summary>
+    <i>We added a new exporter to 'src/base' folder. ('export.js', this file includes all events, classes, structures and helpers.)</i>
+  </details>
+- <details>
+    <summary>Database Updated</summary>
+    <i>Some improves for <b>fetch</b>, <b>has</b>, <b>exists</b> functions.</i>
+  </details>
+- <details>
+    <summary>Structures Updated</summary>
+    <i>Added new function <b>defineProperty</b>. (You can define properties easy.)</i>
+    <i>Added new functions <b>time</b>, <b>code</b>.</i>
+  </details>
 
 > Preview Release 5 (12/18/2022)
 

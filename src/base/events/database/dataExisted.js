@@ -5,9 +5,9 @@ export default class extends Event {
           super({ enabled: false, modes: ["Database"] });
 
           this.setName(this.Events.Database.DataExisted);
-                    
-          this.execute = function (key, data, name) {
-               return console.log(`[Database(${name})] Data existed. \nKey: ${key} | Data: ${data}`);
+
+          this.execute = function (key, data, available, name) {
+               return console.log(`[Database(${name})] Data existed. \nKey: ${key} | Data: ${available ? data : "No data."}`);
           };
      };
 };

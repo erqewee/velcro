@@ -6,66 +6,64 @@ import { readdirSync, statSync } from "node:fs";
 
 import EventEmitter from "node:events";
 
-import { fileURLToPath } from "node:url";
-import { dirname, resolve, join } from "node:path";
-
-import i18next from 'i18next';
-import Backend from 'i18next-fs-backend';
+import { resolve } from "node:path";
 
 class Core extends EventEmitter {
-  constructor(coreOptions = { languages: [{ code: "tr-TR", source: "../../languages/tr-TR.yml" }, { code: "en-US", source: "../../languages/en-US.yml" }] }) {
+  constructor(options = { languagesDir: "./src/base/languages" }) {
     super();
 
-    const { languages } = coreOptions;
+    const { languagesDir } = options;
 
-    this.translate = function (key = "test:test", options = { locale: "enGB" }) {
-      return i18next.t(key, { lng: options.locale.replaceAll("-", "") })
-    };
-
-    this.init = async function () {
-
-      const basePath = resolve("./src/base/languages");
-      const nsNames = [];
-      
-      await Promise.all(readdirSync(basePath).filter((dir) => statSync(`${basePath}/${dir}`).isDirectory()).map(async (dir) => {
-        nsNames.push(dir);
-
-        await Promise.all(readdirSync(`${basePath}/${dir}`).filter((file) => statSync(`${basePath}/${dir}/${file}`).isFile()).map((file) => {
-          console.log(file.split(".")[0])
-        }))
-      }));
-
-      return i18next.use(Backend).init({
-        debug: true,
-        backend: {
-          loadPath: resolve(`./src/base/languages/{{lng}}/{{ns}}.yml`),
-        },
-         interpolation: {
-          escapeValue: false
-        },
-        ns: nsNames,
-        unescapePrefix: false,
-        whitelist: ["enUS", "tr"], 
-        defaultNS: false,
-        fallbackLng: ['enUS', 'tr'],
-        lng: "enUS" 
-      })
-    };
-
-    this.handleCache = async function () {
-      await Promise.all(languages.map(async (data, index) => {
-        const file = (await import(resolve(data.source)));
-
-        this.cache.set(data.code, file);
-
-        this.emit(this.Events.LanguageLoaded, { code: data.code, source: data.source });
-      }));
-
-      this.emit(this.Events.Ready, true);
-    }; // nu nu nu⚡
-
+    this.languages = resolve(languagesDir);
     this.cache = LanguagesCache;
     this.Events = Events;
+  };
+
+  translate(key = "welcomer", locate = "tr-TR") {
+    const outKey = String(key).trim();
+    const translations = LanguagesCache.get(locate);
+    console.log(LanguagesCache.size)
+    const object = new Object(translations);
+
+    let parts = [];
+    if (outKey.includes(".")) parts = key.split(".");
+    else if (outKey.includes("/")) parts = key.split("/");
+    else if (outKey.includes(">")) parts = key.split(">");
+
+    let result = object;
+
+    parts.map((part) => result = result[part]);
+
+    return result;
+  };
+
+  handleCache() {
+    let completed = false;
+
+    (async () => {
+      await Promise.all(readdirSync(this.languages).filter((file) => statSync(`${this.languages}/${file}`).isFile()).map(async (file) => {
+        const baseFile = new (await import(`file://${this.languages}/${file}`)).default;
+
+        const splitter = (separator = ".js", get = 0) => String(file).split(separator)[get];
+        const name = splitter();
+
+        const code = splitter(".js"); // tr-TR
+        const fullCode = splitter("-"); // tr
+
+        if (!baseFile?.translations) return;
+
+        LanguagesCache.set(fullCode, baseFile.translations);
+        LanguagesCache.set(code, baseFile.translations);
+
+        this.emit(this.Events.LanguageLoaded, { code, source: `file://${this.languages}/${file}` });
+      }));
+
+      completed = true;
+    })();
+
+    if (completed) this.emit(this.Events.Ready, 0);
+
+    return completed;
   };
 
   static Events = Events;

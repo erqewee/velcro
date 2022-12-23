@@ -100,11 +100,15 @@ export class Database extends EventEmitter {
 
       this.emit(this.Events.DataFetchRequest, key, name);
 
+      let available = false;
+
       if (key && enabled) console.log(chalk.bgYellowBright(" WARN "), chalk.grey(`You cannot use 'fetchAll' with a key. Please replace '${key}' with 'null' or disable 'fetchAll' mode.`));
 
       const fetch = enabled ? this.database.fetchAll(limit) : this.database.fetch(key);
 
-      this.emit(this.Events.DataFetched, key, fetch, name);
+      if (fetch) available = true;
+
+      this.emit(this.Events.DataFetched, key, fetch, available, name);
 
       return fetch;
     };
@@ -112,10 +116,14 @@ export class Database extends EventEmitter {
     this.has = function (key = "ErqeweeDevelopment") {
       this.emit(this.Events.DataHasRequest, key, name);
 
-      const has = this.database.has(key);
-      const data = this.exists(key) ? this.fetch(key) : null;
+      let available = false;
 
-      this.emit(this.Events.DataHashed, key, data, name);
+      const has = this.database.has(key);
+      const data = has ? this.fetch(key) : null;
+
+      if (has) available = true;
+
+      this.emit(this.Events.DataHashed, key, data, available, name);
 
       return has;
     };
@@ -123,10 +131,14 @@ export class Database extends EventEmitter {
     this.exists = function (key = "ErqeweeDevelopment") {
       this.emit(this.Events.DataExistsRequest, key, name);
 
+      let available = false;
+
       const exist = this.database.exists(key);
       const data = exist ? this.fetch(key) : null;
 
-      this.emit(this.Events.DataExisted, key, data, name);
+      if (exist) available = true;
+
+      this.emit(this.Events.DataExisted, key, data, available, name);
 
       return exist;
     };

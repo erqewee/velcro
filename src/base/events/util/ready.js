@@ -43,7 +43,7 @@ export default class extends Event {
 
       const client = this.client;
       const db = this.databases.subscribe;
-      const youtube = new YouTube(this.client, { database: db, YouTube: { channelID: "UCjtU9nHOAo6XpJCF9qb-1Ow", userID: null } });
+      const youtube = new YouTube(this.client, { database: db, YouTube: { channelID: "UCjtU9nHOAo6XpJCF9qb-1Ow" } });
 
       const guild = client.guilds.resolve("942839259876958268");
 
