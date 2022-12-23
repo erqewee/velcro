@@ -39,6 +39,7 @@
 - <details>
     <summary>Structures Updated</summary>
     <i>Added new function <b>defineProperty</b>. (You can define properties easy.)</i>
+    <br>
     <i>Added new functions <b>time</b>, <b>code</b>.</i>
   </details>
 
