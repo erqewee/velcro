@@ -4,14 +4,17 @@ import { Data } from "../../config/export.js";
 
 export class REST {
   constructor(client) {
-    const rest = new Rest({ version: "10" }).setToken(Data.Bot.TOKEN);
+    this.client = client;
+  };
 
-    this.routes = Routes;
-    
-    this.put = function (body) {
-      if (!Array.isArray(body)) throw new TypeError("BODY only got ARRAY!");
+  #routes = Routes;
+  #rest = new Rest().setToken(Data.Bot.TOKEN);
 
-      return rest.put(this.routes.applicationGuildCommands(client.user?.id, "942839259876958268"), { body });
-    };
+  async put(body = []) {
+    let completed = false;
+
+    await this.#rest.put(this.#routes.applicationGuildCommands(this.client.user?.id, "942839259876958268"), { body }).then(() => completed = true);
+
+    return completed;
   };
 };

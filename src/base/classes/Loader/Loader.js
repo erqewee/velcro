@@ -3,239 +3,297 @@ import { resolve } from "node:path";
 
 import { Events } from "discord.js";
 
-import { CommandsCache, EventsCache, HandlersCache } from "./LoaderCache.js";
+import { CommandsCache, EventsCache, HandlersCache, LanguagesCache } from "./LoaderCache.js";
+import { Events as LoaderEvents } from "./Events.js";
+
 import { Structure } from "../../structures/export.js";
 
 import { Data } from "../../../config/export.js";
 
 import EventEmitter from "node:events";
 
-import chalk from "chalk";
+import ora from "ora";
+
+import { Translations } from "../../languages/Translations.js";
+
 const dbs = new Structure().databases;
 
 export class Loader extends EventEmitter {
   constructor(client = null, databases = [dbs.economy, dbs.general, dbs.subscribe]) {
     super();
 
-    if (!client) throw new Error("Client isn't provided.");
-
-    const storage = [];
-
-    this.commands = { cache: CommandsCache };
-    this.events = { types: Events, cache: EventsCache };
-    this.handlers = { types: this.events.types, cache: HandlersCache };
+    this.client = client;
+    this.databases = databases;
 
     this.setMaxListeners(0);
+  };
 
-    this.HandlerSetup = async function () {
-      const path = this.resolve("./src/base/events/handlers");
+  commands = CommandsCache;
+  events = EventsCache;
+  handlers = HandlersCache;
+  languages = LanguagesCache;
 
-      let body = null;
+  storage = [];
 
-      const loadedHandlers = [];
+  Events = LoaderEvents;
 
-      try {
-        await Promise.all(this.read(path).filter((file) => this.isFile(path, "/../handlers", file) && file.endsWith(".js")).map(async (file) => {
-          const handlerBase = new (await import(`../../events/handlers/${file}`)).default;
+  async Handler() {
+    const path = this.#resolve("./src/base/events/handlers");
 
-          if (handlerBase?.name && handlerBase?.enabled) {
-            this.handlers.cache.set(handlerBase.name, handlerBase);
+    let body = {};
 
-            const handler = this.handlers.cache.get(handlerBase.name);
+    const loadedHandlers = [];
 
-            client.on(handler.name, async (...interactions) => {
-              if (handler?.type === "UserMenu" && interactions.map((interaction) => interaction.customId && interaction.isUserSelectMenu())) return await handler.execute(...interactions);
-              else if (handler?.type === "StringMenu" && interactions.map((interaction) => interaction.customId && interaction.isStringSelectMenu())) return await handler.execute(...interactions);
-              else if (handler?.type === "Button" && interactions.map((interaction) => interaction.customId && interaction.isButton())) return await handler.execute(...interactions);
-              else if (handler?.type === "Modal" && interactions.map((interaction) => interaction.customId && interaction.isModalSubmit())) return await handler.execute(...interactions);
-              else if (handler?.type === "ChatCommand" && interactions.map((interaction) => !interaction.customId && interaction?.isChatInputCommand && interaction?.isChatInputCommand())) return await handler.execute(...interactions);
-              else if (handler?.type === "ContextCommand" && interactions.map((interaction) => !interaction.customId && interaction?.isChatInputCommand && interaction?.isContextMenuCommand())) return await handler.execute(...interactions);
-              else return await handler.execute(...interactions);
-            });
+    const spinner = ora("Handlers Loading").start();
 
-            loadedHandlers.push(handler.name);
+    await Promise.all(this.#read(path).filter((file) => this.#isFile(path, "/../handlers", file) && file.endsWith(".js")).map(async (file) => {
+      const handlerBase = new (await import(`../../events/handlers/${file}`)).default;
 
-            body = {
-              path: path,
-              file: file,
-              name: handler.name,
-              type: handler?.type,
-              size: (path.length + 1),
-              loaded: ((loadedHandlers.length + 1) - 1)
-            };
+      if (handlerBase?.name && handlerBase?.enabled) {
+        this.handlers.set(handlerBase.name, handlerBase);
 
-            this.emit("handlerLoaded", body);
+        const handler = this.handlers.get(handlerBase.name);
+
+        this.client.on(handler.name, async (...listeners) => {
+          if (handler?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await handler.execute(...listeners);
+          else if (handler?.type === "StringMenu" && listeners.map((listener) => listener?.customId && listener.isStringSelectMenu())) return await handler.execute(...listeners);
+          else if (handler?.type === "Button" && listeners.map((listener) => listener?.customId && listener.isButton())) return await handler.execute(...listeners);
+          else if (handler?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await handler.execute(...listeners);
+          else if (handler?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await handler.execute(...listeners);
+          else if (handler?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await handler.execute(...listeners);
+          else return await handler.execute(...listeners);
+        });
+
+        loadedHandlers.push(handler.name);
+
+        body = {
+          path: path,
+          file: file,
+          name: handler.name,
+          type: handler?.type,
+          size: (path.length + 1),
+          loaded: ((loadedHandlers.length + 1) - 1)
+        };
+
+        this.emit(this.Events.HandlerLoaded, body);
+      };
+    })).catch((err) => {
+      this.emit(this.Events.Error, {
+        type: "HANDLER",
+        error: err,
+        body: body
+      });
+
+      spinner.fail(`An error ocurred when loading handlers. | ${err}`);
+    }).finally(() => {
+      this.emit(this.Events.HandlersReady, loadedHandlers);
+
+      spinner.succeed("Handlers Loaded.");
+    });
+
+    return { handlers: loadedHandlers };
+  };
+
+  async Event() {
+    const path = this.#resolve("./src/base/events");
+
+    const loadedEvents = [];
+
+    let body = {};
+
+    const spinner = ora("Events Loading").start();
+
+    await Promise.all(this.#read(path).filter((dir) => this.#isFolder(path, dir)).map(async (dir) => {
+      if (dir === "handlers") return;
+
+      const events = this.#read(`${path}/${dir}`);
+
+      await Promise.all(events.filter((file) => this.#isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
+        const eventBase = new (await import(`../../events/${dir}/${file}`)).default;
+
+        if (eventBase?.name && eventBase?.enabled) {
+          this.events.set(eventBase.name, eventBase);
+
+          const event = this.events.get(eventBase.name);
+
+          if (event._client && !event.once && !event.database && !event.process) this.client.on(event.name, async (...listeners) => {
+            if (event?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await event.execute(...listeners);
+            else if (event?.type === "StringMenu" && listeners.map((listener) => listener?.customId && listener.isStringSelectMenu())) return await event.execute(...listeners);
+            else if (event?.type === "Button" && listeners.map((listener) => listener?.customId && listener.isButton())) return await event.execute(...listeners);
+            else if (event?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await event.execute(...listeners);
+            else if (event?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await event.execute(...listeners);
+            else if (event?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await event.execute(...listeners);
+            else return await event.execute(...listeners).catch(() => { })
+          });
+          if (event._client && event.once && !event.database && !event.process) this.client.once(event.name, async (...listeners) => await event.execute(...listeners));
+          if (event.process && !event.database) process.on(event.name, async (...args) => await event.execute(...args));
+          if (event.database && !event.once && !event.process) this.databases.map((database) => database.on(event.name, async (...args) => await event.execute(...args)));
+
+          loadedEvents.push(event.name);
+
+          body = {
+            path: path,
+            dir: dir,
+            file: file,
+            name: event.name,
+            type: event?.type,
+            process: event.process,
+            size: (events.length + 1),
+            loaded: ((loadedEvents.length + 1) - 1),
+            once: event.once
           };
-        }));
 
-        this.emit("handlersReady", chalk.greenBright("[Loader] Handlers Ready."), loadedHandlers);
-      } catch (err) {
-        this.emit("error", {
-          type: "HANDLER",
-          error: err,
-          body: body
-        });
-      };
-    };
+          this.emit(this.Events.EventLoaded, body);
+        };
+      }))
+    })).catch((err) => {
+      this.emit(this.Events.Error, {
+        type: "EVENT",
+        error: err,
+        body: body
+      });
 
-    this.EventSetup = async function () {
-      const path = this.resolve("./src/base/events");
+      spinner.fail(`An error ocurred when loading events. | ${err}`);
+    }).finally(() => {
+      this.emit(this.Events.EventsReady, loadedEvents);
 
-      const loadedEvents = [];
+      spinner.succeed("Events Loaded.");
+    });
 
-      let body = null;
+    return { events: loadedEvents };
+  };
 
-      try {
-        await Promise.all(this.read(path).filter((dir) => this.isFolder(path, dir)).map(async (dir) => {
-          if (dir === "handlers") return;
+  async Command() {
+    const path = this.#resolve("./src/base/commands");
 
-          const events = this.read(`${path}/${dir}`);
+    const loadedCommands = [];
 
-          await Promise.all(events.filter((file) => this.isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
-            const eventBase = new (await import(`../../events/${dir}/${file}`)).default;
+    let body = {};
 
-            if (eventBase?.name && eventBase?.enabled) {
-              this.events.cache.set(eventBase.name, eventBase);
+    const spinner = ora("Commands Loading").start();
 
-              const event = this.events.cache.get(eventBase.name);
+    await Promise.all(this.#read(path).filter((dir) => this.#isFolder(path, dir)).map(async (dir) => {
+      const commands = this.#read(`${path}/${dir}/`);
 
-              if (!event.once) client.on(event.name, async (...interactions) => {
-                if (event?.type === "UserMenu" && interactions.map((interaction) => interaction.customId && interaction.isUserSelectMenu())) return await event.execute(...interactions);
-                else if (event?.type === "StringMenu" && interactions.map((interaction) => interaction.customId && interaction.isStringSelectMenu())) return await event.execute(...interactions);
-                else if (event?.type === "Button" && interactions.map((interaction) => interaction.customId && interaction.isButton())) return await event.execute(...interactions);
-                else if (event?.type === "Modal" && interactions.map((interaction) => interaction.customId && interaction.isModalSubmit())) return await event.execute(...interactions);
-                else if (event?.type === "ChatCommand" && interactions.map((interaction) => !interaction.customId && interaction?.isChatInputCommand && interaction?.isChatInputCommand())) return await event.execute(...interactions);
-                else if (event?.type === "ContextCommand" && interactions.map((interaction) => !interaction.customId && interaction?.isChatInputCommand && interaction?.isContextMenuCommand())) return await event.execute(...interactions);
-                else return await event.execute(...interactions);
-              });
-              if (event.once) client.once(event.name, async (...interactions) => await event.execute(...interactions));
-              if (event.process) process.on(event.name, async (...args) => await event.execute(...args));
-              if (event.database) databases.map((database) => database.on(event.name, async (...args) => await event.execute(...args)));
+      await Promise.all(commands.filter((file) => this.#isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
+        const commandBase = new (await import(`../../commands/${dir}/${file}`)).default;
 
-              loadedEvents.push(event.name);
+        if (commandBase?.data) {
+          this.commands.set(commandBase.data.name, commandBase);
 
-              body = {
-                path: path,
-                dir: dir,
-                file: file,
-                name: event.name,
-                type: event?.type,
-                process: event.process,
-                size: (events.length + 1),
-                loaded: ((loadedEvents.length + 1) - 1),
-                once: event.once
-              };
+          const command = this.commands.get(commandBase.data.name);
 
-              this.emit("eventLoaded", body);
-            };
-          }))
-        }));
+          if (command.enabled && !command.support) {
+            this.commands.set(command.data.name, command);
+            this.storage.push(command.data);
+          };
 
-        this.emit("eventsReady", chalk.blueBright("[Loader] Events Ready."), loadedEvents);
-      } catch (err) {
-        this.emit("error", {
-          type: "EVENT",
-          error: err,
-          body: body
-        });
-      };
-    };
+          loadedCommands.push(command.data);
 
-    this.CommandSetup = async function () {
-      const path = this.resolve("./src/base/commands");
+          body = {
+            path: path,
+            dir: dir,
+            file: file,
+            name: command.data.name,
+            size: (commands.length + 1),
+            loaded: ((loadedCommands.length + 1) - 1)
+          };
 
-      const loadedCommands = [];
+          this.emit(this.Events.CommandLoaded, body);
+        };
+      }));
+    })).catch((err) => {
+      this.emit(this.Events.Error, {
+        type: "COMMAND",
+        error: err,
+        body: body
+      });
 
-      let body = null;
+      spinner.fail(`An error ocurred when loading commands. | ${err}`);
+    }).finally(() => {
+      this.emit(this.Events.CommandsReady, loadedCommands);
 
-      try {
-        await Promise.all(this.read(path).filter((dir) => this.isFolder(path, dir)).map(async (dir) => {
-          const commands = this.read(`${path}/${dir}/`);
+      spinner.succeed("Commands Loaded.");
+    });
 
-          await Promise.all(commands.filter((file) => this.isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
-            const commandBase = new (await import(`../../commands/${dir}/${file}`)).default;
+    return { commands: loadedCommands };
+  };
 
-            if (commandBase?.data) {
-              this.commands.cache.set(commandBase.data.name, commandBase);
+  async Language() {
+    const loadedLanguages = [];
 
-              const command = this.commands.cache.get(commandBase.data.name);
+    let body = {};
 
-              if (command.enabled && !command.support) {
-                this.commands.cache.set(command.data.name, command);
-                storage.push(command.data);
-              };
+    const spinner = ora("Languages Loading").start();
+    const languageSource = new Translations();
 
-              loadedCommands.push(command.data);
+    await Promise.all(languageSource.Languages.map((lang) => {
+      const { code, source } = lang;
+      const directCode = String(code).split("-")[0];
 
-              body = {
-                path: path,
-                dir: dir,
-                file: file,
-                name: command.data.name,
-                size: (commands.length + 1),
-                loaded: ((loadedCommands.length + 1) - 1)
-              };
+      this.languages.set(code, source);
+      this.languages.set(directCode, source);
 
-              this.emit("commandLoaded", body);
-            };
-          }));
-        }));
+      loadedLanguages.push(lang);
 
-        this.emit("commandsReady", chalk.yellowBright("[Loader] Commands Ready."), loadedCommands);
-      } catch (err) {
-        this.emit("error", {
-          type: "COMMAND",
-          error: err,
-          body: body
-        });
+      body = {
+        code: code,
+        directCode: directCode,
+        source: source
       };
 
-      return {
-        commands: loadedCommands
-      };
-    };
+      this.emit(this.Events.LanguageLoaded, body);
+    })).catch((err) => {
+      this.emit(this.Events.Error, {
+        type: "LANG",
+        error: err,
+        body: body
+      });
 
-    this.Setup = function () {
-      // databases.map((db) => db.on("dataFetchRequest", (key, val) => console.log(key, val)))
+      spinner.fail(`An error ocurred when loading languages. | ${err}`);
+    }).finally(() => {
+      this.emit(this.Events.LanguagesReady, loadedLanguages);
 
-      this.EventSetup();
-      this.HandlerSetup();
-      this.CommandSetup();
+      spinner.succeed("Languages Loaded.");
+    });
 
-      let body = {};
+    return { languages: loadedLanguages };
+  };
 
-      return client.login(Data.Bot.TOKEN).then(() => this.emit("ready", chalk.grey("[Client] Connected to Gateway."), storage)).catch((err) => this.emit("error", { type: "BOT", error: err, body: body }));
-    };
+  Setup() {
+    const spinner = ora("Connecting to Gateway...").start();
 
-    this.isFile = function (path, dir, file) {
-      if (typeof path !== "string") throw new TypeError("PATH must be a STRING!");
-      if (typeof dir !== "string") throw new TypeError("DIR must be a STRING!");
-      if (typeof file !== "string") throw new TypeError("FILE must be a STRING!");
+    this.Language();
+    this.Handler();
+    this.Event();
+    this.Command();
 
-      const scanFile = statSync(this.resolve(path + "/" + dir + "/" + file)).isFile();
+    this.client.login(Data.Bot.TOKEN).then(() => {
+      this.emit("ready", 0);
 
-      return scanFile;
-    };
+      spinner.succeed("Connected to Gateway.");
+    }).catch((err) => spinner.fail(`An error ocurred when connecting to gateway. | ${err}`));
 
-    this.isFolder = function (path, dir) {
-      if (typeof path !== "string") throw new TypeError("PATH must be a STRING!");
-      if (typeof dir !== "string") throw new TypeError("DIR must be a STRING!");
+    return 0;
+  };
 
-      const scanFolder = statSync(this.resolve(path + "/" + dir)).isDirectory();
+  #isFile(path, dir, file) {
+    const scanFile = statSync(this.#resolve(path + "/" + dir + "/" + file)).isFile();
 
-      return scanFolder;
-    };
+    return scanFile;
+  };
 
-    this.resolve = function (path) {
-      if (typeof path !== "string") throw new TypeError("PATH must be a STRING!");
+  #isFolder(path, dir) {
+    const scanFolder = statSync(this.#resolve(path + "/" + dir)).isDirectory();
 
-      return resolve(path);
-    };
+    return scanFolder;
+  };
 
-    this.read = function (path) {
-      if (typeof path !== "string") throw new TypeError("PATH must be a STRING!");
+  #resolve(path = "./src") {
+    return resolve(path);
+  };
 
-      return readdirSync(this.resolve(path));
-    };
+  #read(path) {
+    return readdirSync(this.#resolve(path));
   };
 };

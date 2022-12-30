@@ -7,6 +7,5 @@ export default {
         Developers: ["744835491643260988"]
     },
 
-    WEBHOOKURL: process.env.WEBHOOK,
-    SEMATEXT_MONITORING_TOKEN: process.env.SEMATEXT_MONITORING_TOKEN
+    WEBHOOKURL: process.env.WEBHOOK
 };

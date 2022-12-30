@@ -7,73 +7,74 @@ const ChannelManager = new BaseChannelManager();
 const { PATCH, POST, PUT, GET, DELETE } = api;
 
 export class WebhookManager {
-  constructor() {
-    this.get = async function (webhookID) {
-      if (typeof webhookID !== "string") throw new TypeError("WebhookID must be a STRING!");
+  constructor() { };
 
-      const webhook = await GET(`${api.config.BASE_URL}/webhooks/${webhookID}`);
+  get(webhookID) {
+    if (!api.checker.check(webhookID).isString()) api.checker.error("webhookId", "InvalidType", { expected: "String", received: (typeof webhookID) });
 
-      return webhook;
-    };
+    const webhook = GET(`${api.config.BASE_URL}/webhooks/${webhookID}`);
 
-    this.create = async function(channelID, options = {
-      name: null,
-      avatar: null
-    }) {
-      if (typeof channelID !== "string") throw new TypeError("ChannelID must be a STRING!");
+    return webhook;
+  };
 
-      const channel = await ChannelManager.get(channelID);
-      const webhook = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/webhooks`, {
-        name: options?.name,
-        avatar: options?.avatar
-      });
+  create(channelID, options = {
+    name: null,
+    avatar: null
+  }) {
+    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
 
-      return webhook;
-    };
+    const channel = ChannelManager.get(channelID);
+    const webhook = POST(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/webhooks`, {
+      name: options?.name,
+      avatar: options?.avatar
+    });
 
-    this.message = async function (webhookID, options = {
-      content: null,
-      embeds: [],
-      flags: 0,
-      allowedMentions: {},
-      components: [],
-      files: [],
-      payloadJson: null,
-      attachments: [],
-      nonce: null,
-      tts: false,
-      messageReference: {},
-      stickerIds: []
-    }) {
-      if (typeof webhookID !== "string") throw new TypeError("WebhookID must be a STRING!");
+    return webhook;
+  };
 
-      const webhook = await this.get(webhookID);
+  message(webhookID, options = {
+    content: null,
+    embeds: [],
+    flags: 0,
+    allowedMentions: {},
+    components: [],
+    files: [],
+    payloadJson: null,
+    attachments: [],
+    nonce: null,
+    tts: false,
+    messageReference: {},
+    stickerIds: []
+  }) {
+    if (!api.checker.check(webhookID).isString()) api.checker.error("webhookId", "InvalidType", { expected: "String", received: (typeof webhookID) });
 
-      const message = await POST(`${api.config.BASE_URL}/webhooks/${webhook.id}/${webhook.token}`, {
-        content: options?.content,
-        embeds: options?.embeds,
-        flags: options?.flags,
-        allowed_mentions: options?.allowedMentions,
-        components: options?.attachments,
-        files: options?.files,
-        payload_json: options?.payloadJson,
-        attachments: options?.attachments,
-        nonce: options?.nonce,
-        tts: options?.tts,
-        message_reference: options?.messageReference,
-        sticker_ids: options?.stickerIds
-      });
+    const webhook = this.get(webhookID);
 
-      return message;
-    };
+    const message = POST(`${api.config.BASE_URL}/webhooks/${webhook.id}/${webhook.token}`, {
+      content: options?.content,
+      embeds: options?.embeds,
+      flags: options?.flags,
+      allowed_mentions: options?.allowedMentions,
+      components: options?.attachments,
+      files: options?.files,
+      payload_json: options?.payloadJson,
+      attachments: options?.attachments,
+      nonce: options?.nonce,
+      tts: options?.tts,
+      message_reference: options?.messageReference,
+      sticker_ids: options?.stickerIds
+    });
 
-    this.delete = async function(webhook_) {
+    return message;
+  };
 
-      const fetchWebhook = await this.get(webhook_.id);
-    
-      const webhook = await DELETE(`${api.config.BASE_URL}/webhooks/${fetchWebhook.id}/${fetchWebhook.token}`);
+  delete(webhook) {
+    if (!api.checker.check(webhook).isObject()) api.checker.error("webhook", "InvalidType", { expected: "Object", received: (typeof webhook) });
 
-      return webhook;
-    };
+    const fetched = this.get(webhook.id);
+
+    const deleted = DELETE(`${api.config.BASE_URL}/webhooks/${fetched.id}/${fetched.token}`);
+
+    return deleted;
   };
 };

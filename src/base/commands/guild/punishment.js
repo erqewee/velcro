@@ -221,14 +221,14 @@ export default class extends Command {
     // THIS COMMAND NOT COMPLETED, DON'T TOUCH!!!
     // THIS COMMAND NOT COMPLETED, DON'T TOUCH!!!
     // THIS COMMAND NOT COMPLETED, DON'T TOUCH!!!
+  };
 
-    this.execute = async function ({ interaction, member: m, channel: c, guild: g, options, command }) {
-      const db = this.databases.general;
+  async execute({ interaction, member: m, channel: c, guild: g, options, command }) {
+    const db = this.databases.general;
 
-      if (command === "add") {
-        const ruleNo = Number(options.getString("rule"));
-        const time = options.getString("time");
-      }
-    };
+    if (command === "add") {
+      const ruleNo = Number(options.getString("rule"));
+      const time = options.getString("time");
+    }
   };
 };

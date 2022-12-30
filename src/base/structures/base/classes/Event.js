@@ -4,97 +4,83 @@ import { Structure as EventStructure } from "../Structure.js";
 import { Database } from "../../../classes/Database/Database.js";
 
 export class Event extends EventStructure {
-  constructor(eventOptions = { name: null, enabled: true, modes: [null], type: "ChatCommand" }) {
+  constructor(eventOptions = { name: null, enabled: true, modes: [], type: "ChatCommand" }) {
     super();
 
     this.name = eventOptions.name;
     this.type = eventOptions.type;
     this.modes = eventOptions?.modes;
 
-    this.once = false;
-    this.process = false;
-    this.database = false;
-    this.language = false;
-
-    this.enabled = false;
-
-    if (eventOptions?.enabled === true) this.setEnabled();
-
-    if (eventOptions?.modes) {
-      eventOptions.modes.map((m) => {
-        const mode = String(m).trim().toLowerCase();
-
-        if (mode.includes("once")) this.setOnce();
-        else if (mode.includes("process")) this.setProcess();
-        else if (mode.includes("database")) this.setDatabase();
-        else if (mode.includes("language")) this.setLanguage();
-
-        return eventOptions.modes.push(mode);
-      });
-    };
-
-    this.Events = { Discord: Events, Database: Database.Events };
-
-    this.webhook = null;
+    if (this.checker.check(eventOptions?.enabled).isBoolean() && eventOptions.enabled === true) this.setEnabled();
+    if (this.checker.check(eventOptions?.modes).isArray()) this.setModes(eventOptions.modes);
   };
 
-  setName(name = null) {
-    const object = new Object(this);
+  enabled = false;
+  _client = true;
+  process = false;
+  once = false;
+  database = false;
+  language = false;
 
-    if (object.hasOwnProperty("name")) this["name"] = name;
+  webhook = null;
+
+  Events = { Discord: Events, Database: Database.Events };
+
+  setName(name = null) {
+    if (!this.checker.check(name).isString()) this.checker.error("name", "InvalidType", { expected: "String", received: (typeof name) });
+
+    this["name"] = name;
 
     return name;
   };
 
   setEnabled(state = true) {
-    const object = new Object(this);
+    if (!this.checker.check(state).isBoolean()) this.checker.error("state", "InvalidType", { expected: "Boolean", received: (typeof state) });
 
-    if (object.hasOwnProperty("enabled")) this["enabled"] = state;
-
-    return state;
-  };
-
-  setOnce(state = true) {
-    const object = new Object(this);
-
-    if (object.hasOwnProperty("once")) this["once"] = state;
+    this["enabled"] = state;
 
     return state;
   };
 
-  setProcess(state = true) {
-    const object = new Object(this);
+  setModes(modes = []) {
+    if (!this.checker.check(modes).isArray()) this.checker.error("modes", "InvalidType", { expected: "Array", received: (typeof modes) });
 
-    if (object.hasOwnProperty("process")) this["process"] = state;
+    this["modes"] = modes;
 
-    return state;
-  };
+    modes.map((m) => {
+      const mode = String(m).trim().toLowerCase();
 
-  setDatabase(state = true) {
-    const object = new Object(this);
+      if (mode === "once") this["once"] = true;
+      if (mode === "process") this["process"] = true;
+      if (mode === "database") this["database"] = true;
+      if (mode === "language") this["language"] = true;
+      if (mode === "client") this["_client"] = true;
 
-    if (object.hasOwnProperty("database")) this["database"] = state;
+      return mode;
+    });
 
-    return state;
-  };
-
-  setLanguage(state = true) {
-    const object = new Object(this);
-
-    if (object.hasOwnProperty("language")) this["language"] = state;
-
-    return state;
+    return modes;
   };
 
   setType(type = "ChatCommand") {
-    const object = new Object(this);
+    if (!this.checker.check(type).isString()) this.checker.error("type", "InvalidType", { expected: "String", received: (typeof type) });
 
-    if (object.hasOwnProperty("type")) this["type"] = type;
+    this["type"] = type;
 
     return type;
   };
 
-  defineProperty(propertyData = [{ key: "oneUses", value: true }]) {
+  setExecute(callback = () => { }) {
+    if (!this.checker.check(callback).isFunction()) this.checker.error("callback", "InvalidType", { expected: "Function", received: (typeof callback) });
+
+    this["execute"] = callback;
+
+    return callback;
+  };
+
+  #defineProperty(propertyData = [{ key: "oneUses", value: true }]) {
+    if (!this.checker.check(propertyData).isArray()) this.checker.error("propertyData", "InvalidType", { expected: "Array", received: (typeof propertyData) });
+
     propertyData.map((property) => {
       const propertyObject = new Object(property);
       const baseObject = new Object(this);
@@ -111,27 +97,25 @@ export class Event extends EventStructure {
     });
   };
 
-  setProperty(propertyData = [{ key: "Enabled", value: null }, { key: "Name", value: null }, { key: "Once", value: false }, { key: "Database", value: false }, { key: "Process", value: false }, { key: "Type", value: "ChatCommand" }, { key: "Webhook", value: null }]) {
+  setProperty(propertyData = [{ key: "Enabled", value: null }, { key: "Name", value: null }, { key: "Once", value: false }, { key: "Database", value: false }, { key: "Process", value: false }, { key: "Type", value: "ChatCommand" }, { key: "Webhook", value: null }, { key: "Execute", value: () => { } }]) {
+    if (!this.checker.check(propertyData).isArray()) this.checker.error("propertyData", "InvalidType", { expected: "Array", received: (typeof propertyData) });
+
     propertyData.map((property) => {
       const propertyObject = new Object(property);
       if (!propertyObject.hasOwnProperty("key") || !propertyObject.hasOwnProperty("value")) return;
 
-      const key = String(property["key"]).toLowerCase();
+      const key = String(property["key"]).trim().toLowerCase();
       const value = property["value"];
 
-      let base = this[key];
-
-      if (!base) this.defineProperty([{ key, value }]);
-
-      base = this[key];
-
-      if (base) this[key] = value;
+      this.#defineProperty([{ key, value }]);
     });
 
     return { getProperty: this.getProperty };
   };
 
-  getProperty(propertyData = [{ key: "Enabled" }, { key: "Name" }, { key: "Once" }, { key: "Process" }, { key: "Type" }, { key: "Webhook" }, { key: "Database" }]) {
+  getProperty(propertyData = [{ key: "Enabled" }, { key: "Name" }, { key: "Once" }, { key: "Process" }, { key: "Type" }, { key: "Webhook" }, { key: "Database" }, { key: "Execute" }]) {
+    if (!this.checker.check(propertyData).isArray()) this.checker.error("propertyData", "InvalidType", { expected: "Array", received: (typeof propertyData) });
+
     const results = [];
 
     (async () => {
@@ -139,7 +123,7 @@ export class Event extends EventStructure {
         const propertyObject = new Object(property);
         if (!propertyObject.hasOwnProperty("key")) return;
 
-        const key = String(property["key"]).toLowerCase();
+        const key = String(property["key"]).trim().toLowerCase();
         const value = this[key];
 
         return results.push({ key, value });
@@ -148,7 +132,9 @@ export class Event extends EventStructure {
 
     const base = this;
 
-    function editProperty(propertyEditData = [{ value: null /* ENABLED */ }, { value: null /* NAME*/ }, { value: false /* ONCE */ }, { value: false /* PROCESS */ }, { value: "ChatCommand" /* TYPE */ }, { value: null /* WEBHOOK DATA */ }, { value: false /* DATABASE */ }], debug = false) {
+    function editProperty(propertyEditData = [{ value: null /* ENABLED */ }, { value: null /* NAME*/ }, { value: false /* ONCE */ }, { value: false /* PROCESS */ }, { value: "ChatCommand" /* TYPE */ }, { value: null /* WEBHOOK DATA */ }, { value: false /* DATABASE */ }, { value: () => { } /* EXECUTE */ }], debug = false) {
+      if (!this.checker.check(propertyEditData).isArray()) this.checker.error("propertyEditData", "InvalidType", { expected: "Array", received: (typeof propertyEditData) });
+
       const storage = [];
 
       (async () => {
@@ -172,9 +158,12 @@ export class Event extends EventStructure {
   };
 
   createWebhook(options = { url: null, id: null, token: null }) {
+    if (!this.checker.check(options).isObject()) this.checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
+
     const { id, token, url } = options;
 
     const webhook = new Client({ url, id, token });
+    this.webhook = webhook;
 
     function send(sendOptions = { content: "New Message!", embeds: [], components: [] }) {
       return webhook.send({ content: sendOptions?.content, embeds: sendOptions?.embeds, components: sendOptions?.components });

@@ -1,7 +1,6 @@
 // CLASSES
 import { Client } from "./classes/Client.js";
 import { Database } from "./classes/Database/Database.js";
-import { Language } from "./classes/Language/Core.js";
 import { Checker } from "./classes/Checker.js";
 import { REST } from "./classes/REST.js";
 import { Survey } from "./classes/Survey.js";
@@ -31,7 +30,7 @@ import dataAddRequest from "./events/database/dataAddRequest.js";
 import dataDeleted from "./events/database/dataDeleted.js";
 import dataDeleteRequest from "./events/database/dataDeleteRequest.js";
 import dataExisted from "./events/database/dataExisted.js";
-import dataExistRequest from "./events/database/dataExistRequest.js";
+import dataExistsRequest from "./events/database/dataExistsRequest.js";
 import dataFetched from "./events/database/dataFetched.js";
 import dataFetchRequest from "./events/database/dataFetchRequest.js";
 import dataHashed from "./events/database/dataHashed.js";
@@ -45,6 +44,7 @@ import dataSaveRequest from "./events/database/dataSaveRequest.js";
 import dataSubtracted from "./events/database/dataSubtracted.js";
 import dataSubtractRequest from "./events/database/dataSubtractRequest.js";
 import database_error from "./events/database/error.js";
+import database_debug from "./events/database/debug.js";
 
 import memberAdd from "./events/guild/memberAdd.js";
 import memberRemove from "./events/guild/memberRemove.js";
@@ -52,7 +52,8 @@ import memberRemove from "./events/guild/memberRemove.js";
 import interaction from "./events/handlers/interaction.js";
 
 import button from "./events/interactions/button.js";
-import menu from "./events/interactions/menu.js";
+import string_menu from "./events/interactions/string_menu.js";
+import user_menu from "./events/interactions/user_menu.js";
 
 import exception from "./events/process/exception.js";
 import rejection from "./events/process/rejection.js";
@@ -65,17 +66,17 @@ import register from "./events/util/register.js";
 
 // EXPORTER
 export {
-  Client, Database, Language, Checker, REST, Survey, YouTube, Loader, // CLASSES
+  Client, Database, Checker, REST, Survey, YouTube, Loader, // CLASSES
 
   Command, Handler, Event, Structure, // STRUCTURES
 
   CacheManager, // HELPERS
 
   debug, client_error, voice, warn, // EVENTS > CLIENT EVENTS
-  dataAddRequest, dataAdded, dataDeleteRequest, dataDeleted, dataExistRequest, dataExisted, dataFetchRequest, dataFetched, dataHashed, dataHasRequest, dataPulled, dataPullRequest, dataPushed, dataPushRequest, dataSaved, dataSaveRequest, dataSubtracted, dataSubtractRequest, database_error, // EVENTS > DATABASE EVENTS
+  dataAddRequest, dataAdded, dataDeleteRequest, dataDeleted, dataExistsRequest, dataExisted, dataFetchRequest, dataFetched, dataHashed, dataHasRequest, dataPulled, dataPullRequest, dataPushed, dataPushRequest, dataSaved, dataSaveRequest, dataSubtracted, dataSubtractRequest, database_error, database_debug, // EVENTS > DATABASE EVENTS
   memberAdd, memberRemove, // EVENTS > GUILD EVENTS
   interaction, // EVENTS > HANDLERS
-  button, menu, // EVENTS > INTERACTIONS
+  button, string_menu, user_menu, // EVENTS > INTERACTIONS
   exception, rejection, // EVENTS > PROCESS EVENTS
   message, ready, register // EVENTS > UTIL EVENTS
 };

@@ -18,31 +18,31 @@ export default class extends Command {
           .addStringOption((o) => o.setName("unregistered-name").setDescription("Enter unregistered display name.").setMinLength(5).setMaxLength(30).setRequired(true))
       )
     );
+  };
 
-    this.execute = async function ({ interaction, member: m, channel, guild, options }) {
-      const db = this.databases.general;
+  async execute({ interaction, member: m, channel, guild, options }) {
+    const db = this.databases.general;
 
-      const command = options.getSubcommand(false);
+    const command = options.getSubcommand(false);
 
-      if (command === "set") {
-        const employee = options.getRole("employee-role").id;
-        const channel = options.getChannel("channel").id;
-        const unregistered = options.getRole("unregistered-role").id;
-        const bot = options.getRole("bot-role").id;
-        const member = options.getRole("member-role").id;
-        const unregistered_name = options.getString("unregistered-name");
+    if (command === "set") {
+      const employee = options.getRole("employee-role").id;
+      const channel = options.getChannel("channel").id;
+      const unregistered = options.getRole("unregistered-role").id;
+      const bot = options.getRole("bot-role").id;
+      const member = options.getRole("member-role").id;
+      const unregistered_name = options.getString("unregistered-name");
 
-        db.set(`Guild_${guild.id}.Settings.Register`, {
-          Employee: employee,
-          Channel: channel,
-          Unregistered: unregistered,
-          UnregisteredName: unregistered_name,
-          Bot: bot,
-          Member: member
-        });
+      db.set(`Guild_${guild.id}.Settings.Register`, {
+        Employee: employee,
+        Channel: channel,
+        Unregistered: unregistered,
+        UnregisteredName: unregistered_name,
+        Bot: bot,
+        Member: member
+      });
 
-        return interaction.reply({ content: `${this.config.Emoji.State.SUCCESS} Başarılı!`, ephemeral: true });
-      };
+      return interaction.reply({ content: `${this.config.Emoji.State.SUCCESS} Başarılı!`, ephemeral: true });
     };
   };
 };

@@ -27,73 +27,38 @@ export default class extends Command {
           .addStringOption((o) => o.setName("channel").setDescription("Provide channel.").addChoices(...choices).setRequired(true))
       )
     );
+  };
 
-    this.execute = async function ({ interaction, member, channel, guild, options }) {
-      const channelID = options.getString("channel");
-      const youtube = new YouTube(this.client, { YouTube: { channelID: channelID } });
+  async execute({ interaction, member, channel, guild, options }) {
+    const channelID = options.getString("channel");
+    const youtube = new YouTube(this.client, channelID);
 
-      const command = options.getSubcommand(false);
+    const command = options.getSubcommand(false);
 
-      if (command === "videos") {
-        await interaction.reply({ embeds: [new this.Embed({ description: `${this.config.Emoji.State.LOADING} Veriler yükleniyor...` })] });
+    if (command === "videos") {
+      await interaction.reply({ embeds: [new this.Embed({ description: `${this.config.Emoji.State.LOADING} Veriler yükleniyor...` })] });
 
-        const videos = await youtube.getLastVideos();
+      const videos = await youtube.getLastVideos();
 
-        const buttons = [];
-        const embeds = [];
+      const buttons = [];
+      const embeds = [];
 
-        await Promise.all(videos.map(async (video, _index) => {
-          const INDEX = (_index + 1);
+      await Promise.all(videos.map(async (video, _index) => {
+        const INDEX = (_index + 1);
 
-          await interaction.editReply({
-            embeds: [new this.Embed({
-              title: `${this.client.user.username} - YouTube | Sıralama Yükleniyor`,
-              description: `${this.config.Emoji.State.LOADING} ${video.TITLE}`,
-              fields: [
-                {
-                  name: `${this.config.Emoji.Other.INFINITE} Tamamlanan`,
-                  value: `- \`${INDEX}\``,
-                  inline: true
-                },
-                {
-                  name: `${this.config.Emoji.Other.ACTIVITY} Kalan`,
-                  value: `- \`${videos.length - INDEX}\``,
-                  inline: true
-                },
-                {
-                  name: `${this.config.Emoji.Other.CALENDAR} Tarih`,
-                  value: `- <t:${video.PUBLISHED_DATE}:R>`,
-                  inline: true
-                },
-                {
-                  name: `${this.config.Emoji.Other.INFINITE} Görüntülenme`,
-                  value: `- \`${video.VIEWS}\``,
-                  inline: true
-                },
-                {
-                  name: `${this.config.Emoji.Other.FIRE} Beğenme`,
-                  value: `- \`${video.LIKES.TOTAL}\``,
-                  inline: true
-                }
-              ],
-              image: {
-                url: video.THUMBNAIL
-              }
-            })
-            ]
-          });
-
-          embeds.push(new this.Embed({
-            title: `${this.client.user.username} - YouTube | Sıralama #${INDEX}`,
-            url: video.LINK,
-            description: `${video.TITLE}`,
-            image: {
-              url: video.THUMBNAIL
-            },
+        await interaction.editReply({
+          embeds: [new this.Embed({
+            title: `${this.client.user.username} - YouTube | Sıralama Yükleniyor`,
+            description: `${this.config.Emoji.State.LOADING} ${video.TITLE}`,
             fields: [
               {
-                name: `${this.config.Emoji.Other.ADMIN} Yükleyen`,
-                value: `- ${video.AUTHOR}`,
+                name: `${this.config.Emoji.Other.INFINITE} Tamamlanan`,
+                value: `- \`${INDEX}\``,
+                inline: true
+              },
+              {
+                name: `${this.config.Emoji.Other.ACTIVITY} Kalan`,
+                value: `- \`${videos.length - INDEX}\``,
                 inline: true
               },
               {
@@ -104,27 +69,28 @@ export default class extends Command {
               {
                 name: `${this.config.Emoji.Other.INFINITE} Görüntülenme`,
                 value: `- \`${video.VIEWS}\``,
-                inline: false
+                inline: true
               },
               {
                 name: `${this.config.Emoji.Other.FIRE} Beğenme`,
                 value: `- \`${video.LIKES.TOTAL}\``,
                 inline: true
               }
-            ]
-          }));
+            ],
+            image: {
+              url: video.THUMBNAIL
+            }
+          })
+          ]
+        });
 
-          return buttons.push(video.BUTTON);
-        }));
-
-        return await this.pagination(interaction, { embeds, buttons });
-      } else if (command === "last") {
-        const video = (await youtube.getLastVideos())[0];
-
-        const embed = new this.Embed({
-          title: `${this.client.user.username} - YouTube | Son Video`,
+        embeds.push(new this.Embed({
+          title: `${this.client.user.username} - YouTube | Sıralama #${INDEX}`,
           url: video.LINK,
           description: `${video.TITLE}`,
+          image: {
+            url: video.THUMBNAIL
+          },
           fields: [
             {
               name: `${this.config.Emoji.Other.ADMIN} Yükleyen`,
@@ -146,14 +112,48 @@ export default class extends Command {
               value: `- \`${video.LIKES.TOTAL}\``,
               inline: true
             }
-          ],
-          image: {
-            url: video.THUMBNAIL
-          }
-        });
+          ]
+        }));
 
-        return interaction.reply({ embeds: [embed] });
-      };
+        return buttons.push(video.BUTTON);
+      }));
+
+      return await this.pagination(interaction, { embeds, buttons });
+    } else if (command === "last") {
+      const video = (await youtube.getLastVideos())[0];
+
+      const embed = new this.Embed({
+        title: `${this.client.user.username} - YouTube | Son Video`,
+        url: video.LINK,
+        description: `${video.TITLE}`,
+        fields: [
+          {
+            name: `${this.config.Emoji.Other.ADMIN} Yükleyen`,
+            value: `- ${video.AUTHOR}`,
+            inline: true
+          },
+          {
+            name: `${this.config.Emoji.Other.CALENDAR} Tarih`,
+            value: `- <t:${video.PUBLISHED_DATE}:R>`,
+            inline: true
+          },
+          {
+            name: `${this.config.Emoji.Other.INFINITE} Görüntülenme`,
+            value: `- \`${video.VIEWS}\``,
+            inline: false
+          },
+          {
+            name: `${this.config.Emoji.Other.FIRE} Beğenme`,
+            value: `- \`${video.LIKES.TOTAL}\``,
+            inline: true
+          }
+        ],
+        image: {
+          url: video.THUMBNAIL
+        }
+      });
+
+      return interaction.reply({ embeds: [embed] });
     };
   };
 };

@@ -5,128 +5,145 @@ const { PATCH, POST, PUT, GET, DELETE } = api;
 
 import { GuildCache } from "./GuildCache.js";
 
-import chalk from "chalk";
+import ora from "ora";
 
 export class GuildManager {
-  constructor() {
-    this.get = async function (guildID) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID Must be a STRING!");
+  constructor(client) {
+    this.client = client;
+  };
 
-      const guild = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
+  cache = GuildCache;
 
-      return guild;
-    };
+  async handleCache(debug = false) {
+    if (!api.checker.check(debug).isBoolean()) api.checker.error("debug", "InvalidType", { expected: "Boolean", received: (typeof debug) });
 
-    this.map = async function () {
-      if (!Array.isArray(storage)) throw new TypeError("Storage Must be a ARRAY!");
+    let spinner = ora("[CacheManager(Guild)] Initiating caching.");
 
-      const guilds = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`);
+    if (debug) spinner.start();
 
-      return guilds;
-    };
+    await Promise.all(this.client.guilds.cache.map(async (guild) => {
+      const { id, name } = guild;
 
-    this.leave = async function (guildID) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID Must be a STRING!");
+      if (debug) {
+        spinner.text = `[CacheManager(Guild)] ${name} (${id}) was handled and cached.`;
 
-      const guild = await DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
+        spinner = spinner.render().start();
+      };
 
-      return guild;
-    };
+      return this.cache.set(id, guild);
+    })).then(() => debug ? spinner.succeed("[CacheManager(Guild)] Caching completed!") : null).catch((err) => debug ? spinner.fail(`[CacheManager(Guild)] An error occurred while caching. | ${err}`) : null);
 
-    this.create = async function (options = {
-      name: "New Guild",
-      region: null,
-      icon: null,
-      verificationLevel: 0,
-      defaultMessageNotifications: 0,
-      explicitContentFilter: 0,
-      roles: [],
-      channels: [],
-      afkChannelId: null,
-      afkTimeout: 0,
-      systemChannelId: null,
-      systemChannelFlags: 0
-    }) {
-      const guild = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`, {
-        json: {
-          name: options?.name,
-          region: options?.region,
-          icon: options?.icon,
-          verification_level: options?.verificationLevel,
-          default_message_notifications: options?.defaultMessageNotifications,
-          explicit_content_filter: options?.explicitContentFilter,
-          roles: options?.roles,
-          channels: options?.channels,
-          afk_channel_id: options?.afkChannelId,
-          afk_timeout: options?.afkTimeout,
-          system_channel_id: options?.systemChannelId,
-          system_channel_flags: options?.systemChannelFlags
-        }
-      });
+    return debug;
+  };
 
-      return guild;
-    };
+  get(guildID) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "Boolean", received: (typeof guildID) });
 
-    this.edit = async function (guildID, options = {
-      name: "Modified Guild",
-      region: null,
-      verificationLevel: 0,
-      defaultMessageNotifications: 0,
-      explicitContentFilter: 0,
-      afkChannelId: null,
-      afkTimeout: 0,
-      icon: null,
-      ownerId: null,
-      splash: null,
-      discoverySplash: null,
-      banner: null,
-      systemChannelId: null,
-      systemChannelFlags: 0,
-      rulesChannelId: 0,
-      publicUpdatesChannelId: null,
-      preferredLocale: null,
-      features: [],
-      description: null,
-      premiumProgressBarEnabled: false
-    }) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID Must be a STRING!");
+    const guild = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
 
-      const guild = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`, {
-        json: {
-          name: options?.name,
-          region: options?.region,
-          verification_level: options?.verificationLevel,
-          default_message_notifications: options?.defaultMessageNotifications,
-          explicit_content_filter: options?.explicitContentFilter,
-          afk_channel_id: options?.afkChannelId,
-          afk_timeout: options?.afkTimeout,
-          icon: options?.icon,
-          owner_id: options?.ownerId,
-          splash: options?.splash,
-          discovery_splash: options?.discoverySplash,
-          banner: options?.banner,
-          system_channel_id: options?.systemChannelId,
-          system_channel_flags: options?.systemChannelFlags,
-          rules_channel_id: options?.rulesChannelId,
-          public_updates_channel_id: options?.publicUpdatesChannelId,
-          preferred_locale: options?.preferredLocale,
-          features: options?.features,
-          description: options?.description,
-          premium_progress_bar_enabled: options?.premiumProgressBarEnabled
-        }
-      });
+    return guild;
+  };
 
-      return guild;
-    };
+  map() {
+    const guilds = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`);
 
-    this.cache = GuildCache;
+    return guilds;
+  };
 
-    this.handleCache = async function (client_, debug) {
-      return client_.guilds.cache.map(async (guild) => {
-        if (debug) console.log(chalk.grey(`[GuildCacheManager] ${guild.name} (${guild.id}) was handled and cached.`));
+  leave(guildID) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "Boolean", received: (typeof guildID) });
 
-        return this.cache.set(guild.id, guild);
-      });
-    };
+    const guild = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
+
+    return guild;
+  };
+
+  create(options = {
+    name: "New Guild",
+    region: null,
+    icon: null,
+    verificationLevel: 0,
+    defaultMessageNotifications: 0,
+    explicitContentFilter: 0,
+    roles: [],
+    channels: [],
+    afkChannelId: null,
+    afkTimeout: 0,
+    systemChannelId: null,
+    systemChannelFlags: 0
+  }) {
+    if (!api.checker.check(options).isObject()) api.checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
+
+    const guild = POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`, {
+      json: {
+        name: options?.name,
+        region: options?.region,
+        icon: options?.icon,
+        verification_level: options?.verificationLevel,
+        default_message_notifications: options?.defaultMessageNotifications,
+        explicit_content_filter: options?.explicitContentFilter,
+        roles: options?.roles,
+        channels: options?.channels,
+        afk_channel_id: options?.afkChannelId,
+        afk_timeout: options?.afkTimeout,
+        system_channel_id: options?.systemChannelId,
+        system_channel_flags: options?.systemChannelFlags
+      }
+    });
+
+    return guild;
+  };
+
+  edit(guildID, options = {
+    name: "Modified Guild",
+    region: null,
+    verificationLevel: 0,
+    defaultMessageNotifications: 0,
+    explicitContentFilter: 0,
+    afkChannelId: null,
+    afkTimeout: 0,
+    icon: null,
+    ownerId: null,
+    splash: null,
+    discoverySplash: null,
+    banner: null,
+    systemChannelId: null,
+    systemChannelFlags: 0,
+    rulesChannelId: 0,
+    publicUpdatesChannelId: null,
+    preferredLocale: null,
+    features: [],
+    description: null,
+    premiumProgressBarEnabled: false
+  }) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "Boolean", received: (typeof guildID) });
+    if (!api.checker.check(options).isObject()) api.checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
+
+    const guild = PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`, {
+      json: {
+        name: options?.name,
+        region: options?.region,
+        verification_level: options?.verificationLevel,
+        default_message_notifications: options?.defaultMessageNotifications,
+        explicit_content_filter: options?.explicitContentFilter,
+        afk_channel_id: options?.afkChannelId,
+        afk_timeout: options?.afkTimeout,
+        icon: options?.icon,
+        owner_id: options?.ownerId,
+        splash: options?.splash,
+        discovery_splash: options?.discoverySplash,
+        banner: options?.banner,
+        system_channel_id: options?.systemChannelId,
+        system_channel_flags: options?.systemChannelFlags,
+        rules_channel_id: options?.rulesChannelId,
+        public_updates_channel_id: options?.publicUpdatesChannelId,
+        preferred_locale: options?.preferredLocale,
+        features: options?.features,
+        description: options?.description,
+        premium_progress_bar_enabled: options?.premiumProgressBarEnabled
+      }
+    });
+
+    return guild;
   };
 };

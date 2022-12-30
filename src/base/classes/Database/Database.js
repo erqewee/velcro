@@ -2,162 +2,290 @@ import EventEmitter from "node:events";
 import chalk from "chalk";
 
 import { JsonDatabase, YamlDatabase } from "wio.db";
-import { unlinkSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
 
 import { Events } from "./Events.js";
 
+import { get } from "stack-trace";
+
 export class Database extends EventEmitter {
-  constructor(databaseOptions = { path: null, dir: null, name: "MyDatabase" }) {
+  constructor(type = "JSON", databaseOptions = { path: "../../", dir: "databases", name: "MyDatabase", debug: false }) {
     super();
 
-    const { path, dir, name } = databaseOptions;
+    const { path, dir, name, debug } = databaseOptions;
 
     this.path = path;
     this.dir = dir;
-    this.name = name;
+    this.name = name.split(".json")[0];
 
-    this.Events = Events;
+    this.debug = debug;
 
     const fullPath = `${this.path}/${this.dir}/${this.name}.json`;
+    const databasePath = String(fullPath).replaceAll("/", "\\");
 
-    this.database = new JsonDatabase({ databasePath: String(fullPath).replaceAll("/", "\\") });
+    this.database = new JsonDatabase({ databasePath });
+    if (String(type).toLowerCase() === "yaml") this.database = new YamlDatabase({ databasePath });
 
     this.setMaxListeners(0);
+  };
 
-    this.set = function (key = "ErqeweeDevelopment.Discord", value = "https://discord.gg/ZwhgJvXqm9") {
-      this.emit(this.Events.DataSaveRequest, key, value, name);
+  debug = false;
 
-      this.database.set(key, value);
-      const data = this.fetch(key);
+  Events = Events;
 
-      this.emit(this.Events.DataSaved, key, value, data, name);
+  set(key = "ErqeweeDevelopment.Discord", value = "https://discord.gg/ZwhgJvXqm9") {
+    this.emit(this.Events.DataSaveRequest, key, value, this.name);
 
-      return { data, del: this.del };
-    };
+    this.database.set(key, value);
+    const data = this.fetch(key);
 
-    this.del = function (key = "ErqeweeDevelopment") {
-      this.emit(this.Events.DataDeleteRequest, key, name);
+    this.emit(this.Events.DataSaved, key, value, data, this.name);
 
-      const data = this.fetch(key);
-      this.database.delete(key);
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
 
-      this.emit(this.Events.DataDeleted, key, data, name);
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "set", this.name);
 
-      return { data, set: this.set };
-    };
+    return { data, del: this.del };
+  };
 
-    this.add = function (key = "ErqeweeDevelopment.GitLab", value = "https://gitlab.com/erqewee") {
-      this.emit(this.Events.DataAddRequest, key, value, name);
+  del(key = "ErqeweeDevelopment", deleteAllOptions = { enabled: false }) {
+    const { enabled } = deleteAllOptions;
 
-      const oldData = this.fetch(key);
-      this.database.add(key, value);
-      const newData = this.fetch(key);
+    this.emit(this.Events.DataDeleteRequest, key, this.name);
 
-      this.emit(this.Events.DataAdded, key, value, oldData, newData, name);
+    const data = this.fetch(key);
+    enabled ? this.database.deleteAll() : this.database.delete(key);
 
-      return { oldData, newData, sub: this.sub };
-    };
+    this.emit(this.Events.DataDeleted, key, data, this.name);
 
-    this.sub = function (key = "ErqeweeDevelopment.Projects.COUNT", value = 1) {
-      this.emit(this.Events.DataSubtractRequest, key, value, name);
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
 
-      const oldData = this.fetch(key);
-      this.database.substr(key, value);
-      const newData = this.fetch(key);
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "del", this.name);
 
-      this.emit(this.Events.DataSubtracted, key, value, oldData, newData, name);
+    return { data, set: this.set };
+  };
 
-      return { oldData, newData, add: this.add };
-    };
+  add(key = "ErqeweeDevelopment.GitLab", value = "https://gitlab.com/erqewee") {
+    this.emit(this.Events.DataAddRequest, key, value, this.name);
 
-    this.push = function (key = "ErqeweeDevelopment.Projects.Active", value = "Wyvern") {
-      this.emit(this.Events.DataPushRequest, key, value, name);
+    const oldData = this.fetch(key);
+    this.database.add(key, value);
+    const newData = this.fetch(key);
 
-      const oldData = this.fetch(key);
-      this.database.push(key, value);
-      const newData = this.fetch(key);
+    this.emit(this.Events.DataAdded, key, value, oldData, newData, this.name);
 
-      this.emit(this.Events.DataPushed, key, value, oldData, newData, name);
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
 
-      return { oldData, newData, pull: this.pull };
-    };
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "add", this.name);
 
-    this.pull = function (key = "ErqeweeDevelopment.Projects.Active", callback = (data) => data === "Wyvern") {
-      this.emit(this.Events.DataPullRequest, key, callback, name);
+    return { oldData, newData, sub: this.sub };
+  };
 
-      const oldData = this.fetch(key);
-      this.database.pull(key, callback);
-      const newData = this.fetch(key);
+  sub(key = "ErqeweeDevelopment.Projects.COUNT", value = 1) {
+    this.emit(this.Events.DataSubtractRequest, key, value, this.name);
 
-      this.emit(this.Events.DataPulled, key, callback, oldData, newData, name);
+    const oldData = this.fetch(key);
+    this.database.substr(key, value);
+    const newData = this.fetch(key);
 
-      return { oldData, newData, push: this.push };
-    };
+    this.emit(this.Events.DataSubtracted, key, value, oldData, newData, this.name);
 
-    this.fetch = function (key = "ErqeweeDevelopment", fetchAllOptions = { enabled: false, limit: 3 }) {
-      const { limit, enabled } = fetchAllOptions;
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
 
-      this.emit(this.Events.DataFetchRequest, key, name);
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "sub", this.name);
 
-      let available = false;
+    return { oldData, newData, add: this.add };
+  };
 
-      if (key && enabled) console.log(chalk.bgYellowBright(" WARN "), chalk.grey(`You cannot use 'fetchAll' with a key. Please replace '${key}' with 'null' or disable 'fetchAll' mode.`));
+  push(key = "ErqeweeDevelopment.Projects.Active", value = "Wyvern") {
+    this.emit(this.Events.DataPushRequest, key, value, this.name);
 
-      const fetch = enabled ? this.database.fetchAll(limit) : this.database.fetch(key);
+    const oldData = this.fetch(key);
+    this.database.push(key, value);
+    const newData = this.fetch(key);
 
-      if (fetch) available = true;
+    this.emit(this.Events.DataPushed, key, value, oldData, newData, this.name);
 
-      this.emit(this.Events.DataFetched, key, fetch, available, name);
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
 
-      return fetch;
-    };
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "push", this.name);
 
-    this.has = function (key = "ErqeweeDevelopment") {
-      this.emit(this.Events.DataHasRequest, key, name);
+    return { oldData, newData, pull: this.pull };
+  };
 
-      let available = false;
+  pull(key = "ErqeweeDevelopment.Projects.Active", callback = (data) => data === "Wyvern") {
+    this.emit(this.Events.DataPullRequest, key, callback, this.name);
 
-      const has = this.database.has(key);
-      const data = has ? this.fetch(key) : null;
+    const oldData = this.fetch(key);
+    this.database.pull(key, callback);
+    const newData = this.fetch(key);
 
-      if (has) available = true;
+    this.emit(this.Events.DataPulled, key, callback, oldData, newData, this.name);
 
-      this.emit(this.Events.DataHashed, key, data, available, name);
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
 
-      return has;
-    };
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "pull", this.name);
 
-    this.exists = function (key = "ErqeweeDevelopment") {
-      this.emit(this.Events.DataExistsRequest, key, name);
+    return { oldData, newData, push: this.push };
+  };
 
-      let available = false;
+  fetch(key = "ErqeweeDevelopment", fetchAllOptions = { enabled: false, limit: 3 }) {
+    const { limit, enabled } = fetchAllOptions;
 
-      const exist = this.database.exists(key);
-      const data = exist ? this.fetch(key) : null;
+    this.emit(this.Events.DataFetchRequest, key, this.name);
 
-      if (exist) available = true;
+    let available = false;
 
-      this.emit(this.Events.DataExisted, key, data, available, name);
+    if (key && enabled) console.log(chalk.bgYellowBright(" WARN "), chalk.grey(`You cannot use 'fetchAll' with a key. Please replace '${key}' with 'null' or disable 'fetchAll' mode.`));
 
-      return exist;
-    };
+    const fetch = enabled ? this.database.fetchAll(limit) : this.database.fetch(key);
 
-    this.destroy = function () {
-      this.emit(this.Events.DatabaseDestroyRequest, name);
+    if (fetch) available = true;
 
-      try {
-        this.database.destroy();
+    this.emit(this.Events.DataFetched, key, fetch, available, this.name);
 
-        this.emit(this.Events.DatabaseDestroyed, name);
-      } catch (err) {
-        this.emit(this.Events.Error, err);
-      };
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
+
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "fetch", this.name);
+
+    return fetch;
+  };
+
+  has(key = "ErqeweeDevelopment") {
+    this.emit(this.Events.DataHasRequest, key, this.name);
+
+    let available = false;
+
+    const has = this.database.has(key);
+    const data = has ? this.fetch(key) : null;
+
+    if (has) available = true;
+
+    this.emit(this.Events.DataHashed, key, data, available, this.name);
+
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
+
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "has", this.name);
+
+    return has;
+  };
+
+  exists(key = "ErqeweeDevelopment") {
+    this.emit(this.Events.DataExistsRequest, key, this.name);
+
+    let available = false;
+
+    const exist = this.database.exists(key);
+    const data = exist ? this.fetch(key) : null;
+
+    if (exist) available = true;
+
+    this.emit(this.Events.DataExisted, key, data, available, this.name);
+
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
+
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "exists", this.name);
+
+    return exist;
+  };
+
+  filter(callback = (value, index = 0, array = []) => { }) {
+    this.emit(this.Events.DataFilterRequest, callback, this.name);
+
+    const filter = this.database.filter(callback);
+
+    this.emit(this.Events.DataFiltered, filter, callback, this.name);
+
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
+
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "filter", this.name);
+
+    return filter;
+  };
+
+  sort(callback = (a, b) => { }) {
+    this.emit(this.Events.DataSortRequest, callback, this.name);
+
+    const sort = this.database.sort(callback);
+
+    this.emit(this.Events.DataSorted, sort, callback, this.name);
+
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
+
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "sort", this.name);
+
+    return sort;
+  };
+
+  toJSON(limit) {
+    const json = this.database.toJSON(limit);
+
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
+
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "toJSON", this.name);
+
+    return json;
+  };
+
+  destroy() {
+    this.emit(this.Events.DatabaseDestroyRequest, this.name);
+
+    const stack = get()[1];
+    const path = stack.getFileName();
+    const line = stack.getLineNumber();
+    const column = stack.getColumnNumber();
+
+    if (this.debug) this.emit(this.Events.Debug, path, line, column, "destroy", this.name);
+
+    try {
+      this.database.destroy();
+
+      this.emit(this.Events.DatabaseDestroyed, this.name);
+    } catch (err) {
+      this.emit(this.Events.Error, err);
     };
   };
 
-  static YAML = YamlDatabase;
-  static JSON = JsonDatabase;
+  static YAML = "YAML";
+  static JSON = "JSON";
+
+  static YAMLDatabase = YamlDatabase;
+  static JSONDatabase = JsonDatabase;
 
   static Events = Events;
 };

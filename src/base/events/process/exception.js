@@ -1,13 +1,19 @@
 import { Event } from "../../structures/export.js";
 
+import ora from "ora";
+
+let spinner = ora("The \"Uncaught Exception\" event is being tracked.").start();
+
 export default class extends Event {
-     constructor() {
-          super({ enabled: true, modes: ["Process"] });
+  constructor() {
+    super({ enabled: true, modes: ["Process"] });
 
-          this.setName("uncaughtException");
+    this.setName("uncaughtException");
+  };
 
-          this.execute = function (data) {
-               return console.log(data);
-          };
-     };
+  async execute(data) {
+    spinner.warn(` The event "Uncaught Exception" has been received. | ${data}`);
+
+    spinner = spinner.render().start("The \"Uncaught Exception\" event is being tracked.");
+  };
 };

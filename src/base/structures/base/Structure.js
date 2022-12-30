@@ -18,56 +18,67 @@ import {
 } from "../../../api/export.js";
 
 import { Checker } from "../../classes/Checker.js";
+const checker = new Checker();
 
-import { CommandsCache, EventsCache, HandlersCache } from "../../classes/Loader/LoaderCache.js";
+import { CommandsCache, EventsCache, HandlersCache, LanguagesCache } from "../../classes/Loader/LoaderCache.js";
 
 import { Database } from "../../classes/Database/Database.js";
-const Economy = new Database({ path: "./src/base", dir: "databases", name: "Economy" });
-const Subscribe = new Database({ path: "./src/base", dir: "databases", name: "Subscribe" });
-const General = new Database({ path: "./src/base", dir: "databases", name: "General" });
+const Economy = new Database("JSON", { path: "./src/base", dir: "databases", name: "Economy" });
+const Subscribe = new Database("JSON", { path: "./src/base", dir: "databases", name: "Subscribe" });
+const General = new Database("JSON", { path: "./src/base", dir: "databases", name: "General" });
+
+import lodash from "lodash";
+const { get } = lodash;
 
 export class Structure {
-  constructor() {
-    this.client = global.client;
+  constructor() { };
 
-    this.Embed = EmbedBuilder;
-    this.Button = ButtonBuilder;
-    this.Row = ActionRowBuilder;
-    this.TextInput = TextInputBuilder;
-    this.Modal = ModalBuilder;
-    this.StringMenu = StringSelectMenuBuilder;
-    this.UserMenu = UserSelectMenuBuilder;
-    this.Attachment = AttachmentBuilder;
+  client = global.client;
 
-    this.SlashCommand = SlashCommandBuilder;
+  Embed = EmbedBuilder;
+  Button = ButtonBuilder;
+  Row = ActionRowBuilder;
+  TextInput = TextInputBuilder;
+  Modal = ModalBuilder;
+  StringMenu = StringSelectMenuBuilder;
+  UserMenu = UserSelectMenuBuilder;
+  Attachment = AttachmentBuilder;
 
-    this.TextInputStyle = TextInputStyle;
-    this.ChannelType = ChannelType;
-    this.ButtonStyle = ButtonStyle;
-    this.Permissions = PermissionsBitField.Flags;
+  SlashCommand = SlashCommandBuilder;
+  Command = this.SlashCommand;
 
-    this.guilds = new GuildManager();
-    this.emojis = new EmojiManager(this.client);
-    this.messages = new MessageManager();
-    this.connections = new VoiceManager(this.client);
-    this.users = new UserManager();
-    this.channels = new ChannelManager();
-    this.invites = new InviteManager();
-    this.members = new MemberManager();
-    this.roles = new RoleManager(this.client);
-    this.webhooks = new WebhookManager();
+  TextInputStyle = TextInputStyle;
+  ChannelType = ChannelType;
+  ButtonStyle = ButtonStyle;
+  Permissions = PermissionsBitField.Flags;
 
-    this.checker = new Checker();
+  guilds = new GuildManager(this.client); // Required Client, Because includes cache system.
+  emojis = new EmojiManager(this.client); // Required Client, Because includes cache system.
+  connections = new VoiceManager(this.client);
+  channels = new ChannelManager(this.client); // Required Client, Because includes cache system.
+  invites = new InviteManager(this.client); // Required Client, Because includes cache system.
+  members = new MemberManager(this.client); // Required Client, Because includes cache system.
+  roles = new RoleManager(this.client); // Required Client, Because uses DiscordJS methods.
+  webhooks = new WebhookManager();
+  users = new UserManager();
+  messages = new MessageManager();
 
-    this.loader = { commands: { cache: CommandsCache }, events: { cache: EventsCache }, handlers: { cache: HandlersCache } };
-    this.databases = { economy: Economy, subscribe: Subscribe, general: General };
-    this.config = { Data, Emoji };
-  };
+  checker = checker;
+
+  loader = { commands: CommandsCache, events: EventsCache, handlers: HandlersCache, languages: LanguagesCache };
+  databases = { economy: Economy, subscribe: Subscribe, general: General };
+  config = { Data, Emoji };
 
   time(unixCode = Date.now(), format = "R", options = { onlyNumberOutput: false }) {
+    if (!checker.check(unixCode).isNumber()) checker.error("unixCode", "InvalidType", { expected: "Number", received: (typeof unixCode) });
+    if (!checker.check(format).isString()) checker.error("format", "InvalidType", { expected: "String", received: (typeof format) });
+
+    if (!checker.check(options).isObject()) checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
+    if (!checker.check(options?.onlyNumberOutput).isNumber()) checker.error("options#onlyNumberOutput", "InvalidType", { expected: "Boolean", received: (typeof options?.onlyNumberOutput) });
+
     const { onlyNumberOutput: OnO } = options;
 
-    const formattedTime = Math.floor(unixCode / 1000);
+    let formattedTime = Math.floor(unixCode / 1000);
 
     let dateFormat = `<t:${formattedTime}:${format}>`;
 
@@ -84,16 +95,43 @@ export class Structure {
     return output;
   };
 
-  code(text = "console.log('Hello World!');", blockType = "js") {
+  code(text = "console.log('Hello World!');", blockType = "JS") {
+    if (!checker.check(text).isString()) checker.error("text", "InvalidType", { expected: "String", received: (typeof text) });
+    if (!checker.check(blockType).isString()) checker.error("blockType", "InvalidType", { expected: "String", received: (typeof blockType) });
+
     const content = String(text);
-    let type = String(blockType).trim();
+    let type = String(blockType).trim().toLowerCase();
 
     const output = `\`\`\`${type}\n${content}\`\`\``;
 
     return output;
   };
 
+  translate(fkey = null, locate = "en-US") {
+    if (!checker.check(fkey).isString()) checker.error("key", "InvalidType", { expected: "String", received: (typeof key) });
+    if (!checker.check(locate).isString()) checker.error("locate", "InvalidType", { expected: "String", received: (typeof locate) });
+
+    const key = String(fkey).trim();
+
+    let result = null;
+
+    if (this.loader.languages.has(locate)) {
+      const translations = this.loader.languages.get(locate).translations;
+
+      const object = new Object(translations);
+
+      result = String(get(object, key));
+    };
+
+    return result;
+  };
+
   async pagination(interaction = null, { embeds = [], buttons = [] }) {
+    if (!checker.check(interaction).isObject()) checker.error("interaction", "InvalidType", { expected: "Object", received: (typeof interaction) });
+
+    if (!checker.check(embeds).isArray()) checker.error("embeds", "InvalidType", { expected: "Array", received: (typeof embeds) });
+    if (!checker.check(buttons).isArray()) checker.error("buttons", "InvalidType", { expected: "Array", received: (typeof buttons) });
+
     const first = new this.Button({
       style: ButtonStyle.Secondary,
       emoji: { name: "Pagination_First", id: "1042498687533846528" },

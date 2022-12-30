@@ -7,119 +7,121 @@ import { ChannelManager as BaseChannelManager } from "../Channel/ChannelManager.
 const ChannelManager = new BaseChannelManager();
 
 export class MessageManager {
-  constructor() {
-    this.get = async function (channelID, messageID) {
-      if (typeof channelID !== "string") throw new TypeError("ChannelID must be a STRING!");
-      if (typeof messageID !== "string") throw new TypeError("MessageID must be a STRING!");
+  constructor() { };
 
-      const message = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`);
+  get(channelID, messageID) {
+    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
+    if (!api.checker.check(messageID).isString()) api.checker.error("messageId", "InvalidType", { expected: "String", received: (typeof messageID) });
 
-      return message;
-    };
+    const message = GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`);
 
-    this.edit = async function (channelID, messageID, options = {
-      content: null,
-      embeds: [],
-      flags: 0,
-      allowedMentions: {},
-      components: [],
-      files: [],
-      payloadJson: null,
-      attachments: []
-    }) {
-      if (typeof channelID !== "string") throw new TypeError("ChannelID must be a STRING!");
-      if (typeof messageID !== "string") throw new TypeError("MessageID must be a STRING!");
+    return message;
+  };
 
-      const message = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`, {
-        json: {
-          content: options?.content,
-          embeds: options?.embeds,
-          flags: options?.flags,
-          allowed_mentions: options?.allowedMentions,
-          components: options?.attachments,
-          files: options?.files,
-          payload_json: options?.payloadJson,
-          attachments: options?.attachments
-        }
-      });
+  edit(channelID, messageID, options = {
+    content: null,
+    embeds: [],
+    flags: 0,
+    allowedMentions: {},
+    components: [],
+    files: [],
+    payloadJson: null,
+    attachments: []
+  }) {
+    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
+    if (!api.checker.check(messageID).isString()) api.checker.error("messageId", "InvalidType", { expected: "String", received: (typeof messageID) });
 
-      return message;
-    };
+    const message = PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`, {
+      json: {
+        content: options?.content,
+        embeds: options?.embeds,
+        flags: options?.flags,
+        allowed_mentions: options?.allowedMentions,
+        components: options?.attachments,
+        files: options?.files,
+        payload_json: options?.payloadJson,
+        attachments: options?.attachments
+      }
+    });
 
-    this.create = async function (channelID, options = {
-      content: null,
-      embeds: [],
-      flags: 0,
-      allowedMentions: {},
-      components: [],
-      files: [],
-      payloadJson: null,
-      attachments: [],
-      nonce: null,
-      tts: false,
-      messageReference: {},
-      stickers: []
-    }) {
-      if (typeof channelID !== "string") throw new TypeError("ChannelID must be a STRING!");
+    return message;
+  };
 
-      const message = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
-        json: {
-          content: options?.content,
-          embeds: options?.embeds,
-          flags: options?.flags,
-          allowed_mentions: options?.allowedMentions,
-          components: options?.attachments,
-          files: options?.files,
-          payload_json: options?.payloadJson,
-          attachments: options?.attachments,
-          nonce: options?.nonce,
-          tts: options?.tts,
-          message_reference: options?.messageReference,
-          sticker_ids: options?.stickers
-        }
-      });
+  create(channelID, options = {
+    content: null,
+    embeds: [],
+    flags: 0,
+    allowedMentions: {},
+    components: [],
+    files: [],
+    payloadJson: null,
+    attachments: [],
+    nonce: null,
+    tts: false,
+    messageReference: {},
+    stickers: []
+  }) {
+    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
 
-      return message;
-    };
+    const message = POST(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
+      json: {
+        content: options?.content,
+        embeds: options?.embeds,
+        flags: options?.flags,
+        allowed_mentions: options?.allowedMentions,
+        components: options?.attachments,
+        files: options?.files,
+        payload_json: options?.payloadJson,
+        attachments: options?.attachments,
+        nonce: options?.nonce,
+        tts: options?.tts,
+        message_reference: options?.messageReference,
+        sticker_ids: options?.stickers
+      }
+    });
 
-    this.map = async function (channelID, options = {
-      limit: 1,
-      around: null,
-      before: null,
-      after: null
-    }) {
-      if (typeof channelID !== "string") throw new TypeError("ChannelID must be a STRING!");
+    return message;
+  };
 
-      const message = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
-        json: {
-          around: options?.around,
-          before: options?.before,
-          after: options?.after,
-          limit: options?.limit
-        }
-      });
+  map(channelID, options = {
+    limit: 1,
+    around: null,
+    before: null,
+    after: null
+  }) {
+    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
 
-      return message;
-    };
+    const message = GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
+      json: {
+        around: options?.around,
+        before: options?.before,
+        after: options?.after,
+        limit: options?.limit
+      }
+    });
 
-    this.pin = async function (message_) {
-      const channel = await ChannelManager.get(message_.channel.id);
-      const message = await this.get(channel.id, message_.id);
+    return message;
+  };
 
-      const pin = await PUT(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/pins/${message.id}`);
+  pin(message) {
+    if (!api.checker.check(message).isObject()) api.checker.error("message", "InvalidType", { expected: "Object", received: (typeof message) });
 
-      return pin;
-    };
+    const channel = ChannelManager.get(message.channel.id);
+    const fetched = this.get(channel.id, message.id);
 
-    this.unpin = async function (message_) {
-      if (typeof message !== "string") throw new TypeError("Message must be a STRING!");
+    const pin = PUT(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/pins/${fetched.id}`);
 
-      const channel = await ChannelManager.get(message_.channel.id);
-      const message = await this.get(channel.id, message_.id);
+    return pin;
+  };
 
-      const unpin = await DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/pins/${message.id}`);
+  unpin(message) {
+    if (!api.checker.check(message).isObject()) api.checker.error("message", "InvalidType", { expected: "Object", received: (typeof message) });
 
-      return unpin;
-    };
+    const channel = ChannelManager.get(message.channel.id);
+    const fetched = this.get(channel.id, message.id);
+
+    const unpin = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/pins/${fetched.id}`);
+
+    return unpin;
   };
 };

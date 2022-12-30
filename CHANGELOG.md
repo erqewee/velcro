@@ -1,24 +1,84 @@
 # Supported Versions
 
-| Version           | Supported           |
-| ----------------- | ------------------- |
-| Beta Release 1    | :white_check_mark:  |
-| Preview Release 5 | :white_check_mark:  |
-| Preview Release 4 | :white_check_mark:  |
-| Preview Release 3 | :x:                 |
-| Preview Release 2 | :x:                 |
-| Preview Release 1 | :x:                 |
+| Version           | Supported |
+| ----------------- | ----------|
+| Beta Release 2    | ✅ |
+| Beta Release 1    | ✅ |
+| Preview Release 5 | ❌ |
+| Preview Release 4 | ❌ |
+| Preview Release 3 | ❌ |
+| Preview Release 2 | ❌ |
+| Preview Release 1 | ❌ |
 
 # Known Issues
 
-- [NEW] We are investigating a bug where using the 'handleCache' function in the language system caused languages to be cached but returned "undefined" in the 'translate' function.
 - We are investigating the issue not detecting saved changes after using the <b><i>REBOOT</i></b> command.
 
 # Warnings
 
-- We strongly recommend that you upgrade your version to 'Preview Release 4' or 'Higher' for better performance.
+- We strongly recommend that you upgrade your version to 'Beta Release 1' or 'Beta Release 2' for better performance.
 
 # Patch Notes
+
+> Beta Release 2 (12/28/2022)
+
+- [NOTE] This release or higher will be released to Wyvern as soon as possible. (Before Beta Release 4 or lower release arrives)
+
+- <details>
+    <summary>News</summary>
+    <details>
+      <summary>Custom Errors</summary>
+      <i>We added new custom errors. (Structure)</i>
+    </details>
+  </details>
+- <details>
+    <summary>Changes</summary>
+  <details>
+    <summary>Database Updated</summary>
+    <i>New database functions added. (With events)</i>
+    <br>
+    <i>Added debug mode. (Shows where functions are used.)</i>
+  </details>
+  <details>
+    <summary>Structures Updated</summary>
+    <i>If you like using functions. We added <b>setExecute</b> function.</i>
+    <br>
+    <i>Command and Event structures functions are optimized.</i>
+  </details>
+  <details>
+    <summary>Language System Updated</summary>
+    <i>Language system loader has been moved to Loader.</i>
+    <br>
+    <i>Language system 'translate' function has been moved to 'Structure'</i>
+  </details>
+  <details>
+    <summary>Checker Updated</summary>
+    <i>Updated with new functions. (new cool view)</i>
+  </details>
+  <details>
+    <summary>API System Updated</summary>
+    <i>We removed promises from functions. (Not tested new functions)</i>
+    <br>
+    <i>Some improves.</i>
+  </details>
+  <details>
+    <summary>Loader Updated</summary>
+    <i>Some optimizes.</i>
+    <br>
+    <i>Added Language Loader</i>
+  </details>
+  </details>
+- <details>
+    <summary>Fixes</summary>
+    <details>
+      <summary>Language System</summary>
+      <i>We fixed language cache.</i>
+    </details>
+    <details>
+      <summary>Structures</summary>
+      <i>In <b>defineProperty</b> function, Minor bug fixed and applied optimizes.</i>
+    </details>
+  </details>
 
 > Beta Release 1 (12/23/2022)
 
@@ -66,7 +126,7 @@
     <br>
     <i>Removed <b>Command#support</b> option. Added <b>Command#mode</b> option.</i>
   </details>
-  
+
 > Preview Release 4 (12/12/2022)
 
 - <details>

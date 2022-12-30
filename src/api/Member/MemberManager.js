@@ -8,138 +8,154 @@ const GuildManager = new BaseGuildManager();
 
 import { MemberCache } from "./MemberCache.js";
 
-import chalk from "chalk";
+import ora from "ora";
 
 export class MemberManager {
-  constructor() {
-    this.get = async function (guildID, memberID) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
-      if (typeof memberID !== "string") throw new TypeError("MemberID must be a STRING!");
+  constructor(client) {
+    this.client = client;
+  };
 
-      const guild = await GuildManager.get(guildID);
-      const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+  cache = MemberCache;
 
-      return member;
-    };
+  async handleCache(debug = false) {
+    if (!api.checker.check(debug).isBoolean()) api.checker.error("debug", "InvalidType", { expected: "Boolean", received: (typeof debug) });
 
-    this.ban = {
-      add: async function (guildID, memberID, options = {
-        deleteMessageDays: 0,
-        deleteMessageSeconds: 604800
-      }) {
-        if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
-        if (typeof memberID !== "string") throw new TypeError("MemberID must be a STRING!");
+    let spinner = ora("[CacheManager(Member)] Initiating caching.");
 
-        const guild = await GuildManager.get(guildID);
-        const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+    if (debug) spinner.start();
 
-        const banned = await PUT(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`, {
-          json: {
-            delete_message_days: options?.deleteMessageDays,
-            delete_message_seconds: options?.deleteMessageSeconds
-          }
-        });
+    await Promise.all(this.client.guilds.cache.map(async (guild) => {
+      await Promise.all(guild.members.cache.map((member) => {
+        const { user, id } = member;
 
-        return banned;
-      },
+        if (debug) {
+          spinner.text = `[CacheManager(Member)] ${user.tag} (${id}) was handled and cached.`;
 
-      remove: async function (guildID, memberID) {
-        if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
-        if (typeof memberID !== "string") throw new TypeError("MemberID must be a STRING!");
+          spinner = spinner.render().start();
+        };
 
-        const guild = await GuildManager.get(guildID);
-        const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
+        return this.cache.set(id, member);
+      }));
+    })).then(() => debug ? spinner.succeed("[CacheManager(Member)] Caching completed!") : null).catch((err) => debug ? spinner.fail(`[CacheManager(Member)] An error occurred while caching. | ${err}`) : null);
 
-        const unbanned = await DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
+    return debug;
+  };
 
-        return unbanned;
-      },
+  get(guildID, memberID) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+    if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
 
-      get: async function (guildID, memberID) {
-        if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
-        if (typeof memberID !== "string") throw new TypeError("MemberID must be a STRING!");
+    const guild = GuildManager.get(guildID);
+    const member = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
 
-        const guild = await GuildManager.get(guildID);
-        const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
+    return member;
+  };
 
-        const get = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
-
-        return get;
-      },
-
-      map: async function (guildID) {
-        if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
-
-        const guild = await GuildManager.get(guildID);
-
-        const bans = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans`);
-
-        return bans;
-      },
-    };
-
-    this.edit = async function(guildID, memberID, options = {
-      nick: null,
-      roles: [],
-      mute: false,
-      deaf: false,
-      channelId: null,
-      communicationDisabledUntil: null
+  ban = {
+    add: function (guildID, memberID, options = {
+      deleteMessageDays: 14,
+      deleteMessageSeconds: 604800
     }) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
-      if (typeof memberID !== "string") throw new TypeError("MemberID must be a STRING!");
+      if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+      if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
 
-      const guild = await GuildManager.get(guildID);
-      const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+      const guild = GuildManager.get(guildID);
+      const member = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
 
-      const edited = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${member.id}`, {
-        nick: options?.nick,
-        roles: options?.roles,
-        mute: options?.mute,
-        deaf: options?.deaf,
-        channel_id: options?.channelId,
-        communication_disabled_until: options?.communicationDisabledUntil
+      const banned = PUT(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`, {
+        json: {
+          delete_message_days: options?.deleteMessageDays,
+          delete_message_seconds: options?.deleteMessageSeconds
+        }
       });
 
-      return edited;
-    };
+      return banned;
+    },
 
-    this.map = async function(guildID) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
+    remove: function (guildID, memberID) {
+      if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+      if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
 
-      const guild = await GuildManager.get(guildID);
+      const guild = GuildManager.get(guildID);
+      const member = GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
 
-      const members = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members`);
+      const unbanned = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
 
-      return members;
-    };
+      return unbanned;
+    },
 
-    this.search = async function(guildID, options = {
-      query: null,
-      limit: 1
-    }) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
+    get: function (guildID, memberID) {
+      if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+      if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
 
-      const guild = await GuildManager.get(guildID);
+      const guild = GuildManager.get(guildID);
+      const member = GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
 
-      const indexed = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/search`, {
-        query: options?.query,
-        limit: options?.limit
-      });
+      const get = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
 
-      return indexed;
-    };
+      return get;
+    },
 
-    this.cache = MemberCache;
+    map: function (guildID) {
+      if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
 
-    this.handleCache = async function (client_, debug) {
-      return client_.guilds.cache.map(async (guild) => {
-        return guild.members.cache.map((member) => {
-          if (debug) console.log(chalk.grey(`[MemberCacheManager] ${member.user.tag} (${member.id}) was handled and cached.`));
+      const guild = GuildManager.get(guildID);
 
-          return this.cache.set(member.id, member);
-        });
-      });
-    };
+      const bans = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans`);
+
+      return bans;
+    }
+  };
+
+  edit(guildID, memberID, options = {
+    nick: null,
+    roles: [],
+    mute: false,
+    deaf: false,
+    channelId: null,
+    communicationDisabledUntil: null
+  }) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+    if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
+
+    const guild = GuildManager.get(guildID);
+    const member = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+
+    const edited = PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${member.id}`, {
+      nick: options?.nick,
+      roles: options?.roles,
+      mute: options?.mute,
+      deaf: options?.deaf,
+      channel_id: options?.channelId,
+      communication_disabled_until: options?.communicationDisabledUntil
+    });
+
+    return edited;
+  };
+
+  map(guildID) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+
+    const guild = GuildManager.get(guildID);
+
+    const members = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members`);
+
+    return members;
+  };
+
+  search(guildID, options = {
+    query: null,
+    limit: 1
+  }) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+
+    const guild = GuildManager.get(guildID);
+
+    const indexed = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/search`, {
+      query: options?.query,
+      limit: options?.limit
+    });
+
+    return indexed;
   };
 };

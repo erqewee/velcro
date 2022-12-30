@@ -33,25 +33,25 @@ export default class extends Command {
           .addNumberOption((o) => o.setName("no").setDescription("Survey no.").setRequired(true))
       )
     );
+  };
 
-    this.execute = async function ({ interaction, member: m, channel: c, guild: g, options }) {
-      const db = this.databases.general;
+  async execute({ interaction, member: m, channel: c, guild: g, options }) {
+    const db = this.databases.general;
 
-      const survey = new Survey(this.client, interaction, this.config, { database: db });
+    const survey = new Survey(this.client, interaction, this.config, { database: db });
 
-      const command = options.getSubcommand(false);
+    const command = options.getSubcommand(false);
 
-      if (command === "create") {
-        const channel = this.channels.cache.get(options.getChannel("channel").id);
-        const description = options.getString("description");
-        const mention = options.getString("mention") ?? null;
+    if (command === "create") {
+      const channel = this.channels.cache.get(options.getChannel("channel").id);
+      const description = options.getString("description");
+      const mention = options.getString("mention") ?? null;
 
-        return survey.create(channel, { description, mention });
-      } else if(command === "delete") {
-        const surveyNo = String(options.getNumber("no"));
+      return survey.create(channel, { description, mention });
+    } else if(command === "delete") {
+      const surveyNo = String(options.getNumber("no"));
 
-        return survey.delete(surveyNo);
-      };
+      return survey.delete(surveyNo);
     };
   };
 };

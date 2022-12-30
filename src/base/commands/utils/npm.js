@@ -21,35 +21,35 @@ export default class extends Command {
     // THIS COMMAND NOT COMPLETED, DON'T TOUCH.
     // THIS COMMAND NOT COMPLETED, DON'T TOUCH.
     // THIS COMMAND NOT COMPLETED, DON'T TOUCH.
+  };
 
-    this.execute = async function ({ interaction, member, channel, guild, options }) {
-      const name = String(options.getString("name")).toLowerCase();
+  async execute({ interaction, member, channel, guild, options }) {
+    const name = String(options.getString("name")).toLowerCase();
 
-      await interaction.reply({ content: `${this.config.Emoji.State.LOADING} Searching...` });
+    await interaction.reply({ content: `${this.config.Emoji.State.LOADING} Searching...` });
 
-      const npm = await got(`https://registry.npmjs.org/${name}`, { method: "GET" }).json();
+    const npm = await got(`https://registry.npmjs.org/${name}`, { method: "GET" }).json();
 
-      const embeds = [];
+    const embeds = [];
 
-      await Promise.all(Object.keys(npm.time).map(async (key) => {
-        const dependencies = [];
+    await Promise.all(Object.keys(npm.time).map(async (key) => {
+      const dependencies = [];
 
-        if (key === "created" && key === "modified") return;
+      if (key === "created" && key === "modified") return;
 
-        const version = npm.versions[key];
+      const version = npm.versions[key];
 
-        await Promise.all(Object.keys(version.dependencies).map((depend) => dependencies.push(depend)));
+      await Promise.all(Object.keys(version.dependencies).map((depend) => dependencies.push(depend)));
 
 
-      }));
+    }));
 
-      const latest_version = npm["dist-tags"]?.latest;
-      const dev_version = npm["dist-tags"]?.dev;
+    const latest_version = npm["dist-tags"]?.latest;
+    const dev_version = npm["dist-tags"]?.dev;
 
-      embeds.push(new this.Embed({
-        title: `${this.client.user.username} - NPM Results | ${name}`,
-        description: `Use buttons to control.`
-      }));
-    };
+    embeds.push(new this.Embed({
+      title: `${this.client.user.username} - NPM Results | ${name}`,
+      description: `Use buttons to control.`
+    }));
   };
 };

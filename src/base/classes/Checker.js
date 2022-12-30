@@ -1,85 +1,143 @@
 import { PermissionsBitField } from "discord.js";
 const PermissionManager = new PermissionsBitField();
 
-import { UserManager as BaseUserManager } from "../../api/export.js";
-const UserManager = new BaseUserManager();
-
-import { GuildManager as BaseGuildManager } from "../../api/export.js";
-const GuildManager = new BaseGuildManager();
-
-import { ChannelManager as BaseChannelManager } from "../../api/export.js";
-const ChannelManager = new BaseChannelManager();
-
 import { Data } from "../../config/export.js";
 
+import { InvalidType } from "../structures/export.js";
+
+const upperFirst = (str = "string!") => str.replace(/^\w/, (c) => c.toUpperCase());
+
 export class Checker {
-  constructor() {
-    this.isUser = function (userID = null) {
-      let state = false;
+  constructor() { };
 
-      (async () => {
-        await UserManager.get(userID).then((user) => {
-          if (user?.id) state = true;
-        });
-      })();
+  error(argument, type = "InvalidType", options = { expected: "String", received: "Number" }) {
+    const { expected, received } = options;
 
-      return state;
-    };
+    if (!this.check(argument).isString()) throw new InvalidType("argument", { expected: "String", received: upperFirst(typeof argument) });
+    if (!this.check(type).isString()) throw new InvalidType("type", { expected: "String", received: upperFirst(typeof type) });
 
-    this.isBot = function (userID = null) {
-      let state = false;
+    let data = new InvalidType(argument, { expected, received: upperFirst(received) });
 
-      if (!this.isUser(userID)) return;
+    throw data;
+  };
 
-      (async () => {
-        await UserManager.get(userID).then((user) => {
-          if (user?.bot) state = true;
-        });
-      })();
+  check(dtc) {
+    let data = dtc;
 
-      return state;
-    };
+    return {
+      isBoolean: function (cio) {
+        if (cio) data = cio;
 
-    this.isGuild = function (guildID = null) {
-      let state = false;
+        const result = (typeof data === "boolean");
 
-      (async () => {
-        await GuildManager.get(guildID).then((guild) => {
-          if (guild?.id) state = true;
-        });
-      })();
+        return result;
+      },
 
-      return state;
-    };
+      isString: function (cio) {
+        if (cio) data = cio;
 
-    this.isOwner = function (userID = null) {
-      let state = false;
+        const result = (typeof data === "string");
 
-      if (!this.isUser(userID)) return;
+        return result;
+      },
 
-      if (Data.Bot.Developers.includes(userID)) state = true;
+      isObject: function (cio) {
+        if (cio) data = cio;
 
-      return state;
-    };
+        const result = (typeof data === "object");
 
-    this.isPermission = function (permData = "ManageMessages") {
-      let state = false;
+        return result;
+      },
 
-      if (PermissionManager.has(permData)) state = true;
+      isSymbol: function (cio) {
+        if (cio) data = cio;
 
-      return state;
-    };
+        const result = (typeof data === "symbol");
 
-    this.isChannel = function (channelID = null) {
-      let state = false;
+        return result;
+      },
 
-      (async () => {
-        await ChannelManager.get(channelID).then((channel) => {
-          if (channel?.id) state = true;
-        });
-      })();
+      isArray: function (cio) {
+        if (cio) data = cio;
 
-      return state;
+        const result = (Array.isArray(data));
+
+        return result;
+      },
+
+      isNumber: function (cio) {
+        if (cio) data = cio;
+
+        const result = (typeof data === "number");
+
+        return result;
+      },
+
+      isFunction: function (cio) {
+        if (cio) data = cio;
+
+        const result = (typeof data === "function");
+
+        return result;
+      },
+
+      isUndefined: function (cio) {
+        if (cio) data = cio;
+
+        const result = (typeof data === "undefined");
+
+        return result;
+      },
+
+      isNull: function (cio) {
+        if (cio) data = cio;
+
+        const result = (data === null);
+
+        return result;
+      },
+
+      isBigInt: function (cio) {
+        if (cio) data = cio;
+
+        const result = (typeof data === "bigint");
+
+        return result;
+      },
+
+      isAvailable: function (cio) {
+        if (cio) data = cio;
+
+        let result = false;
+
+        if (data) result = true;
+
+        return result;
+      },
+
+      isPermission: function (cio) {
+        if (cio) data = cio;
+
+        let state = false;
+
+        if (!this.isString(data)) throw new InvalidType("data", { expected: "String", received: (typeof data) });
+
+        if (PermissionManager.has(data)) state = true;
+
+        return state;
+      },
+
+      isOwner: function (cio) {
+        if (cio) data = cio;
+
+        let state = false;
+
+        if (!this.isString(data)) throw new InvalidType("data", { expected: "String", received: (typeof data) });
+
+        if (Data.Bot.Developers.includes(data)) state = true;
+
+        return state;
+      }
     };
   };
 };

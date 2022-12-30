@@ -1,2 +1,1 @@
-import { Client } from "./base/export.js";
-new Client().connect().uptime();
+(async () => new (await import("./base/export.js")).Client())();

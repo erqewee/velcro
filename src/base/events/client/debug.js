@@ -1,13 +1,13 @@
 import { Event } from "../../structures/export.js";
 
 export default class extends Event {
-     constructor() {
-          super({ enabled: true });
+  constructor() {
+    super({ enabled: true });
 
-          this.setName(this.Events.Discord.Debug);
+    this.setName(this.Events.Discord.Debug);
+  };
 
-          this.execute = function (data) {
-               return this.createWebhook({ url: this.config.Data.WEBHOOKURL }).send({ content: `${data}` });
-          };
-     };
+  execute(data) {
+    return this.createWebhook({ url: this.config.Data.WEBHOOKURL }).send({ content: `${data}` });
+  };
 };

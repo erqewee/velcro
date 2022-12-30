@@ -8,103 +8,118 @@ const GuildManager = new BaseGuildManager();
 
 import { EmojiCache } from "./EmojiCache.js";
 
-import chalk from "chalk";
+import ora from "ora";
 
 export class EmojiManager {
   constructor(client) {
-    this.get = async function (guildID, emojiID) {
-      if (typeof emojiID !== "string") throw new TypeError("EmojiID must be a STRING!");
-      if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
+    this.client = client;
+  };
 
-      const guild = await GuildManager.get(guildID);
-      const emoji = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis/${emojiID}`);
+  cache = EmojiCache;
 
-      return emoji;
-    };
+  async handleCache(debug = false) {
+    if (!api.checker.check(debug).isBoolean()) api.checker.error("debug", "InvalidType", { expected: "Boolean", received: (typeof debug) });
 
-    this.getById = async function (emojiID, callback) {
-      if (!callback) callback = function () { };
-      if (typeof emojiID !== "string") throw new TypeError("EmojiID must be a STRING!");
+    let spinner = ora("[CacheManager(Emoji)] Initiating caching.");
 
-      const emojis = client.emojis.cache.filter((emoji) => emoji.id === emojiID).map((e) => e);
+    if (debug) spinner.start();
 
-      return await callback(emojis);
-    };
+    await Promise.all(this.client.guilds.cache.map(async (guild) => {
+      await Promise.all(guild.emojis.cache.map((emoji) => {
+        const { id, name } = emoji;
 
-    this.getByName = async function (emojiName, callback) {
-      if (!callback) callback = function () { };
-      if (typeof emojiName !== "string") throw new TypeError("Emoji Name must be a STRING!");
+        if (debug) { 
+          spinner.text = `[CacheManager(Emoji)] ${name} (${id}) was handled and cached.`; 
 
-      const emojis = client.emojis.cache.filter((emoji) => emoji.name === emojiName).map((e) => e);
+          spinner = spinner.render().start();
+        };
 
-      return await callback(emojis);
-    };
+        return this.cache.set(id, emoji);
+      }));
+    })).then(() => debug ? spinner.succeed("[CacheManager(Emoji)] Caching completed!") : null).catch((err) => debug ? spinner.fail(`[CacheManager(Emoji)] An error occurred while caching. | ${err}`) : null);
 
-    this.create = async function (guildID, options = {
-      name: "new_emoji",
-      image: null,
-      roles: []
-    }) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
+    return debug;
+  };
 
-      const guild = await GuildManager.get(guildID);
-      const emoji = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`, {
-        json: {
-          name: options?.name,
-          image: options?.image,
-          roles: options?.roles
-        }
-      });
+  get(guildID, emojiID) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+    if (!api.checker.check(emojiID).isString()) api.checker.error("emojiId", "InvalidType", { expected: "String", received: (typeof emojiID) });
 
-      return emoji;
-    };
+    const guild = GuildManager.get(guildID);
+    const emoji = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis/${emojiID}`);
 
-    this.edit = async function (emojiID, options = {
-      name: "new_emoji",
-      roles: []
-    }) {
-      if (typeof emojiID !== "string") throw new TypeError("EmojiID must be a STRING!");
+    return emoji;
+  };
 
-      const fetchEmoji = await client.emojis.resolve(emojiID);
-      const emoji = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`, {
-        json: {
-          name: options?.name,
-          roles: options?.roles
-        }
-      });
+  getById(emojiID, callback) {
+    if (!api.checker.check(emojiID).isString()) api.checker.error("emojiId", "InvalidType", { expected: "String", received: (typeof emojiID) });
+    if (!api.checker.check(callback).isFunction()) callback = function () { };
 
-      return emoji;
-    };
+    const emojis = (client.emojis.cache.filter((emoji) => emoji.id === emojiID).map((e) => e));
 
-    this.delete = async function (emojiID) {
-      if (typeof emojiID !== "string") throw new TypeError("EmojiID must be a STRING!");
+    return callback(emojis);
+  };
 
-      const fetchEmoji = client.emojis.resolve(emojiID);
-      const emoji = await DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`);
+  getByName(emojiName, callback) {
+    if (!api.checker.check(emojiID).isString()) api.checker.error("emojiName", "InvalidType", { expected: "String", received: (typeof emojiName) });
+    if (!api.checker.check(callback).isFunction()) callback = function () { };
 
-      return emoji;
-    };
+    const emojis = (client.emojis.cache.filter((emoji) => emoji.name === emojiName).map((e) => e));
 
-    this.map = async function (guildID) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID must be a STRING!");
-      if (!Array.isArray(storage)) throw new TypeError("Storage Must be a ARRAY!");
+    return callback(emojis);
+  };
 
-      const guild = await GuildManager.get(guildID);
-      const emojis = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`);
+  create(guildID, options = {
+    name: "new_emoji",
+    image: null,
+    roles: []
+  }) {
+    if (!api.checker.isString(guildID)) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
 
-      return emojis;
-    };
+    const guild = GuildManager.get(guildID);
+    const emoji = POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`, {
+      json: {
+        name: options?.name,
+        image: options?.image,
+        roles: options?.roles
+      }
+    });
 
-    this.cache = EmojiCache;
+    return emoji;
+  };
 
-    this.handleCache = async function (client_, debug) {
-      return client_.guilds.cache.map(async (guild) => {
-        return guild.emojis.cache.map((emoji) => {
-          if (debug) console.log(chalk.grey(`[EmojiCacheManager] ${emoji.name} (${emoji.id}) was handled and cached.`));
+  edit(emojiID, options = {
+    name: "new_emoji",
+    roles: []
+  }) {
+    if (!api.checker.check(emojiID).isString()) api.checker.error("emojiId", "InvalidType", { expected: "String", received: (typeof emojiID) });
 
-          return this.cache.set(emoji.id, emoji);
-        });
-      });
-    };
+    const fetchEmoji = client.emojis.resolve(emojiID);
+    const emoji = PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`, {
+      json: {
+        name: options?.name,
+        roles: options?.roles
+      }
+    });
+
+    return emoji;
+  };
+
+  delete(emojiID) {
+    if (!api.checker.check(emojiID).isString()) api.checker.error("emojiId", "InvalidType", { expected: "String", received: (typeof emojiID) });
+
+    const fetchEmoji = client.emojis.resolve(emojiID);
+    const emoji = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`);
+
+    return emoji;
+  };
+
+  map(guildID) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+
+    const guild = GuildManager.get(guildID);
+    const emojis = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`);
+
+    return emojis;
   };
 };

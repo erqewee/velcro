@@ -8,136 +8,152 @@ const GuildManager = new BaseGuildManager();
 
 import { ChannelCache } from "./ChannelCache.js";
 
-import chalk from "chalk";
+import ora from "ora";
 
 export class ChannelManager {
-  constructor() {
-    this.get = async function (channelID) {
-      if (typeof channelID !== "string") throw new TypeError("ChannelID Must be a STRING!");
+  constructor(client) {
+    this.client = client;
+  };
 
-      const channel = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}`);
+  cache = ChannelCache;
 
-      return channel;
-    };
+  async handleCache(debug = false) {
+    if (!api.checker.check(debug).isBoolean()) api.checker.error("debug", "InvalidType", { expected: "Boolean", received: (typeof debug) });
 
-    this.map = async function (guildID, storage, callback) {
-      if (!storage) storage = [];
-      if (!callback) callback = function () { };
-      if (!guildID) guildID = "";
-      if (typeof guildID !== "string") throw new TypeError("GuildID Must be a STRING!");
+    let spinner = ora("[CacheManager(Channel)] Initiating caching.");
 
-      const channels = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels`);
+    if (debug) spinner.start();
 
-      return channels;
-    };
+    await Promise.all(client.channels.cache.map((channel) => {
+      const { name, id } = channel;
 
-    this.create = async function (guildID, options = {
-      name: "new-channel",
-      type: 0,
-      topic: null,
-      bitrate: 8000,
-      userLimit: 0,
-      rateLimit: 0,
-      position: 0,
-      permissions: [],
-      parent: null,
-      nsfw: false,
-      rtcRegion: null,
-      videoQualityMode: 0,
-      defaultAutoArchiveDuration: 0,
-      defaultReactionEmoji: null,
-      availableTags: [],
-      defaultSortOrder: 0
-    }) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID Must be a STRING!");
+      if (debug) {
+        spinner.text = `[CacheManager(Channel)] ${name} (${id}) was handled and cached.`;
 
-      const channel = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels`, {
-        json: {
-          name: options?.name,
-          type: options?.type,
-          topic: options?.topic,
-          bitrate: options?.bitrate,
-          user_limit: options?.userLimit,
-          rate_limit_per_user: options?.rateLimit,
-          position: options?.position,
-          permission_overwrites: options?.permissions,
-          parent_id: options?.parent,
-          nsfw: options?.nsfw,
-          rtc_region: options?.rtcRegion,
-          video_quality_mode: options?.videoQualityMode,
-          default_auto_archive_duration: options?.defaultAutoArchiveDuration,
-          default_reaction_emoji: options?.defaultReactionEmoji,
-          available_tags: options?.availableTags,
-          default_sort_order: options?.defaultSortOrder
-        }
-      });
+        spinner = spinner.render().start();
+      };
 
-      return channel;
-    };
+      return this.cache.set(id, channel);
+    })).then(() => debug ? spinner.succeed("[CacheManager(Channel)] Caching completed!") : null).catch((err) => debug ? spinner.fail(`[CacheManager(Channel)] An error occurred while caching. | ${err}`) : null);
 
-    this.delete = async function (guildID, channelID) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID Must be a STRING!");
-      if (typeof channelID !== "string") throw new TypeError("ChannelID Must be a STRING!");
+    return debug;
+  };
 
-      const channel = await DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels/${channelID}`);
+  get(channelID) {
+    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
 
-      return channel;
-    };
+    const channel = GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}`);
 
-    this.edit = async function (channelID, options = {
-      name: "modified-channel",
-      type: 0,
-      topic: null,
-      bitrate: 8000,
-      userLimit: 0,
-      rateLimit: 0,
-      position: 0,
-      permissions: [],
-      parent: null,
-      nsfw: false,
-      rtcRegion: null,
-      videoQualityMode: 0,
-      defaultAutoArchiveDuration: 0,
-      defaultReactionEmoji: null,
-      availableTags: [],
-      defaultSortOrder: 0
-    }) {
-      if (typeof channelID !== "string") throw new TypeError("ChannelID Must be a STRING!");
-      const getChannel = await this.get(channelID);
-      const guild = await GuildManager.get(getChannel.guild_id);
+    return channel;
+  };
 
-      const channel = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/channels/${channelID}`, {
-        json: {
-          name: options?.name,
-          type: options?.type,
-          topic: options?.topic,
-          bitrate: options?.bitrate,
-          user_limit: options?.userLimit,
-          rate_limit_per_user: options?.rateLimit,
-          position: options?.position,
-          permission_overwrites: options?.permissions,
-          parent_id: options?.parent,
-          nsfw: options?.nsfw,
-          rtc_region: options?.rtcRegion,
-          video_quality_mode: options?.videoQualityMode,
-          default_auto_archive_duration: options?.defaultAutoArchiveDuration,
-          default_reaction_emoji: options?.defaultReactionEmoji,
-          available_tags: options?.availableTags,
-          default_sort_order: options?.defaultSortOrder
-        }
-      });
+  map(guildID, storage, callback) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+    if (!api.checker.check(storage).isArray()) storage = [];
+    if (!api.checker.check(callback).isFunction()) callback = function () {};
 
-      return channel;
-    };
+    const channels = GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels`);
 
-    this.cache = ChannelCache;
+    return channels;
+  };
 
-    this.handleCache = async function (client_, debug) {
-      return client_.channels.cache.map((channel) => {
-        if (debug) console.log(chalk.grey(`[ChannelCacheManager] ${channel.name} (${channel.id}) was handled and cached.`));
-        
-        return this.cache.set(channel.id, channel);
-      });
-    };
+  create(guildID, options = {
+    name: "new-channel",
+    type: 0,
+    topic: null,
+    bitrate: 8000,
+    userLimit: 0,
+    rateLimit: 0,
+    position: 0,
+    permissions: [],
+    parent: null,
+    nsfw: false,
+    rtcRegion: null,
+    videoQualityMode: 0,
+    defaultAutoArchiveDuration: 0,
+    defaultReactionEmoji: null,
+    availableTags: [],
+    defaultSortOrder: 0
+  }) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+
+    const channel = POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels`, {
+      json: {
+        name: options?.name,
+        type: options?.type,
+        topic: options?.topic,
+        bitrate: options?.bitrate,
+        user_limit: options?.userLimit,
+        rate_limit_per_user: options?.rateLimit,
+        position: options?.position,
+        permission_overwrites: options?.permissions,
+        parent_id: options?.parent,
+        nsfw: options?.nsfw,
+        rtc_region: options?.rtcRegion,
+        video_quality_mode: options?.videoQualityMode,
+        default_auto_archive_duration: options?.defaultAutoArchiveDuration,
+        default_reaction_emoji: options?.defaultReactionEmoji,
+        available_tags: options?.availableTags,
+        default_sort_order: options?.defaultSortOrder
+      }
+    });
+
+    return channel;
+  };
+
+  delete(guildID, channelID) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
+
+    const channel = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels/${channelID}`);
+
+    return channel;
+  };
+
+  edit(channelID, options = {
+    name: "modified-channel",
+    type: 0,
+    topic: null,
+    bitrate: 8000,
+    userLimit: 0,
+    rateLimit: 0,
+    position: 0,
+    permissions: [],
+    parent: null,
+    nsfw: false,
+    rtcRegion: null,
+    videoQualityMode: 0,
+    defaultAutoArchiveDuration: 0,
+    defaultReactionEmoji: null,
+    availableTags: [],
+    defaultSortOrder: 0
+  }) {
+    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
+    
+    const getChannel = this.get(channelID);
+    const guild = GuildManager.get(getChannel.guild_id);
+
+    const channel = PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/channels/${channelID}`, {
+      json: {
+        name: options?.name,
+        type: options?.type,
+        topic: options?.topic,
+        bitrate: options?.bitrate,
+        user_limit: options?.userLimit,
+        rate_limit_per_user: options?.rateLimit,
+        position: options?.position,
+        permission_overwrites: options?.permissions,
+        parent_id: options?.parent,
+        nsfw: options?.nsfw,
+        rtc_region: options?.rtcRegion,
+        video_quality_mode: options?.videoQualityMode,
+        default_auto_archive_duration: options?.defaultAutoArchiveDuration,
+        default_reaction_emoji: options?.defaultReactionEmoji,
+        available_tags: options?.availableTags,
+        default_sort_order: options?.defaultSortOrder
+      }
+    });
+
+    return channel;
   };
 };

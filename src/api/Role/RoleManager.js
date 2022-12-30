@@ -3,14 +3,16 @@ const GuildManager = new BaseGuildManager();
 
 export class RoleManager {
   constructor(client) {
-    this.get = async function (guildID, roleID) {
-      if (typeof guildID !== "string") throw new TypeError("GuildID Must be a STRING!");
-      if (typeof roleID !== "string") throw new TypeError("RoleID Must be a STRING!");
+    this.client = client;
+  };
 
-      const guild = await GuildManager.get(guildID);
-      const role = client.guilds.resolve(guild.id).roles.resolve(roleID);
+  get(guildID, roleID) {
+    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+    if (!api.checker.check(guildID).isString()) api.checker.error("roleId", "InvalidType", { expected: "String", received: (typeof roleID) });
 
-      return role;
-    };
+    const guild = GuildManager.get(guildID);
+    const role = client.guilds.resolve(guild.id).roles.resolve(roleID);
+
+    return role;
   };
 };

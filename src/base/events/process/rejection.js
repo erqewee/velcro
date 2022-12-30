@@ -1,13 +1,13 @@
 import { Event } from "../../structures/export.js";
 
 export default class extends Event {
-     constructor() {
-          super({ enabled: true, modes: ["Process"] });
+  constructor() {
+    super({ enabled: true, modes: ["Process"] });
 
-          this.setName("unhandledRejection");
+    this.setName("uncaughtRejection");
+  };
 
-          this.execute = function (data) {
-               return console.log(data);
-          };
-     };
+  async execute(data) {
+    return console.log(data);
+  };
 };

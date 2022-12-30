@@ -4,13 +4,13 @@ const api = new API();
 const { PATCH, POST, PUT, GET, DELETE } = api;
 
 export class UserManager {
-  constructor() {
-    this.get = async function (userID) {
-      if (userID && typeof userID !== "string") throw new TypeError("UserID must be a STRING!");
+  constructor() { };
 
-      const user = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${userID}`);
+  get(userID) {
+    if (!api.checker.check(userID).isString()) api.checker.error("userId", "InvalidType", { expected: "String", received: (typeof userID) });
+    
+    const user = GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${userID}`);
 
-      return user;
-    };
+    return user;
   };
 };

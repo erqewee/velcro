@@ -1,6 +1,4 @@
 export const Events = {
-  DatabaseCreated: "databaseCreated", // This event is removing fully in future versions.
-
   DatabaseDestroyRequest: "databaseDestroyRequest",
   DatabaseDestroyed: "databaseDestroyed",
 
@@ -31,5 +29,12 @@ export const Events = {
   DataExistsRequest: "dataExistsRequest",
   DataExisted: "dataExisted",
 
+  DataFilterRequest: "dataFilterRequest",
+  DataFiltered: "dataFiltered",
+  
+  DataSortRequest: "dataSortRequest",
+  DataSorted: "dataSorted",
+  
+  Debug: "debug",
   Error: "error"
 };
