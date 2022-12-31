@@ -14,7 +14,7 @@ export class Checker {
     const { expected, received } = options;
 
     if (!this.check(argument).isString()) throw new InvalidType("argument", { expected: "String", received: upperFirst(typeof argument) });
-    if (!this.check(ftype).isString()) throw new InvalidType("type", { expected: "String", received: upperFirst(typeof type) });
+    if (!this.check(ftype).isString()) throw new InvalidType("type", { expected: "String", received: upperFirst(typeof ftype) });
 
     const type = ftype.toLowerCase();
 
