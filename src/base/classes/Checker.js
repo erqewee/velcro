@@ -3,20 +3,27 @@ const PermissionManager = new PermissionsBitField();
 
 import { Data } from "../../config/export.js";
 
-import { InvalidType } from "../structures/export.js";
+import { InvalidType, InvalidChannel, InvalidGuild, InvalidRole } from "../structures/base/error/Error.js";
 
 const upperFirst = (str = "string!") => str.replace(/^\w/, (c) => c.toUpperCase());
 
 export class Checker {
   constructor() { };
 
-  error(argument, type = "InvalidType", options = { expected: "String", received: "Number" }) {
+  error(argument, ftype = "InvalidType", options = { expected: "String", received: "Number" }) {
     const { expected, received } = options;
 
     if (!this.check(argument).isString()) throw new InvalidType("argument", { expected: "String", received: upperFirst(typeof argument) });
-    if (!this.check(type).isString()) throw new InvalidType("type", { expected: "String", received: upperFirst(typeof type) });
+    if (!this.check(ftype).isString()) throw new InvalidType("type", { expected: "String", received: upperFirst(typeof type) });
+
+    const type = ftype.toLowerCase();
 
     let data = new InvalidType(argument, { expected, received: upperFirst(received) });
+
+    if (type === "invalidrole") data = new InvalidRole(argument);
+    else if (type === "invalidchannel") data = new InvalidChannel(argument);
+    else if (type === "invalidguild") data = new InvalidGuild(argument);
+    else data = data;
 
     throw data;
   };

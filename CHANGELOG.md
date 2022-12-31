@@ -2,7 +2,8 @@
 
 | Version           | Supported |
 | ----------------- | ----------|
-| Beta Release 2    | ✅ |
+| Beta Release 3    | ✅ |
+| Beta Release 2    | ⚠️ |
 | Beta Release 1    | ✅ |
 | Preview Release 5 | ❌ |
 | Preview Release 4 | ❌ |
@@ -10,15 +11,26 @@
 | Preview Release 2 | ❌ |
 | Preview Release 1 | ❌ |
 
+✅ Supported
+<br>
+⚠️ Deprecated
+<br>
+❌ Not Supported
+
 # Known Issues
 
 - We are investigating the issue not detecting saved changes after using the <b><i>REBOOT</i></b> command.
 
 # Warnings
 
-- We strongly recommend that you upgrade your version to 'Beta Release 1' or 'Beta Release 2' for better performance.
+- Critical bugs have been fixed. If you are using 'Beta Release 2', upgrade to 'Beta Release 3' immediately.
+- We strongly recommend that you upgrade your version to 'Beta Release 1' or 'Beta Release 3' for better performance.
 
 # Patch Notes
+
+> Beta Release 3 (12/31/2022)
+
+- [NOTE] This update includes only bug fix.
 
 > Beta Release 2 (12/28/2022)
 

@@ -3,7 +3,7 @@ const api = new API();
 
 const { PATCH, POST, PUT, GET, DELETE } = api;
 
-import { GuildCache } from "./GuildCache.js";
+import { GuildsCache as GuildCache } from "../Caches.js";
 
 import ora from "ora";
 
@@ -36,16 +36,16 @@ export class GuildManager {
     return debug;
   };
 
-  get(guildID) {
+  async get(guildID) {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "Boolean", received: (typeof guildID) });
 
-    const guild = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
+    const guild = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
 
     return guild;
   };
 
-  map() {
-    const guilds = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`);
+  async map() {
+    const guilds = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`);
 
     return guilds;
   };
@@ -58,7 +58,7 @@ export class GuildManager {
     return guild;
   };
 
-  create(options = {
+  async create(options = {
     name: "New Guild",
     region: null,
     icon: null,
@@ -74,7 +74,7 @@ export class GuildManager {
   }) {
     if (!api.checker.check(options).isObject()) api.checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
 
-    const guild = POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`, {
+    const guild = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`, {
       json: {
         name: options?.name,
         region: options?.region,
@@ -94,7 +94,7 @@ export class GuildManager {
     return guild;
   };
 
-  edit(guildID, options = {
+  async edit(guildID, options = {
     name: "Modified Guild",
     region: null,
     verificationLevel: 0,
@@ -119,7 +119,7 @@ export class GuildManager {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "Boolean", received: (typeof guildID) });
     if (!api.checker.check(options).isObject()) api.checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
 
-    const guild = PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`, {
+    const guild = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`, {
       json: {
         name: options?.name,
         region: options?.region,

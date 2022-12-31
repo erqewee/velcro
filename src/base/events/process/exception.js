@@ -6,7 +6,7 @@ let spinner = ora("The \"Uncaught Exception\" event is being tracked.").start();
 
 export default class extends Event {
   constructor() {
-    super({ enabled: true, modes: ["Process"] });
+    super({ enabled: false, modes: ["Process"] });
 
     this.setName("uncaughtException");
   };

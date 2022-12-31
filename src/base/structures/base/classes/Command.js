@@ -21,8 +21,6 @@ export class Command extends CommandStructure {
 
     const object = new Object(commandData);
 
-    if (!object.hasOwnProperty("data")) return;
-
     this["data"] = object;
 
     return object;

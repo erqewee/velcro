@@ -17,7 +17,7 @@ import {
   RoleManager, WebhookManager
 } from "../../../api/export.js";
 
-import { Checker } from "../../classes/Checker.js";
+import { Checker } from "../../export.js";
 const checker = new Checker();
 
 import { CommandsCache, EventsCache, HandlersCache, LanguagesCache } from "../../classes/Loader/LoaderCache.js";

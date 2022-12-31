@@ -9,7 +9,7 @@ const GuildManager = new BaseGuildManager();
 import { ChannelManager as BaseChannelManager } from "../Channel/ChannelManager.js";
 const ChannelManager = new BaseChannelManager();
 
-import { InviteCache } from "./InviteCache.js";
+import { InvitesCache as InviteCache } from "../Caches.js";
 
 import ora from "ora";
 
@@ -44,17 +44,17 @@ export class InviteManager {
     return debug;
   };
 
-  get(guildID, inviteCode) {
+  async get(guildID, inviteCode) {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
     if (!api.checker.check(inviteCode).isString()) api.checker.error("inviteCode", "InvalidType", { expected: "String", received: (typeof inviteCode) });
 
-    const guild = GuildManager.get(guildID);
-    const invite = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/invites/${inviteCode}`);
+    const guild = await GuildManager.get(guildID);
+    const invite = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/invites/${inviteCode}`);
 
     return invite;
   };
 
-  create(channelID, options = {
+  async create(channelID, options = {
     maxAge: 86400,
     maxUses: 0,
     temporary: false,
@@ -66,9 +66,9 @@ export class InviteManager {
     if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
     if (!api.checker.check(options).isObject()) api.checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
 
-    const channel = ChannelManager.get(channelID);
+    const channel = await ChannelManager.get(channelID);
 
-    const invite = POST(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/channels/${channel.id}/invites`, {
+    const invite = await POST(`${Manager.config.BASE_URL}/${Manager.config.VERSION}/channels/${channel.id}/invites`, {
       json: {
         max_age: options?.maxAge,
         max_uses: options?.maxUses,
@@ -83,23 +83,23 @@ export class InviteManager {
     return invite;
   };
 
-  delete(channelID, inviteCode) {
+  async delete(channelID, inviteCode) {
     if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
     if (!api.checker.check(inviteCode).isString()) api.checker.error("inviteCode", "InvalidType", { expected: "String", received: (typeof inviteCode) });
 
-    const channel = ChannelManager.get(channelID);
+    const channel = await ChannelManager.get(channelID);
     const invite = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/invites/${inviteCode}`);
 
     return invite;
   };
 
-  map(guildID, storage) {
+  async map(guildID, storage) {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
     if (!api.checker.check(storage).isArray()) storage = [];
 
-    const guild = GuildManager.get(guildID);
+    const guild = await GuildManager.get(guildID);
 
-    const invites = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/invites`);
+    const invites = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/invites`);
 
     invites.map((invite) => storage.push(invite.code));
 

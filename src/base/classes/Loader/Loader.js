@@ -178,15 +178,12 @@ export class Loader extends EventEmitter {
       await Promise.all(commands.filter((file) => this.#isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
         const commandBase = new (await import(`../../commands/${dir}/${file}`)).default;
 
-        if (commandBase?.data) {
+        if (commandBase?.data && commandBase?.enabled) {
           this.commands.set(commandBase.data.name, commandBase);
 
           const command = this.commands.get(commandBase.data.name);
 
-          if (command.enabled && !command.support) {
-            this.commands.set(command.data.name, command);
-            this.storage.push(command.data);
-          };
+          this.storage.push(command.data);
 
           loadedCommands.push(command.data);
 
@@ -264,8 +261,8 @@ export class Loader extends EventEmitter {
     const spinner = ora("Connecting to Gateway...").start();
 
     this.Language();
-    this.Handler();
     this.Event();
+    this.Handler();
     this.Command();
 
     this.client.login(Data.Bot.TOKEN).then(() => {

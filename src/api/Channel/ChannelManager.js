@@ -6,7 +6,7 @@ const { PATCH, POST, PUT, GET, DELETE } = api;
 import { GuildManager as BaseGuildManager } from "../Guild/GuildManager.js";
 const GuildManager = new BaseGuildManager();
 
-import { ChannelCache } from "./ChannelCache.js";
+import { ChannelsCache as ChannelCache } from "../Caches.js";
 
 import ora from "ora";
 
@@ -39,25 +39,23 @@ export class ChannelManager {
     return debug;
   };
 
-  get(channelID) {
+  async get(channelID) {
     if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
 
-    const channel = GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}`);
+    const channel = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}`);
 
     return channel;
   };
 
-  map(guildID, storage, callback) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
-    if (!api.checker.check(storage).isArray()) storage = [];
-    if (!api.checker.check(callback).isFunction()) callback = function () {};
+  async map(callback) {
+    if (!api.checker.check(callback).isFunction()) callback = function () { };
 
-    const channels = GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels`);
+    const channels = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels`);
 
     return channels;
   };
 
-  create(guildID, options = {
+  async create(guildID, options = {
     name: "new-channel",
     type: 0,
     topic: null,
@@ -77,7 +75,7 @@ export class ChannelManager {
   }) {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
 
-    const channel = POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels`, {
+    const channel = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels`, {
       json: {
         name: options?.name,
         type: options?.type,
@@ -110,7 +108,7 @@ export class ChannelManager {
     return channel;
   };
 
-  edit(channelID, options = {
+  async edit(channelID, options = {
     name: "modified-channel",
     type: 0,
     topic: null,
@@ -129,11 +127,11 @@ export class ChannelManager {
     defaultSortOrder: 0
   }) {
     if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
-    
-    const getChannel = this.get(channelID);
-    const guild = GuildManager.get(getChannel.guild_id);
 
-    const channel = PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/channels/${channelID}`, {
+    const getChannel = await this.get(channelID);
+    const guild = await GuildManager.get(getChannel.guild_id);
+
+    const channel = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/channels/${channelID}`, {
       json: {
         name: options?.name,
         type: options?.type,

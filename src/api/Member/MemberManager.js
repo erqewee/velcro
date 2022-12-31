@@ -6,7 +6,7 @@ const { PATCH, POST, PUT, GET, DELETE } = api;
 import { GuildManager as BaseGuildManager } from "../Guild/GuildManager.js";
 const GuildManager = new BaseGuildManager();
 
-import { MemberCache } from "./MemberCache.js";
+import { MembersCache as MemberCache } from "../Caches.js";
 
 import ora from "ora";
 
@@ -41,28 +41,28 @@ export class MemberManager {
     return debug;
   };
 
-  get(guildID, memberID) {
+  async get(guildID, memberID) {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
     if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
 
-    const guild = GuildManager.get(guildID);
-    const member = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+    const guild = await GuildManager.get(guildID);
+    const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
 
     return member;
   };
 
   ban = {
-    add: function (guildID, memberID, options = {
+    add: async function (guildID, memberID, options = {
       deleteMessageDays: 14,
       deleteMessageSeconds: 604800
     }) {
       if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
       if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
 
-      const guild = GuildManager.get(guildID);
-      const member = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+      const guild = await GuildManager.get(guildID);
+      const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
 
-      const banned = PUT(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`, {
+      const banned = await PUT(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`, {
         json: {
           delete_message_days: options?.deleteMessageDays,
           delete_message_seconds: options?.deleteMessageSeconds
@@ -72,42 +72,42 @@ export class MemberManager {
       return banned;
     },
 
-    remove: function (guildID, memberID) {
+    remove: async function (guildID, memberID) {
       if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
       if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
 
-      const guild = GuildManager.get(guildID);
-      const member = GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
+      const guild = await GuildManager.get(guildID);
+      const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
 
       const unbanned = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
 
       return unbanned;
     },
 
-    get: function (guildID, memberID) {
+    get: async function (guildID, memberID) {
       if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
       if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
 
-      const guild = GuildManager.get(guildID);
-      const member = GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
+      const guild = await GuildManager.get(guildID);
+      const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
 
-      const get = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
+      const get = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
 
       return get;
     },
 
-    map: function (guildID) {
+    map: async function (guildID) {
       if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
 
-      const guild = GuildManager.get(guildID);
+      const guild = await GuildManager.get(guildID);
 
-      const bans = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans`);
+      const bans = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans`);
 
       return bans;
     }
   };
 
-  edit(guildID, memberID, options = {
+  async edit(guildID, memberID, options = {
     nick: null,
     roles: [],
     mute: false,
@@ -118,42 +118,46 @@ export class MemberManager {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
     if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
 
-    const guild = GuildManager.get(guildID);
-    const member = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+    const guild = await GuildManager.get(guildID);
+    const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
 
-    const edited = PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${member.id}`, {
-      nick: options?.nick,
-      roles: options?.roles,
-      mute: options?.mute,
-      deaf: options?.deaf,
-      channel_id: options?.channelId,
-      communication_disabled_until: options?.communicationDisabledUntil
+    const edited = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${member.id}`, {
+      json: {
+        nick: options?.nick,
+        roles: options?.roles,
+        mute: options?.mute,
+        deaf: options?.deaf,
+        channel_id: options?.channelId,
+        communication_disabled_until: options?.communicationDisabledUntil
+      }
     });
 
     return edited;
   };
 
-  map(guildID) {
+  async map(guildID) {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
 
-    const guild = GuildManager.get(guildID);
+    const guild = await GuildManager.get(guildID);
 
-    const members = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members`);
+    const members = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members`);
 
     return members;
   };
 
-  search(guildID, options = {
+  async search(guildID, options = {
     query: null,
     limit: 1
   }) {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
 
-    const guild = GuildManager.get(guildID);
+    const guild = await GuildManager.get(guildID);
 
-    const indexed = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/search`, {
-      query: options?.query,
-      limit: options?.limit
+    const indexed = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/search`, {
+      json: {
+        query: options?.query,
+        limit: options?.limit
+      }
     });
 
     return indexed;

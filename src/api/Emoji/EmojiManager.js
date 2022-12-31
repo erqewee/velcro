@@ -6,7 +6,7 @@ const { PATCH, POST, PUT, GET, DELETE } = api;
 import { GuildManager as BaseGuildManager } from "../Guild/GuildManager.js";
 const GuildManager = new BaseGuildManager();
 
-import { EmojiCache } from "./EmojiCache.js";
+import { EmojisCache as EmojiCache } from "../Caches.js";
 
 import ora from "ora";
 
@@ -28,8 +28,8 @@ export class EmojiManager {
       await Promise.all(guild.emojis.cache.map((emoji) => {
         const { id, name } = emoji;
 
-        if (debug) { 
-          spinner.text = `[CacheManager(Emoji)] ${name} (${id}) was handled and cached.`; 
+        if (debug) {
+          spinner.text = `[CacheManager(Emoji)] ${name} (${id}) was handled and cached.`;
 
           spinner = spinner.render().start();
         };
@@ -41,12 +41,12 @@ export class EmojiManager {
     return debug;
   };
 
-  get(guildID, emojiID) {
+  async get(guildID, emojiID) {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
     if (!api.checker.check(emojiID).isString()) api.checker.error("emojiId", "InvalidType", { expected: "String", received: (typeof emojiID) });
 
-    const guild = GuildManager.get(guildID);
-    const emoji = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis/${emojiID}`);
+    const guild = await GuildManager.get(guildID);
+    const emoji = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis/${emojiID}`);
 
     return emoji;
   };
@@ -69,15 +69,15 @@ export class EmojiManager {
     return callback(emojis);
   };
 
-  create(guildID, options = {
+  async create(guildID, options = {
     name: "new_emoji",
     image: null,
     roles: []
   }) {
     if (!api.checker.isString(guildID)) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
 
-    const guild = GuildManager.get(guildID);
-    const emoji = POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`, {
+    const guild = await GuildManager.get(guildID);
+    const emoji = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`, {
       json: {
         name: options?.name,
         image: options?.image,
@@ -88,14 +88,14 @@ export class EmojiManager {
     return emoji;
   };
 
-  edit(emojiID, options = {
+  async edit(emojiID, options = {
     name: "new_emoji",
     roles: []
   }) {
     if (!api.checker.check(emojiID).isString()) api.checker.error("emojiId", "InvalidType", { expected: "String", received: (typeof emojiID) });
 
     const fetchEmoji = client.emojis.resolve(emojiID);
-    const emoji = PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`, {
+    const emoji = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`, {
       json: {
         name: options?.name,
         roles: options?.roles
@@ -114,11 +114,11 @@ export class EmojiManager {
     return emoji;
   };
 
-  map(guildID) {
+  async map(guildID) {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
 
-    const guild = GuildManager.get(guildID);
-    const emojis = GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`);
+    const guild = await GuildManager.get(guildID);
+    const emojis = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`);
 
     return emojis;
   };

@@ -16,3 +16,21 @@ export class InvalidType extends BaseError {
     this.received = received;
   };
 };
+
+export class InvalidGuild extends BaseError {
+  constructor(argument) {
+    super(`${argument} is not a valid server.`);
+  };
+};
+
+export class InvalidRole extends BaseError {
+  constructor(argument) {
+    super(`${argument} is not a valid guild role.`);
+  };
+};
+
+export class InvalidChannel extends BaseError {
+  constructor(argument) {
+    super(`${argument} is not a valid guild channel.`);
+  };
+};

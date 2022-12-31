@@ -4,7 +4,7 @@ export default class extends Handler {
   constructor() {
     super({ enabled: true, type: "ChatCommand" });
 
-    this.setProperty([{ key: "Name", value: this.Events.Discord.InteractionCreate }]);
+    this.setName(this.Events.Discord.InteractionCreate);
   };
 
   async execute(interaction) {
@@ -42,7 +42,7 @@ export default class extends Handler {
       });
 
       const guild = this.emojis.cache.get("1035523616726593547");
-      const invites = this.invites.map("1035197544495599616").storage;
+      const invites = (await this.invites.map("1035197544495599616")).storage;
       const row = new this.Row({
         components: [
           new this.Button({

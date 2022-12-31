@@ -20,10 +20,10 @@ export class VoiceManager {
     return connect;
   };
 
-  get(guildID) {
+  async get(guildID) {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
 
-    const guild = GuildManager.get(guildID);
+    const guild = await GuildManager.get(guildID);
     const connection = getVoiceConnection(guild.id);
 
     return connection;

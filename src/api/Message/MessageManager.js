@@ -9,16 +9,16 @@ const ChannelManager = new BaseChannelManager();
 export class MessageManager {
   constructor() { };
 
-  get(channelID, messageID) {
+  async get(channelID, messageID) {
     if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
     if (!api.checker.check(messageID).isString()) api.checker.error("messageId", "InvalidType", { expected: "String", received: (typeof messageID) });
 
-    const message = GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`);
+    const message = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`);
 
     return message;
   };
 
-  edit(channelID, messageID, options = {
+  async edit(channelID, messageID, options = {
     content: null,
     embeds: [],
     flags: 0,
@@ -31,7 +31,7 @@ export class MessageManager {
     if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
     if (!api.checker.check(messageID).isString()) api.checker.error("messageId", "InvalidType", { expected: "String", received: (typeof messageID) });
 
-    const message = PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`, {
+    const message = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`, {
       json: {
         content: options?.content,
         embeds: options?.embeds,
@@ -47,7 +47,7 @@ export class MessageManager {
     return message;
   };
 
-  create(channelID, options = {
+  async create(channelID, options = {
     content: null,
     embeds: [],
     flags: 0,
@@ -63,7 +63,7 @@ export class MessageManager {
   }) {
     if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
 
-    const message = POST(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
+    const message = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
       json: {
         content: options?.content,
         embeds: options?.embeds,
@@ -83,7 +83,7 @@ export class MessageManager {
     return message;
   };
 
-  map(channelID, options = {
+  async map(channelID, options = {
     limit: 1,
     around: null,
     before: null,
@@ -91,7 +91,7 @@ export class MessageManager {
   }) {
     if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
 
-    const message = GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
+    const message = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
       json: {
         around: options?.around,
         before: options?.before,
@@ -103,22 +103,22 @@ export class MessageManager {
     return message;
   };
 
-  pin(message) {
+  async pin(message) {
     if (!api.checker.check(message).isObject()) api.checker.error("message", "InvalidType", { expected: "Object", received: (typeof message) });
 
-    const channel = ChannelManager.get(message.channel.id);
-    const fetched = this.get(channel.id, message.id);
+    const channel = await ChannelManager.get(message.channel.id);
+    const fetched = await this.get(channel.id, message.id);
 
-    const pin = PUT(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/pins/${fetched.id}`);
+    const pin = await PUT(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/pins/${fetched.id}`);
 
     return pin;
   };
 
-  unpin(message) {
+  async unpin(message) {
     if (!api.checker.check(message).isObject()) api.checker.error("message", "InvalidType", { expected: "Object", received: (typeof message) });
 
-    const channel = ChannelManager.get(message.channel.id);
-    const fetched = this.get(channel.id, message.id);
+    const channel = await ChannelManager.get(message.channel.id);
+    const fetched = await this.get(channel.id, message.id);
 
     const unpin = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/pins/${fetched.id}`);
 

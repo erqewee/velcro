@@ -8,9 +8,8 @@ export class Handler extends HandlerStructure {
     this.type = handlerOptions.type;
     this.modes = handlerOptions?.modes;
 
-    if (handlerOptions?.enabled === true) this.setEnabled();
-
-    if (this.checker.isArray(handlerOptions?.modes)) {
+    if (this.checker.check(handlerOptions?.enabled).isBoolean() && handlerOptions.enabled === true) this.setEnabled();
+    if (this.checker.check(handlerOptions?.modes).isArray()) {
       const modes = [];
 
       handlerOptions.modes.map((m) => {

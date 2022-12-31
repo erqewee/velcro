@@ -1,3 +1,6 @@
+import { API } from "../API.js";
+const api = new API();
+
 import { GuildManager as BaseGuildManager } from "../Guild/GuildManager.js";
 const GuildManager = new BaseGuildManager();
 
@@ -6,11 +9,11 @@ export class RoleManager {
     this.client = client;
   };
 
-  get(guildID, roleID) {
+  async get(guildID, roleID) {
     if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
     if (!api.checker.check(guildID).isString()) api.checker.error("roleId", "InvalidType", { expected: "String", received: (typeof roleID) });
 
-    const guild = GuildManager.get(guildID);
+    const guild = await GuildManager.get(guildID);
     const role = client.guilds.resolve(guild.id).roles.resolve(roleID);
 
     return role;
