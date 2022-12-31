@@ -7,7 +7,7 @@ class BaseError extends Error {
 };
 
 export class InvalidType extends BaseError {
-  constructor(argument, options = { expected: "String", received: "Number" }) {
+  constructor(argument, options = { expected: [], received: "Number" }) {
     super(`The required type for '${argument}' was not specified.`);
 
     const { expected, received } = options;

@@ -16,14 +16,20 @@ export class Command extends CommandStructure {
   mode = "Global";
   developer = false;
 
-  setCommand(commandData = {}) {
-    if (!this.checker.check(commandData).isObject()) this.checker.error("commandData", "InvalidType", { expected: "Object", received: (typeof commandData) });
+  toJSON(data = {}) {
+    if (!this.checker.check(data).isObject() && !this.checker.check(data).isString()) this.checker.error("data", "InvalidType", { expected: ["Object", "String"], received: (typeof data) });
 
-    const object = new Object(commandData);
-
-    this["data"] = object;
+    const object = new Object(JSON.parse(JSON.stringify(data)));
 
     return object;
+  };
+
+  setCommand(commandData = {}) {
+    const json = this.toJSON(commandData);
+
+    this["data"] = json;
+
+    return json;
   };
 
   setEnabled(state = true) {
