@@ -4,7 +4,8 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "start": "cls && node src/index.js"
+    "start": "cls && node src/index.js",
+    "test": "node test.js"
   },
   "type": "module",
   "module": "ESNext",
