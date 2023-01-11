@@ -1,30 +1,45 @@
 import { API } from "../API.js";
 const api = new API();
 
-import { joinVoiceChannel, getVoiceConnection } from "@discordjs/voice";
+import { joinVoiceChannel, getVoiceConnection, VoiceConnection } from "@discordjs/voice";
 
 import { GuildManager as BaseGuildManager } from "../Guild/GuildManager.js";
 const GuildManager = new BaseGuildManager();
+
+import Discord, { Client } from "discord.js";
+const { GuildChannel, Guild } = Discord;
 
 export class VoiceManager {
   constructor(client) {
     this.client = client;
   };
 
-  create(channelID) {
-    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
-    
-    const channel = client.channels.resolve(channelID);
-    const connect = joinVoiceChannel({ channelId: channel.id, guildId: channel.guild.id, adapterCreator: channel.guild.voiceAdapterCreator });
+  /**
+   * The bot joins the channel you specify.
+   * @param {GuildChannel} channel 
+   * @returns {VoiceConnection}
+   */
+  create(channel) {
+    const channelChecker = new api.checker.BaseChecker(channel);
+    channelChecker.createError(!channelChecker.isObject, "channel", { expected: "Object", received: channelChecker }).throw();
+
+    const voiceChannel = client.channels.resolve(channel.id);
+    const connect = joinVoiceChannel({ channelId: voiceChannel.id, guildId: voiceChannel.guild.id, adapterCreator: voiceChannel.guild.voiceAdapterCreator });
 
     return connect;
   };
 
-  async get(guildID) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+  /**
+   * It checks if the bot is on the voice channel on the server you specify.
+   * @param {Guild} guild
+   * @returns {VoiceConnection | undefined}
+   */
+  async get(guild) {
+    const guildChecker = new api.checker.BaseChecker(guild);
+    guildChecker.createError(!guildChecker.isObject, "guild", { expected: "Object", received: guildChecker }).throw();
 
-    const guild = await GuildManager.get(guildID);
-    const connection = getVoiceConnection(guild.id);
+    const connectionGuild = await GuildManager.get(guild);
+    const connection = getVoiceConnection(connectionGuild.id);
 
     return connection;
   };

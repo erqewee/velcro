@@ -8,8 +8,11 @@ export class Handler extends HandlerStructure {
     this.type = handlerOptions.type;
     this.modes = handlerOptions?.modes;
 
-    if (this.checker.check(handlerOptions?.enabled).isBoolean() && handlerOptions.enabled === true) this.setEnabled();
-    if (this.checker.check(handlerOptions?.modes).isArray()) {
+    const enabledChecker = new this.checker.BaseChecker(handlerOptions?.enabled);
+    const modesChecker = new this.checker.BaseChecker(handlerOptions?.modes);
+
+    if (enabledChecker.isBoolean && handlerOptions.enabled === true) this.setEnabled();
+    if (modesChecker.isArray) {
       const modes = [];
 
       handlerOptions.modes.map((m) => {
@@ -23,7 +26,7 @@ export class Handler extends HandlerStructure {
         return modes.push(mode);
       });
 
-      handlerOptions.modes = modes;
+      this["modes"] = modes;
     };
   };
 

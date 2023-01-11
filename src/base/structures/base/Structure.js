@@ -1,11 +1,13 @@
-import {
+import Discord,  {
   ButtonStyle, ChannelType, PermissionsBitField,
   EmbedBuilder, StringSelectMenuBuilder,
   UserSelectMenuBuilder, ButtonBuilder,
   ActionRowBuilder, TextInputBuilder,
   TextInputStyle, ModalBuilder,
-  AttachmentBuilder, SlashCommandBuilder
+  AttachmentBuilder, SlashCommandBuilder,
+  Client
 } from "discord.js";
+const { Interaction } = Discord;
 
 import { Data, Emoji } from "../../../config/export.js";
 
@@ -14,11 +16,13 @@ import {
   MessageManager, EmojiManager,
   ChannelManager, InviteManager,
   VoiceManager, MemberManager,
-  RoleManager, WebhookManager
+  RoleManager, WebhookManager,
+  API
 } from "../../../api/export.js";
 
+import { deprecate as deprecated } from "node:util";
+
 import { Checker } from "../../export.js";
-const checker = new Checker();
 
 import { CommandsCache, EventsCache, HandlersCache, LanguagesCache } from "../../classes/Loader/LoaderCache.js";
 
@@ -52,35 +56,103 @@ export class Structure {
   ButtonStyle = ButtonStyle;
   Permissions = PermissionsBitField.Flags;
 
+  /**
+   * Guild Manager
+   */
   guilds = new GuildManager(this.client); // Required Client, Because includes cache system.
+  /**
+   * Emoji Manager
+   */
   emojis = new EmojiManager(this.client); // Required Client, Because includes cache system.
-  connections = new VoiceManager(this.client);
+  /**
+   * Voice Connection Manager
+   */
+  connections = new VoiceManager(this.client); // Required Client, Because uses DiscordJS methods.
+  /**
+   * Channel Manager
+   */
   channels = new ChannelManager(this.client); // Required Client, Because includes cache system.
+  /**
+   * Invite Manager
+   */
   invites = new InviteManager(this.client); // Required Client, Because includes cache system.
+  /**
+   * Member Manager
+   */
   members = new MemberManager(this.client); // Required Client, Because includes cache system.
+  /**
+   Role Manager
+   */
   roles = new RoleManager(this.client); // Required Client, Because uses DiscordJS methods.
+  /**
+   * Webhook Manager
+   */
   webhooks = new WebhookManager();
-  users = new UserManager();
-  messages = new MessageManager();
+  /**
+   * User Manager
+   */
+  users = new UserManager(this.client); // Required Client, Because uses DiscordJS methods.
+  /**
+   * Message Manager
+   */
+  messages = new MessageManager(this.client); // Required Client, Because uses DiscordJS methods.
 
-  checker = checker;
+  /**
+   * Checker
+   */
+  checker = new Checker();
+  /** 
+   * Custom API (for custom requests)
+   */
+  api = new API();
 
   loader = { commands: CommandsCache, events: EventsCache, handlers: HandlersCache, languages: LanguagesCache };
   databases = { economy: Economy, subscribe: Subscribe, general: General };
   config = { Data, Emoji };
 
-  time(unixCode = Date.now(), format = "R", options = { onlyNumberOutput: false }) {
-    if (!checker.check(unixCode).isNumber()) checker.error("unixCode", "InvalidType", { expected: "Number", received: (typeof unixCode) });
-    if (!checker.check(format).isString()) checker.error("format", "InvalidType", { expected: "String", received: (typeof format) });
+  /**
+   * Set the function to deprecated.
+   * @param {Function} functionStructure 
+   * @param {{ name: string, code: number, use: string }} options 
+   * @returns {Function}
+   */
+  deprecate(functionStructure = function () { }, options = { name: "myCoolFunction()", code: 0, use: "myCoolGoldFunction()" }) {
+    const structureChecker = new Checker.BaseChecker(functionStructure);
+    structureChecker.createError(!structureChecker.isFunction, "structure", "InvalidType", { expected: "Function", received: structureChecker }).throw();
 
-    if (!checker.check(options).isObject()) checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
-    if (!checker.check(options?.onlyNumberOutput).isNumber()) checker.error("options#onlyNumberOutput", "InvalidType", { expected: "Boolean", received: (typeof options?.onlyNumberOutput) });
+    const nameChecker = new Checker.BaseChecker(options?.name);
+    nameChecker.createError(!nameChecker.isString, "options#name", "InvalidType", { expected: "String", received: nameChecker });
+
+    const codeChecker = new Checker.BaseChecker(options?.code);
+    codeChecker.createError(!codeChecker.isNumber, "options#code", "InvalidType", { expected: "Number", received: codeChecker });
+
+    const deprecateFunction = deprecated(functionStructure, `${options.name.endsWith("()") ? options.name : options.name + "()"} is deprecated. Please use ${options.use.endsWith("()") ? options.use : options.use + "()"} instead.`, String(code));
+
+    return deprecateFunction;
+  };
+
+  /**
+   * Transform time.
+   * @param {number} unixCode 
+   * @param {string} format 
+   * @param {{onlyNumberOutput: boolean}} options 
+   * @returns {string | number}
+   */
+  time(unixCode = Date.now(), format, options = { onlyNumberOutput: false }) {
+    const unixCodeChecker = new Checker.BaseChecker(unixCode);
+    unixCodeChecker.createError(!unixCodeChecker.isNumber, "unixCode", "InvalidType", { expected: "Number", received: unixCodeChecker }).throw();
+
+    const formatChecker = new Checker.BaseChecker(format);
+    formatChecker.createError(!formatChecker.isString, "format", "InvalidType", { expected: "String", received: formatChecker }).throw();
+
+    const optionsChecker = new Checker.BaseChecker(options);
+    optionsChecker.createError(!optionsChecker.isObject, "options", "InvalidType", { expected: "Object", received: optionsChecker }).throw();
 
     const { onlyNumberOutput: OnO } = options;
 
     let formattedTime = Math.floor(unixCode / 1000);
 
-    let dateFormat = `<t:${formattedTime}:${format}>`;
+    let dateFormat = `<t:${formattedTime}:R>`;
 
     if (format === "t") dateFormat = `<t:${formattedTime}:${format}>`;
     else if (format === "T") dateFormat = `<t:${formattedTime}:${format}>`;
@@ -95,42 +167,153 @@ export class Structure {
     return output;
   };
 
-  code(text = "console.log('Hello World!');", blockType = "JS") {
-    if (!checker.check(text).isString()) checker.error("text", "InvalidType", { expected: "String", received: (typeof text) });
-    if (!checker.check(blockType).isString()) checker.error("blockType", "InvalidType", { expected: "String", received: (typeof blockType) });
+  /**
+   * Create new Discord Codeblock.
+   * @param {string} text 
+   * @param {string} blockType 
+   * @returns {string}
+   */
+  code(text = "console.log('Hello World!');", fType = "JS") {
+    const textChecker = new Checker.BaseChecker(text);
+    textChecker.createError(!textChecker.isString, "text", "InvalidType", { expected: "String", received: textChecker }).throw();
+
+    const typeChecker = new Checker.BaseChecker(fType);
+    typeChecker.createError(!typeChecker.isString, "type", "InvalidType", { expected: "String", received: typeChecker }).throw();
 
     const content = String(text);
-    let type = String(blockType).trim().toLowerCase();
+    let type = String(fType).trim().toLowerCase();
 
     const output = `\`\`\`${type}\n${content}\`\`\``;
 
     return output;
   };
 
-  translate(fkey = null, locate = "en-US") {
-    if (!checker.check(fkey).isString()) checker.error("key", "InvalidType", { expected: "String", received: (typeof key) });
-    if (!checker.check(locate).isString()) checker.error("locate", "InvalidType", { expected: "String", received: (typeof locate) });
+  /**
+   * Translate the entered string.
+   * @param {string} fKey 
+   * @param {string} locate 
+   * @returns {string}
+   */
+  translate(fKey = null, locate = "en-US") {
+    const keyChecker = new Checker.BaseChecker(fKey);
+    keyChecker.createError(!keyChecker.isString, "key", "InvalidType", { expected: "String" }).throw();
 
-    const key = String(fkey).trim();
+    const locateChecker = new Checker.BaseChecker(locate);
+    locateChecker.createError(!locateChecker.isString, "locate", "InvalidType", { expected: "String" }).throw();
 
-    let result = null;
+    const key = String(fKey).trim();
 
-    if (this.loader.languages.has(locate)) {
-      const translations = this.loader.languages.get(locate).translations;
+    const requestedPathFormat = /^[a-z]+:[a-z]+(\.[a-z]+){0,10}$/;
+    const requestedLocateFormat = /^[a-z]{2}(?:-[A-Z]{2})?$/;
+    
+    const checker = new Checker.BaseChecker(0);
 
-      const object = new Object(translations);
+    checker.createError(!key.match(requestedPathFormat), "key", "Not Requested Format", { expected: ["data:events", "data:examples.source"], received: (key) }).throw();
+    checker.createError(!locate.match(requestedLocateFormat), "locate", "Not Requested Format", { expected: ["az-AZ", "tr", "xx", "xx-XX"], received: (locate) }).throw();
 
-      result = String(get(object, key));
-    };
+    checker.createError(!this.loader.languages.has(locate), "locate", "Language Not Found", { expected: locate }).throw();
 
-    return result;
+    const translations = this.loader.languages.get(locate);
+
+    const object = new Object(translations);
+
+    const translationSource = get(object, key.slice(5));
+
+    const sourceControlChecker = new Checker.BaseChecker(translationSource);
+    sourceControlChecker.createError(sourceControlChecker.isUndefined(), "locate", "Language Not Found", { received: key }).throw();
+
+    const translation = String(translationSource);
+
+    return translation;
   };
 
-  async pagination(interaction = null, { embeds = [], buttons = [] }) {
-    if (!checker.check(interaction).isObject()) checker.error("interaction", "InvalidType", { expected: "Object", received: (typeof interaction) });
+  /**
+   * Get the first character of the entered string.
+   * @param {string} string 
+   */
+  first(string = "Hello World!") {
+    const stringChecker = new Checker.BaseChecker(string);
+    stringChecker.createError(!stringChecker.isString, "string", "InvalidType", { expected: "String", received: stringChecker }).throw();
 
-    if (!checker.check(embeds).isArray()) checker.error("embeds", "InvalidType", { expected: "Array", received: (typeof embeds) });
-    if (!checker.check(buttons).isArray()) checker.error("buttons", "InvalidType", { expected: "Array", received: (typeof buttons) });
+    let firstCharacter;
+
+    string.replace(/^\w/, (char) => firstCharacter = char);
+
+    return {
+      firstCharacter,
+
+      /**
+       * Converts the first character received to uppercase.
+       * @returns {string}
+       */
+      toUpper: function () {
+        const newString = (firstCharacter).toUpperCase() + string;
+
+        return newString;
+      },
+
+      /**
+       * Converts the first character received to lowercase.
+       * @returns {string}
+       */
+      toLower: function () {
+        const newString = (firstCharacter).toLowerCase() + string;
+
+        return newString;
+      }
+    };
+  };
+
+  /**
+   * Get the last character of the entered string.
+   * @param {string} string 
+   */
+  last(string = "Hello World!") {
+    const stringChecker = new Checker.BaseChecker(string);
+    stringChecker.createError(!stringChecker.isString, "string", "InvalidType", { expected: "String", received: stringChecker }).throw();
+
+    const lastCharacter = string.substring(0, (string.length - 1)) + string[(string.length - 1)];
+
+    return {
+      lastCharacter,
+
+      /**
+       * Converts the last character received to uppercase.
+       * @returns {string}
+       */
+      toUpper: function () {
+        const newString = lastCharacter.toUpperCase();
+
+        return newString;
+      },
+
+      /**
+       * Converts the last character received to lowercase.
+       * @returns {string}
+       */
+      toLower: function () {
+        const newString = lastCharacter.toLowerCase();
+
+        return newString;
+      }
+    };
+  };
+
+  /**
+   * Discord Pagination System
+   * @param {Interaction} interaction 
+   * @param {{embeds: EmbedBuilder[], buttons: ButtonBuilder[]}} options
+   * @returns {Interaction}
+   */
+  async pagination(interaction, { embeds = [], buttons = [] }) {
+    const interactionChecker = new Checker.BaseChecker(interaction);
+    interactionChecker.createError(!interactionChecker.isObject, "interaction", "InvalidType", { expected: "Object", received: interactionChecker }).throw();
+
+    const embedsChecker = new Checker.BaseChecker(embeds);
+    embedsChecker.createError(!embedsChecker.isArray, "embeds", "InvalidType", { expected: "Array", received: embedsChecker }).throw();
+
+    const buttonsChecker = new Checker.BaseChecker(buttons);
+    buttonsChecker.createError(!buttonsChecker.isArray, "buttons", "InvalidType", { expected: "Array", received: buttonsChecker }).throw();
 
     const first = new this.Button({
       style: ButtonStyle.Secondary,
@@ -377,6 +560,8 @@ export class Structure {
         components
       }).catch(() => { });
     });
+
+    return interaction;
   };
 
   static version = "v1.0.3";

@@ -1,5 +1,3 @@
-import { Collection } from "@discordjs/collection";
+import { Storage } from "../base/classes/Storage/Storage.js";
 
-export class CacheManager extends Collection {
-  static version = "v1.0.0";
-};
+export class CacheManager extends Storage {};

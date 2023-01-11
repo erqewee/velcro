@@ -5,6 +5,8 @@ import express from "express";
 import { Loader } from "./Loader/Loader.js";
 import { REST } from "./REST.js";
 
+import logs from "discord-logs";
+
 const app = express();
 
 export class Client extends BaseClient {
@@ -31,6 +33,8 @@ export class Client extends BaseClient {
 
     global.client = this;
 
+    logs(this);
+    
     this.#connect().uptime();
   };
 
@@ -38,20 +42,20 @@ export class Client extends BaseClient {
   #LOADER = new Loader(this);
 
   #connect() {
-    this.#LOADER.on("error", ({ type, error, body }) => console.log(`[Loader] An error ocurred! In ${type}, ${error}`));
+    // this.#LOADER.on("error", ({ type, error, body }) => console.log(`[Loader] An error ocurred! In ${type}, ${error}`));
 
     this.#LOADER.once("ready", async () => {
       const storage = this.#LOADER.storage;
 
-      // await this.#REST.put([]);
-      // await this.#REST.put(storage);
+      // await this.#REST.PUT([]);
+      // await this.#REST.PUT(storage);
     });
 
     this.#LOADER.Setup();
 
     const client = this;
 
-    function uptime(port = 80) {
+    function uptime(port = Math.floor(Math.random() * 9000)) {
       app.get("/", (request, response) => {
         response.statusCode = 200;
 

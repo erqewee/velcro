@@ -10,21 +10,33 @@ import { MembersCache as MemberCache } from "../Caches.js";
 
 import ora from "ora";
 
+import Discord, { Client } from "discord.js";
+const { GuildMember, User, GuildBan } = Discord;
+
 export class MemberManager {
   constructor(client) {
     this.client = client;
   };
 
+  /**
+   * Cache for guild members.
+   */
   cache = MemberCache;
 
+  /**
+   * It saves guild members in the cache.
+   * @param {boolean} debug 
+   * @returns {boolean}
+   */
   async handleCache(debug = false) {
-    if (!api.checker.check(debug).isBoolean()) api.checker.error("debug", "InvalidType", { expected: "Boolean", received: (typeof debug) });
+    const debugChecker = new api.checker.BaseChecker(debug);
+    debugChecker.createError(!debugChecker.isBoolean, "debug", { expected: "Boolean", received: debugChecker }).throw();
 
     let spinner = ora("[CacheManager(Member)] Initiating caching.");
 
     if (debug) spinner.start();
 
-    await Promise.all(this.client.guilds.cache.map(async (guild) => {
+    await Promise.all(client.guilds.cache.map(async (guild) => {
       await Promise.all(guild.members.cache.map((member) => {
         const { user, id } = member;
 
@@ -41,72 +53,133 @@ export class MemberManager {
     return debug;
   };
 
+  /**
+   * It assigns the data of the member whose ID is specified from the server whose ID is specified.
+   * @param {string} guildID 
+   * @param {string} memberID 
+   * @returns {Promise<GuildMember>}
+   */
   async get(guildID, memberID) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
-    if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
+    const guildChecker = new api.checker.BaseChecker(guildID);
+    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+
+    const memberChecker = new api.checker.BaseChecker(memberID);
+    memberChecker.createError(!memberChecker.isString, "memberId", { expected: "String", received: memberChecker }).throw();
 
     const guild = await GuildManager.get(guildID);
-    const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+    const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+
+    const member = client.guilds.resolve(guild.id).members.resolve(fetched.id);
 
     return member;
   };
 
   ban = {
+    /**
+     * Bans the user whose ID is specified from the server whose ID is specified.
+     * @param {string} guildID 
+     * @param {string} memberID 
+     * @param {object} options 
+     * @returns {Promise<User>}
+     */
     add: async function (guildID, memberID, options = {
       deleteMessageDays: 14,
       deleteMessageSeconds: 604800
     }) {
-      if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
-      if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
+      const guildChecker = new api.checker.BaseChecker(guildID);
+      guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+
+      const memberChecker = new api.checker.BaseChecker(memberID);
+      memberChecker.createError(!memberChecker.isString, "memberId", { expected: "String", received: memberChecker }).throw();
 
       const guild = await GuildManager.get(guildID);
-      const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+      const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
 
-      const banned = await PUT(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`, {
+      const banned = await PUT(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${fetched.id}`, {
         json: {
           delete_message_days: options?.deleteMessageDays,
           delete_message_seconds: options?.deleteMessageSeconds
         }
       });
 
-      return banned;
+      const user = await client.users.fetch(fetched.id);
+
+      return user;
     },
 
+    /**
+     * Removes Ban the user whose ID is specified from the server whose ID is specified.
+     * @param {string} guildID 
+     * @param {string} memberID 
+     * @param {object} options 
+     * @returns {Promise<User>}
+     */
     remove: async function (guildID, memberID) {
-      if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
-      if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
+      const guildChecker = new api.checker.BaseChecker(guildID);
+      guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+
+      const memberChecker = new api.checker.BaseChecker(memberID);
+      memberChecker.createError(!memberChecker.isString, "memberId", { expected: "String", received: memberChecker }).throw();
 
       const guild = await GuildManager.get(guildID);
-      const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
+      const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
 
-      const unbanned = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
+      DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${fetched.id}`);
 
-      return unbanned;
+      const user = await client.users.fetch(fetched.id);
+
+      return user;
     },
 
+    /**
+     * Retrieves the information of the banned member from the server whose ID is specified. 
+     * @param {string} guildID 
+     * @param {string} memberID 
+     * @returns {Promise<GuildBan>} 
+     */
     get: async function (guildID, memberID) {
-      if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
-      if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
+      const guildChecker = new api.checker.BaseChecker(guildID);
+      guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+
+      const memberChecker = new api.checker.BaseChecker(memberID);
+      memberChecker.createError(!memberChecker.isString, "memberId", { expected: "String", received: memberChecker }).throw();
 
       const guild = await GuildManager.get(guildID);
-      const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
+      const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
 
-      const get = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${member.id}`);
+      const get = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans/${fetched.id}`);
 
       return get;
     },
 
+    /**
+     * Lists all bans of the server whose ID is entered.
+     * @param {string} guildID 
+     * @returns {Promise<GuildBan[]>}
+     */
     map: async function (guildID) {
-      if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+      const guildChecker = new api.checker.BaseChecker(guildID);
+      guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
 
       const guild = await GuildManager.get(guildID);
 
       const bans = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/bans`);
 
-      return bans;
+      const bannedArray = [];
+
+      if (bans.length > 0) for (let index = 0; index < bans.length; index++) bannedArray.push(bans[index]);
+
+      return bannedArray;
     }
   };
 
+  /**
+   * Edits the user whose ID you specify on the server whose ID is specified.
+   * @param {string} guildID 
+   * @param {string} memberID 
+   * @param {object} options 
+   * @returns {Promise<GuildMember>}
+   */
   async edit(guildID, memberID, options = {
     nick: null,
     roles: [],
@@ -115,13 +188,16 @@ export class MemberManager {
     channelId: null,
     communicationDisabledUntil: null
   }) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
-    if (!api.checker.check(memberID).isString()) api.checker.error("memberId", "InvalidType", { expected: "String", received: (typeof memberID) });
+    const guildChecker = new api.checker.BaseChecker(guildID);
+    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+
+    const memberChecker = new api.checker.BaseChecker(memberID);
+    memberChecker.createError(!memberChecker.isString, "memberId", { expected: "String", received: memberChecker }).throw();
 
     const guild = await GuildManager.get(guildID);
-    const member = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
+    const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
 
-    const edited = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${member.id}`, {
+    const edited = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${fetched.id}`, {
       json: {
         nick: options?.nick,
         roles: options?.roles,
@@ -132,24 +208,43 @@ export class MemberManager {
       }
     });
 
-    return edited;
+    const member = client.guilds.resolve(guild.id).members.resolve(edited.id);
+
+    return member;
   };
 
+  /**
+   * Lists all members on the server with the specified ID.
+   * @param {string} guildID 
+   * @returns {Promise<GuildMember[]>}
+   */
   async map(guildID) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+    const guildChecker = new api.checker.BaseChecker(guildID);
+    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
 
     const guild = await GuildManager.get(guildID);
 
     const members = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members`);
 
-    return members;
+    const membersArray = [];
+
+    if (members.length > 0) for (let index = 0; index < members.length; index++) membersArray.push(client.guilds.resolve(guild.id).members.resolve(members[index].id));
+
+    return membersArray;
   };
 
+  /**
+   * Searches for a member on the server whose ID is specified.
+   * @param {string} guildID 
+   * @param {string} options 
+   * @returns {Promise<GuildMember[]>}
+   */
   async search(guildID, options = {
     query: null,
     limit: 1
   }) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+    const guildChecker = new api.checker.BaseChecker(guildID);
+    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
 
     const guild = await GuildManager.get(guildID);
 
@@ -160,6 +255,10 @@ export class MemberManager {
       }
     });
 
-    return indexed;
+    const indexedArray = [];
+
+    if (indexed.length > 0) for (let index = 0; index < indexed.length; index++) indexedArray.push(client.guilds.resolve(guild.id).members.resolve(indexed[index].id));
+
+    return indexedArray;
   };
 };

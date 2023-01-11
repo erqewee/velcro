@@ -61,7 +61,7 @@ export default class extends Event {
       subscribeChannel: db.fetch(`Subscribe.Settings.SubscribeChannel`)
     };
 
-    if (!this.connections.get(channel.guild.id)) this.connections.create(channel.id);
+    if (!this.connections.get(channel.guild)) this.connections.create(channel);
 
     const Embed = this.Embed;
     const configDef = this.config;

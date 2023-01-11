@@ -10,15 +10,27 @@ import { ChannelsCache as ChannelCache } from "../Caches.js";
 
 import ora from "ora";
 
+import Discord, { Client } from "discord.js";
+const { Channel } = Discord;
+
 export class ChannelManager {
   constructor(client) {
     this.client = client;
   };
 
+  /**
+   * Cache for channels.
+   */
   cache = ChannelCache;
 
+  /**
+   * It saves channels in the cache.
+   * @param {boolean} debug 
+   * @returns {boolean}
+   */
   async handleCache(debug = false) {
-    if (!api.checker.check(debug).isBoolean()) api.checker.error("debug", "InvalidType", { expected: "Boolean", received: (typeof debug) });
+    const debugChecker = new api.checker.BaseChecker(debug);
+    debugChecker.createError(!debugChecker.isBoolean, "debug", { expected: "Boolean", received: debugChecker }).throw();
 
     let spinner = ora("[CacheManager(Channel)] Initiating caching.");
 
@@ -39,22 +51,41 @@ export class ChannelManager {
     return debug;
   };
 
+  /**
+   * Get the channel whose ID you specified.
+   * @param {string} channelID 
+   * @returns {Promise<Channel>}
+   */
   async get(channelID) {
-    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
+    const channelChecker = new api.checker.BaseChecker(channelID);
+    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker });
 
-    const channel = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}`);
+    const channelBase = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}`);
+    const channel = client.channels.resolve(channelBase.id);
 
     return channel;
   };
 
-  async map(callback) {
-    if (!api.checker.check(callback).isFunction()) callback = function () { };
-
+  /**
+   * Get all the channels of the bot.
+   * @returns {Promise<Channel[]>}
+   */
+  async map() {
     const channels = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels`);
 
-    return channels;
+    const channelsArray = [];
+
+    for (let index = 0; index < channels.length; index++) channelsArray.push(client.channels.resolve(channels[index].id));
+
+    return channelsArray;
   };
 
+  /**
+   * Creates a new Discord Guild Channel.
+   * @param {string} guildID 
+   * @param {object} options 
+   * @returns {Promise<Channel>}
+   */
   async create(guildID, options = {
     name: "new-channel",
     type: 0,
@@ -73,9 +104,10 @@ export class ChannelManager {
     availableTags: [],
     defaultSortOrder: 0
   }) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+    const guildChecker = new api.checker.BaseChecker(guildID);
+    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker });
 
-    const channel = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels`, {
+    const createdChannel = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels`, {
       json: {
         name: options?.name,
         type: options?.type,
@@ -96,18 +128,35 @@ export class ChannelManager {
       }
     });
 
+    const channel = client.channels.resolve(createdChannel.id);
+
     return channel;
   };
 
+  /**
+   * Deletes a Discord Guild Channel.
+   * @param {string} guildID 
+   * @param {string} channelID 
+   * @returns {void}
+   */
   delete(guildID, channelID) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
-    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
+    const guildChecker = new api.checker.BaseChecker(guildID);
+    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }); 
+    
+    const channelChecker = new api.checker.BaseChecker(channelID);
+    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker });
 
-    const channel = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels/${channelID}`);
+    DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels/${channelID}`);
 
-    return channel;
+    return void 0;
   };
 
+  /**
+   * Edits a Discord Guild Channel. 
+   * @param {string} channelID 
+   * @param {object} options 
+   * @returns {Promise<Channel>}
+   */
   async edit(channelID, options = {
     name: "modified-channel",
     type: 0,
@@ -126,12 +175,13 @@ export class ChannelManager {
     availableTags: [],
     defaultSortOrder: 0
   }) {
-    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
+    const channelChecker = new api.checker.BaseChecker(channelID);
+    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker });
 
     const getChannel = await this.get(channelID);
-    const guild = await GuildManager.get(getChannel.guild_id);
+    const guild = await GuildManager.get(client.guilds.resolve(getChannel.guild_id).id);
 
-    const channel = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/channels/${channelID}`, {
+    const editedChannel = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/channels/${channelID}`, {
       json: {
         name: options?.name,
         type: options?.type,
@@ -152,6 +202,8 @@ export class ChannelManager {
       }
     });
 
+    const channel = client.channels.resolve(editedChannel.id);
+    
     return channel;
   };
 };

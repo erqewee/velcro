@@ -7,15 +7,27 @@ import { GuildsCache as GuildCache } from "../Caches.js";
 
 import ora from "ora";
 
+import Discord, { Client } from "discord.js";
+const { Guild } = Discord;
+
 export class GuildManager {
   constructor(client) {
     this.client = client;
   };
 
+  /**
+   * Cache for guilds.
+   */
   cache = GuildCache;
 
+  /**
+   * It saves guilds in the cache.
+   * @param {boolean} debug 
+   * @returns {boolean}
+   */
   async handleCache(debug = false) {
-    if (!api.checker.check(debug).isBoolean()) api.checker.error("debug", "InvalidType", { expected: "Boolean", received: (typeof debug) });
+    const debugChecker = new api.checker.BaseChecker(debug);
+    debugChecker.createError(!debugChecker.isBoolean, "debug", { expected: "Boolean", received: debugChecker }).throw();
 
     let spinner = ora("[CacheManager(Guild)] Initiating caching.");
 
@@ -36,28 +48,54 @@ export class GuildManager {
     return debug;
   };
 
-  async get(guildID) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "Boolean", received: (typeof guildID) });
+  /**
+   * Discards the data of the specified server.
+   * @param {string} guildID 
+   * @returns {Promise<Guild>} 
+   */
+  async get(guild) {
+    const guildChecker = new api.checker.BaseChecker(guild);
+    guildChecker.createError(!guildChecker.isObject, "guild", { expected: "Object" }).throw();
 
-    const guild = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
+    const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}`);
+    const resolved = client.guilds.resolve(fetched.id);
 
-    return guild;
+    return resolved;
   };
 
+  /**
+   * Get all the guilds of the bot.
+   * @returns {Promise<Guild[]>}
+   */
   async map() {
     const guilds = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`);
 
-    return guilds;
+    const guildsArray = [];
+
+    if (guilds.length > 0) for (let index = 0; index < guilds.length; index++) guildsArray.push(client.guilds.resolve(guilds[index].id));
+
+    return guildsArray;
   };
 
+  /**
+   * Deletes the server with the specified ID.
+   * @param {string} guildID 
+   * @returns {void}
+   */
   leave(guildID) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "Boolean", received: (typeof guildID) });
+    const guildChecker = new api.checker.BaseChecker(guild);
+    guildChecker.createError(!guildChecker.isString, "guild", { expected: "String", received: guildChecker }).throw();
 
-    const guild = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
+    DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
 
-    return guild;
+    return void 0;
   };
 
+  /**
+   * Creates a new Discord Guild.
+   * @param {object} options 
+   * @returns {Promise<Guild>}
+   */
   async create(options = {
     name: "New Guild",
     region: null,
@@ -72,9 +110,7 @@ export class GuildManager {
     systemChannelId: null,
     systemChannelFlags: 0
   }) {
-    if (!api.checker.check(options).isObject()) api.checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
-
-    const guild = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`, {
+    const createdGuild = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds`, {
       json: {
         name: options?.name,
         region: options?.region,
@@ -91,9 +127,17 @@ export class GuildManager {
       }
     });
 
+    const guild = client.guilds.resolve(createdGuild.id);
+
     return guild;
   };
 
+  /**
+   * Edits a Discord Guild.
+   * @param {string} guildID 
+   * @param {object} options 
+   * @returns {Promise<Guild>}
+   */
   async edit(guildID, options = {
     name: "Modified Guild",
     region: null,
@@ -116,10 +160,10 @@ export class GuildManager {
     description: null,
     premiumProgressBarEnabled: false
   }) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "Boolean", received: (typeof guildID) });
-    if (!api.checker.check(options).isObject()) api.checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
+    const guildChecker = new api.checker.BaseChecker(guild);
+    guildChecker.createError(!guildChecker.isString, "guild", { expected: "String", received: guildChecker }).throw();
 
-    const guild = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`, {
+    const editedGuild = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`, {
       json: {
         name: options?.name,
         region: options?.region,
@@ -144,6 +188,8 @@ export class GuildManager {
       }
     });
 
+    const guild = client.guilds.resolve(editedGuild.id);
+    
     return guild;
   };
 };

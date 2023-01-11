@@ -11,13 +11,17 @@ export class Translations {
     {
       code: "en-US",
       source: {
-        welcomer: "Hello!"
+        data: {
+          welcomer: "Hello!"
+        }
       }
     },
     {
       code: "az-AZ",
       source: {
-        welcomer: "Salam!"
+        data: {
+          welcomer: "Salam!"
+        }
       }
     }
   ];

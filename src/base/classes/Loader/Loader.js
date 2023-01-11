@@ -1,8 +1,6 @@
 import { statSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { Events } from "discord.js";
-
 import { CommandsCache, EventsCache, HandlersCache, LanguagesCache } from "./LoaderCache.js";
 import { Events as LoaderEvents } from "./Events.js";
 
@@ -13,6 +11,9 @@ import { Data } from "../../../config/export.js";
 import EventEmitter from "node:events";
 
 import ora from "ora";
+
+import { Checker as BaseChecker } from "../Checker/Checker.js";
+const Checker = BaseChecker.BaseChecker;
 
 import { Translations } from "../../languages/Translations.js";
 
@@ -37,7 +38,10 @@ export class Loader extends EventEmitter {
 
   Events = LoaderEvents;
 
-  async Handler() {
+  async Handler(runner) {
+    const runnerChecker = new Checker(runner);
+    runnerChecker.createError(!runnerChecker.isString, "runner", { expected: "String", received: runnerChecker }).throw();
+
     const path = this.#resolve("./src/base/events/handlers");
 
     let body = {};
@@ -54,14 +58,25 @@ export class Loader extends EventEmitter {
 
         const handler = this.handlers.get(handlerBase.name);
 
-        this.client.on(handler.name, async (...listeners) => {
-          if (handler?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await handler.execute(...listeners);
-          else if (handler?.type === "StringMenu" && listeners.map((listener) => listener?.customId && listener.isStringSelectMenu())) return await handler.execute(...listeners);
-          else if (handler?.type === "Button" && listeners.map((listener) => listener?.customId && listener.isButton())) return await handler.execute(...listeners);
-          else if (handler?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await handler.execute(...listeners);
-          else if (handler?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await handler.execute(...listeners);
-          else if (handler?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await handler.execute(...listeners);
-          else return await handler.execute(...listeners);
+        let runCommand = "execute";
+        if (handler?.run) runCommand = "run";
+        else if (runner && handler?.[runner]) runCommand = runner;
+
+        const runCommandChecker = new Checker(handler?.[runCommand]);
+        runCommandChecker.createError(!runCommandChecker.isFunction, "runner", { expected: "Function", received: handler?.[runCommand] }).throw();
+
+        let runType = "on";
+        if (handler?.once) runType = "once";
+
+        this.client[runType](handler.name, async (...listeners) => {
+          if (handler?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await handler[runCommand](...listeners);
+          else if (handler?.type === "StringMenu" && listeners.map((listener) => listener?.customId && listener.isStringSelectMenu())) return await handler[runCommand](...listeners);
+          else if (handler?.type === "Button" && listeners.map((listener) => listener?.customId && listener.isButton())) return await handler[runCommand](...listeners);
+          else if (handler?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await handler[runCommand](...listeners);
+          else if (handler?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await handler[runCommand](...listeners);
+          else if (handler?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await handler[runCommand](...listeners);
+          
+          else return await handler[runCommand](...listeners);
         });
 
         loadedHandlers.push(handler.name);
@@ -91,10 +106,13 @@ export class Loader extends EventEmitter {
       spinner.succeed("Handlers Loaded.");
     });
 
-    return { handlers: loadedHandlers };
+    return loadedHandlers;
   };
 
-  async Event() {
+  async Event(runner) {
+    const runnerChecker = new Checker(runner);
+    runnerChecker.createError(!runnerChecker.isString, "runner", { expected: "String", received: runnerChecker }).throw();
+
     const path = this.#resolve("./src/base/events");
 
     const loadedEvents = [];
@@ -116,18 +134,31 @@ export class Loader extends EventEmitter {
 
           const event = this.events.get(eventBase.name);
 
-          if (event._client && !event.once && !event.database && !event.process) this.client.on(event.name, async (...listeners) => {
-            if (event?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await event.execute(...listeners);
-            else if (event?.type === "StringMenu" && listeners.map((listener) => listener?.customId && listener.isStringSelectMenu())) return await event.execute(...listeners);
-            else if (event?.type === "Button" && listeners.map((listener) => listener?.customId && listener.isButton())) return await event.execute(...listeners);
-            else if (event?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await event.execute(...listeners);
-            else if (event?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await event.execute(...listeners);
-            else if (event?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await event.execute(...listeners);
-            else return await event.execute(...listeners).catch(() => { })
+          let runCommand = "execute";
+          if (event?.run) runCommand = "run";
+          else if (runner && event?.[runner]) runCommand = runner;
+
+          const runCommandChecker = new Checker(event?.[runCommand]);
+          runCommandChecker.createError(!runCommandChecker.isFunction, "runner", { expected: "Function", received: event?.[runCommand] }).throw();
+
+          let runType = "on";
+          if (event?.once) runType = "once";
+
+          let base = this.client;
+          if (event?.process) base = process;
+
+          if (!event.database) base[runType](event.name, async (...listeners) => {
+            if (event?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await event[runCommand](...listeners);
+            else if (event?.type === "StringMenu" && listeners.map((listener) => listener?.customId && listener.isStringSelectMenu())) return await event[runCommand](...listeners);
+            else if (event?.type === "Button" && listeners.map((listener) => listener?.customId && listener.isButton())) return await event[runCommand](...listeners);
+            else if (event?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await event[runCommand](...listeners);
+            else if (event?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await event[runCommand](...listeners);
+            else if (event?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await event[runCommand](...listeners);
+
+            else return await event[runCommand](...listeners);
           });
-          if (event._client && event.once && !event.database && !event.process) this.client.once(event.name, async (...listeners) => await event.execute(...listeners));
-          if (event.process && !event.database) process.on(event.name, async (...args) => await event.execute(...args));
-          if (event.database && !event.once && !event.process) this.databases.map((database) => database.on(event.name, async (...args) => await event.execute(...args)));
+
+          if (!event._client && event.database && !event.process) this.databases.map((database) => database[runType](event.name, async (...args) => await event[runCommand](...args)));
 
           loadedEvents.push(event.name);
 
@@ -160,10 +191,13 @@ export class Loader extends EventEmitter {
       spinner.succeed("Events Loaded.");
     });
 
-    return { events: loadedEvents };
+    return loadedEvents;
   };
 
-  async Command() {
+  async Command(runner) {
+    const runnerChecker = new Checker(runner);
+    runnerChecker.createError(!runnerChecker.isString, "runner", { expected: "String", received: runnerChecker }).throw();
+
     const path = this.#resolve("./src/base/commands");
 
     const loadedCommands = [];
@@ -213,7 +247,7 @@ export class Loader extends EventEmitter {
       spinner.succeed("Commands Loaded.");
     });
 
-    return { commands: loadedCommands };
+    return loadedCommands;
   };
 
   async Language() {
@@ -228,8 +262,8 @@ export class Loader extends EventEmitter {
       const { code, source } = lang;
       const directCode = String(code).split("-")[0];
 
-      this.languages.set(code, source);
-      this.languages.set(directCode, source);
+      this.languages.set(code, source.data);
+      this.languages.set(directCode, source.data);
 
       loadedLanguages.push(lang);
 
@@ -254,7 +288,7 @@ export class Loader extends EventEmitter {
       spinner.succeed("Languages Loaded.");
     });
 
-    return { languages: loadedLanguages };
+    return loadedLanguages;
   };
 
   Setup() {

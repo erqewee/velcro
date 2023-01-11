@@ -10,7 +10,7 @@ export class REST {
   #routes = Routes;
   #rest = new Rest().setToken(Data.Bot.TOKEN);
 
-  async put(body = []) {
+  async PUT(body = []) {
     let completed = false;
 
     await this.#rest.put(this.#routes.applicationGuildCommands(this.client.user?.id, "942839259876958268"), { body }).then(() => completed = true);

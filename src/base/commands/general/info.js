@@ -135,7 +135,7 @@ export default class extends Command {
             callback: (character, storage) => storage.map((w) => n = n.replace(w, character))
           });
 
-          const invites = (await this.invites.map(guild.id)).storage;
+          const invites = await this.invites.map(guild.id);
 
           embeds.push(new this.Embed({
             title: `${client.user.username} - Information | Emoji`,
@@ -167,7 +167,7 @@ export default class extends Command {
           const supportServer = new this.Button({
             style: this.ButtonStyle.Link,
             label: "Join Emoji Server",
-            url: invites.length > 0 ? `https://discord.gg/${invites[0]}` : "https://discord.com/",
+            url: invites.length > 0 ? `https://discord.gg/${invites[0].code}` : "https://discord.com/",
             disabled: invites.length > 0 ? false : true
           });
 

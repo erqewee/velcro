@@ -2,9 +2,10 @@
 
 | Version           | Supported |
 | ----------------- | ----------|
+| Beta Release 4    | ✅ |
 | Beta Release 3    | ✅ |
-| Beta Release 2    | ⚠️ |
-| Beta Release 1    | ✅ |
+| Beta Release 2    | ❌ |
+| Beta Release 1    | ⚠️ |
 | Preview Release 5 | ❌ |
 | Preview Release 4 | ❌ |
 | Preview Release 3 | ❌ |
@@ -16,6 +17,8 @@
 ⚠️ Deprecated
 <br>
 ❌ Not Supported
+<br>
+📛 Not Working
 
 # Known Issues
 
@@ -23,18 +26,40 @@
 
 # Warnings
 
-- Critical bugs have been fixed. If you are using 'Beta Release 2', upgrade to 'Beta Release 3' immediately.
-- We strongly recommend that you upgrade your version to 'Beta Release 1' or 'Beta Release 3' for better performance.
+- Critical bugs have been fixed. If you are using 'Beta Release 2', upgrade to 'Beta Release 3' or 'Beta Release 4' immediately.
+- We strongly recommend that you upgrade your version to 'Beta Release 4' for better performance.
 
 # Patch Notes
+
+> Beta Release 4 (01/11/2022)
+
+- <details>
+    <summary>Changes</summary>
+    <details>
+      <summary>Command Updated</summary>
+      <i><b>ticket</b> command updated.</i>
+    </details>
+    <details>
+      <summary>Structures Updated</summary>
+      <i>Improved 'translate' function.</i>
+      <br>
+      <i>Some changes.</i>
+    </details>
+    <details>
+      <summary>Checkers Updated</summary>
+      <i>Improved checker.</i>
+    </details>
+    <details>
+      <summary>Cache Updated</summary>
+      <i>Cache is now built-in this project.</i>
+    </details>
+  </details>
 
 > Beta Release 3 (12/31/2022)
 
 - [NOTE] This update includes only bug fix.
 
 > Beta Release 2 (12/28/2022)
-
-- [NOTE] This release or higher will be released to Wyvern as soon as possible. (Before Beta Release 4 or lower release arrives)
 
 - <details>
     <summary>News</summary>
@@ -93,8 +118,6 @@
   </details>
 
 > Beta Release 1 (12/23/2022)
-
-- [NOTE] This release or higher will be released to Wyvern as soon as possible. (Before Beta Release 4 or lower release arrives)
 
 - <details>
     <summary>Added Checker</summary>

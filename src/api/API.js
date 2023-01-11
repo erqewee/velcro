@@ -5,7 +5,7 @@ import { Data } from "../config/export.js";
 const headers = { Authorization: `Bot ${Data.Bot.TOKEN}` };
 const config = { BASE_URL: "https://discord.com/api", VERSION: "v10" };
 
-import { Checker } from "../base/classes/Checker.js";
+import { Checker } from "../base/classes/Checker/Checker.js";
 const checker = new Checker();
 
 export class API {
@@ -19,70 +19,97 @@ export class API {
     custom: {}
   };
 
+  /**
+   * Assigns a GET request to the specified URL.
+   * @param {string} url 
+   * @param {{json: {}}} options 
+   */
   async GET(url, options = { json: {} }) {
-    if (!checker.check(url).isString()) checker.error("url", "InvalidType", { expected: "String", received: (typeof url) });
-    if (!checker.check(options).isObject()) checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
-
-    if (!checker.check(options?.json).isObject()) checker.error("options#json", "InvalidType", { expected: "Object", received: (typeof options?.json) });
+    const urlChecker = new checker.BaseChecker(url);
+    urlChecker.createError(!urlChecker.isString, "url", { expected: "String" }).throw();
 
     const { json } = options;
 
     if (!json) json = {};
 
-    const response = await got(url, { method: "GET", headers }).json();
+    let response;
+
+    response = await got(url, { headers }).json();
 
     return response;
   };
 
+  /**
+   * Assigns a PATCH request to the specified URL.
+   * @param {string} url 
+   * @param {{json: {}}} options 
+   * @returns {Promise<any>}
+   */
   async PATCH(url, options = { json: {} }) {
-    if (!checker.check(url).isString()) checker.error("url", "InvalidType", { expected: "String", received: (typeof url) });
-    if (!checker.check(options).isObject()) checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
-
-    if (!checker.check(options?.json).isObject()) checker.error("options#json", "InvalidType", { expected: "Object", received: (typeof options?.json) });
+    const urlChecker = new checker.BaseChecker(url);
+    urlChecker.createError(!urlChecker.isString, "url", { expected: "String" }).throw();
 
     const { json } = options;
 
     if (!json) json = {};
 
-    const response = await got(url, { method: "PATCH", headers, json }).json();
+    let response;
+
+    response = await got(url, { method: "PATCH", headers }).json();
 
     return response;
   };
 
+  /**
+   * Assigns a PUT request to the specified URL.
+   * @param {string} url 
+   * @param {{json: {}}} options 
+   * @returns {any}
+   */
   async PUT(url, options = { json: {} }) {
-    if (!checker.check(url).isString()) checker.error("url", "InvalidType", { expected: "String", received: (typeof url) });
-    if (!checker.check(options).isObject()) checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
-
-    if (!checker.check(options?.json).isObject()) checker.error("options#json", "InvalidType", { expected: "Object", received: (typeof options?.json) });
+    const urlChecker = new checker.BaseChecker(url);
+    urlChecker.createError(!urlChecker.isString, "url", { expected: "String" }).throw();
 
     const { json } = options;
 
     if (!json) json = {};
 
-    const response = await got(url, { method: "PUT", headers, json }).json();
+    let response;
+
+    response = await got(url, { method: "PUT", headers }).json();
 
     return response;
   };
 
+  /**
+   * Assigns a DELETE request to the specified URL.
+   * @param {string} url 
+   * @returns {void}
+   */
   DELETE(url) {
-    if (!checker.check(url).isString()) checker.error("url", "InvalidType", { expected: "String", received: (typeof url) });
+    const urlChecker = new checker.BaseChecker(url);
+    urlChecker.createError(!urlChecker.isString, "url", { expected: "String" }).throw();
 
     (async () => await got(url, { method: "DELETE", headers }))();
-
-    return 0;
   };
 
+  /**
+   * Assigns a POST request to the specified URL.
+   * @param {string} url 
+   * @param {{json: {}}} options 
+   * @returns {Promise<any>}
+   */
   async POST(url, options = { json: {} }) {
-    if (!checker.check(url).isString()) checker.error("url", "InvalidType", { expected: "String", received: (typeof url) });
-    if (!checker.check(options).isObject()) checker.error("options", "InvalidType", { expected: "Object", received: (typeof options) });
-
-    if (!checker.check(options?.json).isObject()) checker.error("options#json", "InvalidType", { expected: "Object", received: (typeof options?.json) });
+    const urlChecker = new checker.BaseChecker(url);
+    urlChecker.createError(!urlChecker.isString, "url", { expected: "String" }).throw();
 
     const { json } = options;
 
     if (!json) json = {};
 
-    const response = await got(url, { method: "POST", json, headers }).json();
+    let response;
+
+    response = await got(url, { method: "POST", headers }).json();
 
     return response;
   };

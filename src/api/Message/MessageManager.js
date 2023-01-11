@@ -6,18 +6,41 @@ const { PATCH, POST, PUT, GET, DELETE } = api;
 import { ChannelManager as BaseChannelManager } from "../Channel/ChannelManager.js";
 const ChannelManager = new BaseChannelManager();
 
+import Discord, { Client } from "discord.js";
+const { Message } = Discord;
+
 export class MessageManager {
-  constructor() { };
+  constructor(client) {
+    this.client = client;
+  };
 
+  /**
+   * It receives the data in the ID of the specified message from the specified channel ID.
+   * @param {string} channelID 
+   * @param {string} messageID 
+   * @returns {Promise<Message>}
+   */
   async get(channelID, messageID) {
-    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
-    if (!api.checker.check(messageID).isString()) api.checker.error("messageId", "InvalidType", { expected: "String", received: (typeof messageID) });
+    const channelChecker = new api.checker.BaseChecker(channelID);
+    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker }).throw();
 
-    const message = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`);
+    const messageChecker = new api.checker.BaseChecker(messageID);
+    messageChecker.createError(!messageChecker.isString, "messageId", { expected: "String", received: messageChecker }).throw();
+
+    const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`);
+
+    const message = await client.channels.resolve(channelID).messages.fetch(fetched.id);
 
     return message;
   };
 
+  /**
+   * Edits the specified message in the specified channel.
+   * @param {string} channelID 
+   * @param {string} messageID 
+   * @param {object} options 
+   * @returns {Promise<Message>}
+   */
   async edit(channelID, messageID, options = {
     content: null,
     embeds: [],
@@ -25,28 +48,39 @@ export class MessageManager {
     allowedMentions: {},
     components: [],
     files: [],
-    payloadJson: null,
+    payloadJSON: null,
     attachments: []
   }) {
-    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
-    if (!api.checker.check(messageID).isString()) api.checker.error("messageId", "InvalidType", { expected: "String", received: (typeof messageID) });
+    const channelChecker = new api.checker.BaseChecker(channelID);
+    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker }).throw();
 
-    const message = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`, {
+    const messageChecker = new api.checker.BaseChecker(messageID);
+    messageChecker.createError(!messageChecker.isString, "messageId", { expected: "String", received: messageChecker }).throw();
+
+    const patched = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`, {
       json: {
         content: options?.content,
         embeds: options?.embeds,
         flags: options?.flags,
         allowed_mentions: options?.allowedMentions,
-        components: options?.attachments,
+        components: options?.components,
         files: options?.files,
-        payload_json: options?.payloadJson,
+        payload_json: options?.payloadJSON,
         attachments: options?.attachments
       }
     });
 
+    const message = await client.channels.resolve(channelID).messages.fetch(patched.id);
+
     return message;
   };
 
+  /**
+   * Creates a new message in the specified channel.
+   * @param {string} channelID 
+   * @param {object} options 
+   * @returns {Promise<Message>}
+   */
   async create(channelID, options = {
     content: null,
     embeds: [],
@@ -61,9 +95,10 @@ export class MessageManager {
     messageReference: {},
     stickers: []
   }) {
-    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
+    const channelChecker = new api.checker.BaseChecker(channelID);
+    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker }).throw();
 
-    const message = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
+    const posted = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
       json: {
         content: options?.content,
         embeds: options?.embeds,
@@ -80,18 +115,27 @@ export class MessageManager {
       }
     });
 
+    const message = await client.channels.resolve(channelID).messages.fetch(posted.id);
+
     return message;
   };
 
+  /**
+   * Lists the messages in the specified channel.
+   * @param {string} channelID 
+   * @param {object} options 
+   * @returns {Promise<Message[]>}
+   */
   async map(channelID, options = {
     limit: 1,
     around: null,
     before: null,
     after: null
   }) {
-    if (!api.checker.check(channelID).isString()) api.checker.error("channelId", "InvalidType", { expected: "String", received: (typeof channelID) });
+    const channelChecker = new api.checker.BaseChecker(channelID);
+    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker }).throw();
 
-    const message = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
+    const messages = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
       json: {
         around: options?.around,
         before: options?.before,
@@ -100,28 +144,46 @@ export class MessageManager {
       }
     });
 
-    return message;
+    const messagesArray = [];
+
+    if (messages.length > 0) for (let index = 0; index < messages.length; index++) messagesArray.push(await client.channels.resolve(channelID).messages.fetch(messages[index].id));
+
+    return messagesArray;
   };
 
+  /**
+   * Pins the specified message to the channel.
+   * @param {Message} message 
+   * @returns {Promise<Message>}
+   */
   async pin(message) {
-    if (!api.checker.check(message).isObject()) api.checker.error("message", "InvalidType", { expected: "Object", received: (typeof message) });
+    const messageChecker = new api.checker.BaseChecker(message);
+    messageChecker.createError(!messageChecker.isObject, "message", { expected: "Object", received: messageChecker }).throw();
 
     const channel = await ChannelManager.get(message.channel.id);
     const fetched = await this.get(channel.id, message.id);
 
-    const pin = await PUT(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/pins/${fetched.id}`);
+    const pinned = await PUT(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/pins/${fetched.id}`);
 
-    return pin;
+    const pinnedMessage = await client.channels.resolve(channel.id).messages.fetch(pinned.id);
+
+    return pinnedMessage;
   };
 
+  /**
+   * Unpins the specified message to the channel.
+   * @param {Message} message 
+   * @returns {number}
+   */
   async unpin(message) {
-    if (!api.checker.check(message).isObject()) api.checker.error("message", "InvalidType", { expected: "Object", received: (typeof message) });
-
+    const messageChecker = new api.checker.BaseChecker(message);
+    messageChecker.createError(!messageChecker.isObject, "message", { expected: "Object", received: messageChecker }).throw();
+    
     const channel = await ChannelManager.get(message.channel.id);
     const fetched = await this.get(channel.id, message.id);
 
-    const unpin = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/pins/${fetched.id}`);
+    DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/pins/${fetched.id}`);
 
-    return unpin;
+    return 0;
   };
 };

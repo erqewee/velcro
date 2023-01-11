@@ -1,11 +1,12 @@
 // CLASSES
 import { Client } from "./classes/Client.js";
 import { Database } from "./classes/Database/Database.js";
-import { Checker } from "./classes/Checker.js";
+import { Checker } from "./classes/Checker/Checker.js";
 import { REST } from "./classes/REST.js";
 import { Survey } from "./classes/Survey.js";
 import { YouTube } from "./classes/YouTube.js";
 import { Loader } from "./classes/Loader/Loader.js";
+import { Storage } from "./classes/Storage/Storage.js";
 // CLASSES
 
 // STRUCTURES
@@ -66,7 +67,7 @@ import register from "./events/util/register.js";
 
 // EXPORTER
 export {
-  Client, Database, Checker, REST, Survey, YouTube, Loader, // CLASSES
+  Client, Database, Checker, REST, Survey, YouTube, Loader, Storage, // CLASSES
 
   Command, Handler, Event, Structure, // STRUCTURES
 

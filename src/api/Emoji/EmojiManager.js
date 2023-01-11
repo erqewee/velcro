@@ -10,21 +10,33 @@ import { EmojisCache as EmojiCache } from "../Caches.js";
 
 import ora from "ora";
 
+import Discord from "discord.js";
+const { GuildEmoji } = Discord;
+
 export class EmojiManager {
   constructor(client) {
-    this.client = client;
+    client = client;
   };
-
+  
+  /**
+   * Cache for emojis.
+   */
   cache = EmojiCache;
 
+  /**
+   * It saves emojis in the cache.
+   * @param {boolean} debug 
+   * @returns {boolean}
+   */
   async handleCache(debug = false) {
-    if (!api.checker.check(debug).isBoolean()) api.checker.error("debug", "InvalidType", { expected: "Boolean", received: (typeof debug) });
+    const debugChecker = new api.checker.BaseChecker(debug);
+    debugChecker.createError(!debugChecker.isBoolean, "debug", { expected: "Boolean", received: debugChecker }).throw();
 
     let spinner = ora("[CacheManager(Emoji)] Initiating caching.");
 
     if (debug) spinner.start();
 
-    await Promise.all(this.client.guilds.cache.map(async (guild) => {
+    await Promise.all(client.guilds.cache.map(async (guild) => {
       await Promise.all(guild.emojis.cache.map((emoji) => {
         const { id, name } = emoji;
 
@@ -41,43 +53,61 @@ export class EmojiManager {
     return debug;
   };
 
+  /**
+   * Get the information of the specified emoji from the specified server.
+   * @param {string} guildID 
+   * @param {string} emojiID 
+   * @returns {Promise<GuildEmoji>}
+   */
   async get(guildID, emojiID) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
-    if (!api.checker.check(emojiID).isString()) api.checker.error("emojiId", "InvalidType", { expected: "String", received: (typeof emojiID) });
+    const guildChecker = new api.checker.BaseChecker(guild);
+    guildChecker.createError(!guildChecker.isString, "guild", { expected: "String", received: guildChecker }).throw();
+
+    const emojiChecker = new api.checker.BaseChecker(emoji);
+    emojiChecker.createError(!emojiChecker.isString, "emoji", { expected: "String", received: emojiChecker }).throw();
 
     const guild = await GuildManager.get(guildID);
-    const emoji = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis/${emojiID}`);
+    const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis/${emojiID}`);
+
+    const emoji = client.emojis.resolve(fetched.id);
 
     return emoji;
   };
 
-  getById(emojiID, callback) {
-    if (!api.checker.check(emojiID).isString()) api.checker.error("emojiId", "InvalidType", { expected: "String", received: (typeof emojiID) });
-    if (!api.checker.check(callback).isFunction()) callback = function () { };
+  /**
+   * Searches all servers for the emoji whose name is entered.
+   * @param {string} emojiName 
+   * @param {Function} callback 
+   * @returns {Function}
+   */
+  getByName(emojiName, callback = function () { }) {
+    const emojiChecker = new api.checker.BaseChecker(emojiName);
+    emojiChecker.createError(!emojiChecker.isString, "emojiName", { expected: "String", received: emojiChecker }).throw();
 
-    const emojis = (client.emojis.cache.filter((emoji) => emoji.id === emojiID).map((e) => e));
-
-    return callback(emojis);
-  };
-
-  getByName(emojiName, callback) {
-    if (!api.checker.check(emojiID).isString()) api.checker.error("emojiName", "InvalidType", { expected: "String", received: (typeof emojiName) });
-    if (!api.checker.check(callback).isFunction()) callback = function () { };
+    const callbackChecker = new api.checker.BaseChecker(callback);
+    callbackChecker.createError(!callbackChecker.isFunction, "callback", { expected: "Function", received: callbackChecker }).throw();
 
     const emojis = (client.emojis.cache.filter((emoji) => emoji.name === emojiName).map((e) => e));
 
     return callback(emojis);
   };
 
+  /**
+   * Creates a new Discord Guild Emoji.
+   * @param {string} guildID 
+   * @param {object} options 
+   * @returns {Promise<GuildEmoji>}
+   */
   async create(guildID, options = {
     name: "new_emoji",
     image: null,
     roles: []
   }) {
-    if (!api.checker.isString(guildID)) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+    const guildChecker = new api.checker.BaseChecker(guild);
+    guildChecker.createError(!guildChecker.isString, "guild", { expected: "String", received: guildChecker }).throw();
 
     const guild = await GuildManager.get(guildID);
-    const emoji = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`, {
+    const createdEmoji = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`, {
       json: {
         name: options?.name,
         image: options?.image,
@@ -85,41 +115,72 @@ export class EmojiManager {
       }
     });
 
+    const emoji = client.emojis.resolve(createdEmoji.id);
+
+    this.cache.set(emoji.id, emoji);
+
     return emoji;
   };
 
+  /**
+   * Edits a Discord Guild Emoji.
+   * @param {string} emojiID 
+   * @param {object} options 
+   * @returns 
+   */
   async edit(emojiID, options = {
     name: "new_emoji",
     roles: []
   }) {
-    if (!api.checker.check(emojiID).isString()) api.checker.error("emojiId", "InvalidType", { expected: "String", received: (typeof emojiID) });
+    const emojiChecker = new api.checker.BaseChecker(emojiID);
+    emojiChecker.createError(!emojiChecker.isString, "emojiId", { expected: "String", received: emojiChecker }).throw();
 
-    const fetchEmoji = client.emojis.resolve(emojiID);
-    const emoji = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`, {
+    const fetched = client.emojis.resolve(emojiID);
+    const editedEmoji = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetched.guild.id}/emojis/${fetched.id}`, {
       json: {
         name: options?.name,
         roles: options?.roles
       }
     });
 
+    const emoji = client.emojis.resolve(editedEmoji.id);
+
     return emoji;
   };
 
+  /**
+   * Deletes a Discord Guild Emoji.
+   * @param {string} emojiID 
+   * @returns {number}
+   */
   delete(emojiID) {
-    if (!api.checker.check(emojiID).isString()) api.checker.error("emojiId", "InvalidType", { expected: "String", received: (typeof emojiID) });
+    const emojiChecker = new api.checker.BaseChecker(emojiID);
+    emojiChecker.createError(!emojiChecker.isString, "emojiId", { expected: "String", received: emojiChecker }).throw();
 
-    const fetchEmoji = client.emojis.resolve(emojiID);
-    const emoji = DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetchEmoji.guild.id}/emojis/${fetchEmoji.id}`);
+    const fetched = client.emojis.resolve(emojiID);
+    DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${fetched.guild.id}/emojis/${fetched.id}`);
 
-    return emoji;
+    this.cache.delete(fetched.id);
+
+    return 0;
   };
 
+  /**
+   * Lists all emojis of the specified server.
+   * @param {string} guildID 
+   * @returns {Promise<GuildEmoji>[]}
+   */
   async map(guildID) {
-    if (!api.checker.check(guildID).isString()) api.checker.error("guildId", "InvalidType", { expected: "String", received: (typeof guildID) });
+    const guildChecker = new api.checker.BaseChecker(guildID);
+    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
 
     const guild = await GuildManager.get(guildID);
     const emojis = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis`);
 
-    return emojis;
+    const arrayEmojis = [];
+
+    if (emojis.length > 0) for (let index = 0; index < emojis.length; index++) arrayEmojis.push(client.emojis.resolve(emojis[index].id));
+
+    return arrayEmojis;
   };
 };

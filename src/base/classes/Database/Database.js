@@ -7,11 +7,29 @@ import { Events } from "./Events.js";
 
 import { get } from "stack-trace";
 
+import { Checker as BaseChecker } from "../Checker/Checker.js";
+const Checker = BaseChecker.BaseChecker;
+
 export class Database extends EventEmitter {
   constructor(type = "JSON", databaseOptions = { path: "../../", dir: "databases", name: "MyDatabase", debug: false }) {
     super();
 
     const { path, dir, name, debug } = databaseOptions;
+
+    const typeChecker = new Checker(type);
+    typeChecker.createError(!typeChecker.isString, "type", { expected: "String", received: typeChecker }).throw();
+
+    const pathChecker = new Checker(path);
+    pathChecker.createError(!pathChecker.isString, "path", { expected: "String", received: pathChecker }).throw();
+
+    const dirChecker = new Checker(dir);
+    dirChecker.createError(!dirChecker.isString, "dir", { expected: "String", received: dirChecker }).throw();
+
+    const nameChecker = new Checker(name);
+    nameChecker.createError(!nameChecker.isString, "name", { expected: "String", received: nameChecker }).throw();
+
+    const debugChecker = new Checker(debug);
+    debugChecker.createError(!debugChecker.isBoolean, "debug", { expected: "Boolean", received: debugChecker }).throw();
 
     this.path = path;
     this.dir = dir;
@@ -23,7 +41,7 @@ export class Database extends EventEmitter {
     const databasePath = String(fullPath).replaceAll("/", "\\");
 
     this.database = new JsonDatabase({ databasePath });
-    if (String(type).toLowerCase() === "yaml") this.database = new YamlDatabase({ databasePath });
+    if (type.toLowerCase() === "yaml") this.database = new YamlDatabase({ databasePath });
 
     this.setMaxListeners(0);
   };
@@ -33,6 +51,9 @@ export class Database extends EventEmitter {
   Events = Events;
 
   set(key = "ErqeweeDevelopment.Discord", value = "https://discord.gg/ZwhgJvXqm9") {
+    const keyChecker = new Checker(key);
+    keyChecker.createError(!keyChecker.isString, "key", { expected: "String", received: keyChecker }).throw();
+
     this.emit(this.Events.DataSaveRequest, key, value, this.name);
 
     this.database.set(key, value);
@@ -51,6 +72,9 @@ export class Database extends EventEmitter {
   };
 
   del(key = "ErqeweeDevelopment", deleteAllOptions = { enabled: false }) {
+    const keyChecker = new Checker(key);
+    keyChecker.createError(!keyChecker.isString, "key", { expected: "String", received: keyChecker }).throw();
+
     const { enabled } = deleteAllOptions;
 
     this.emit(this.Events.DataDeleteRequest, key, this.name);
@@ -70,7 +94,13 @@ export class Database extends EventEmitter {
     return { data, set: this.set };
   };
 
-  add(key = "ErqeweeDevelopment.GitLab", value = "https://gitlab.com/erqewee") {
+  add(key = "ErqeweeDevelopment.Projects.COUNT", value = 1) {
+    const keyChecker = new Checker(key);
+    keyChecker.createError(!keyChecker.isString, "key", { expected: "String", received: keyChecker }).throw();
+
+    const valueChecker = new Checker(value);
+    valueChecker.createError(!valueChecker.isBoolean, "value", { expected: "Number", received: valueChecker }).throw();
+
     this.emit(this.Events.DataAddRequest, key, value, this.name);
 
     const oldData = this.fetch(key);
@@ -90,6 +120,12 @@ export class Database extends EventEmitter {
   };
 
   sub(key = "ErqeweeDevelopment.Projects.COUNT", value = 1) {
+    const keyChecker = new Checker(key);
+    keyChecker.createError(!keyChecker.isString, "key", { expected: "String", received: keyChecker }).throw();
+
+    const valueChecker = new Checker(value);
+    valueChecker.createError(!valueChecker.isBoolean, "value", { expected: "Number", received: valueChecker }).throw();
+
     this.emit(this.Events.DataSubtractRequest, key, value, this.name);
 
     const oldData = this.fetch(key);
@@ -109,6 +145,9 @@ export class Database extends EventEmitter {
   };
 
   push(key = "ErqeweeDevelopment.Projects.Active", value = "Wyvern") {
+    const keyChecker = new Checker(key);
+    keyChecker.createError(!keyChecker.isString, "key", { expected: "String", received: keyChecker }).throw();
+
     this.emit(this.Events.DataPushRequest, key, value, this.name);
 
     const oldData = this.fetch(key);
@@ -128,6 +167,12 @@ export class Database extends EventEmitter {
   };
 
   pull(key = "ErqeweeDevelopment.Projects.Active", callback = (data) => data === "Wyvern") {
+    const keyChecker = new Checker(key);
+    keyChecker.createError(!keyChecker.isString, "key", { expected: "String", received: keyChecker }).throw();
+
+    const callbackChecker = new Checker(callback);
+    callbackChecker.createError(!callbackChecker.isFunction, "callback", { expected: "Function", received: callbackChecker }).throw();
+
     this.emit(this.Events.DataPullRequest, key, callback, this.name);
 
     const oldData = this.fetch(key);
@@ -147,6 +192,9 @@ export class Database extends EventEmitter {
   };
 
   fetch(key = "ErqeweeDevelopment", fetchAllOptions = { enabled: false, limit: 3 }) {
+    const keyChecker = new Checker(key);
+    keyChecker.createError(!keyChecker.isString, "key", { expected: "String", received: keyChecker }).throw();
+
     const { limit, enabled } = fetchAllOptions;
 
     this.emit(this.Events.DataFetchRequest, key, this.name);
@@ -172,6 +220,9 @@ export class Database extends EventEmitter {
   };
 
   has(key = "ErqeweeDevelopment") {
+    const keyChecker = new Checker(key);
+    keyChecker.createError(!keyChecker.isString, "key", { expected: "String", received: keyChecker }).throw();
+
     this.emit(this.Events.DataHasRequest, key, this.name);
 
     let available = false;
@@ -194,6 +245,9 @@ export class Database extends EventEmitter {
   };
 
   exists(key = "ErqeweeDevelopment") {
+    const keyChecker = new Checker(key);
+    keyChecker.createError(!keyChecker.isString, "key", { expected: "String", received: keyChecker }).throw();
+
     this.emit(this.Events.DataExistsRequest, key, this.name);
 
     let available = false;
@@ -216,6 +270,9 @@ export class Database extends EventEmitter {
   };
 
   filter(callback = (value, index = 0, array = []) => { }) {
+    const callbackChecker = new Checker(callback);
+    callbackChecker.createError(!callbackChecker.isFunction, "callback", { expected: "Function", received: callbackChecker }).throw();
+
     this.emit(this.Events.DataFilterRequest, callback, this.name);
 
     const filter = this.database.filter(callback);
@@ -233,6 +290,9 @@ export class Database extends EventEmitter {
   };
 
   sort(callback = (a, b) => { }) {
+    const callbackChecker = new Checker(callback);
+    callbackChecker.createError(!callbackChecker.isFunction, "callback", { expected: "Function", received: callbackChecker }).throw();
+
     this.emit(this.Events.DataSortRequest, callback, this.name);
 
     const sort = this.database.sort(callback);
@@ -250,6 +310,9 @@ export class Database extends EventEmitter {
   };
 
   toJSON(limit) {
+    const limitChecker = new Checker(limit);
+    limitChecker.createError(!limitChecker.isNumber, "limit", { expected: "Number", received: limitChecker }).throw();
+
     const json = this.database.toJSON(limit);
 
     const stack = get()[1];
