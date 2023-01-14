@@ -6,7 +6,6 @@ import { REST } from "./classes/REST.js";
 import { Survey } from "./classes/Survey.js";
 import { YouTube } from "./classes/YouTube.js";
 import { Loader } from "./classes/Loader/Loader.js";
-import { Storage } from "./classes/Storage/Storage.js";
 // CLASSES
 
 // STRUCTURES
@@ -52,6 +51,7 @@ import memberRemove from "./events/guild/memberRemove.js";
 
 import interaction from "./events/handlers/interaction.js";
 
+import password_button from "./events/interactions/password-button.js";
 import button from "./events/interactions/button.js";
 import string_menu from "./events/interactions/string_menu.js";
 import user_menu from "./events/interactions/user_menu.js";
@@ -67,7 +67,7 @@ import register from "./events/util/register.js";
 
 // EXPORTER
 export {
-  Client, Database, Checker, REST, Survey, YouTube, Loader, Storage, // CLASSES
+  Client, Database, Checker, REST, Survey, YouTube, Loader, // CLASSES
 
   Command, Handler, Event, Structure, // STRUCTURES
 
@@ -77,7 +77,7 @@ export {
   dataAddRequest, dataAdded, dataDeleteRequest, dataDeleted, dataExistsRequest, dataExisted, dataFetchRequest, dataFetched, dataHashed, dataHasRequest, dataPulled, dataPullRequest, dataPushed, dataPushRequest, dataSaved, dataSaveRequest, dataSubtracted, dataSubtractRequest, database_error, database_debug, // EVENTS > DATABASE EVENTS
   memberAdd, memberRemove, // EVENTS > GUILD EVENTS
   interaction, // EVENTS > HANDLERS
-  button, string_menu, user_menu, // EVENTS > INTERACTIONS
+  button, string_menu, user_menu, password_button, // EVENTS > INTERACTIONS
   exception, rejection, // EVENTS > PROCESS EVENTS
   message, ready, register // EVENTS > UTIL EVENTS
 };

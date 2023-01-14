@@ -19,6 +19,8 @@ import { Translations } from "../../languages/Translations.js";
 
 const dbs = new Structure().databases;
 
+import { NodeVersion } from "../../structures/base/error/Error.js";
+
 export class Loader extends EventEmitter {
   constructor(client = null, databases = [dbs.economy, dbs.general, dbs.subscribe]) {
     super();
@@ -27,6 +29,9 @@ export class Loader extends EventEmitter {
     this.databases = databases;
 
     this.setMaxListeners(0);
+
+    let required = 16;
+    if (NodeVersion.version < required) throw new NodeVersion(required, "The project is not compatible with this NodeJS version.");
   };
 
   commands = CommandsCache;
@@ -66,7 +71,11 @@ export class Loader extends EventEmitter {
         runCommandChecker.createError(!runCommandChecker.isFunction, "runner", { expected: "Function", received: handler?.[runCommand] }).throw();
 
         let runType = "on";
-        if (handler?.once) runType = "once";
+        if (handler?.once) {
+          runType = "once";
+
+          handler["type"] = null;
+        };
 
         this.client[runType](handler.name, async (...listeners) => {
           if (handler?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await handler[runCommand](...listeners);
@@ -75,7 +84,7 @@ export class Loader extends EventEmitter {
           else if (handler?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await handler[runCommand](...listeners);
           else if (handler?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await handler[runCommand](...listeners);
           else if (handler?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await handler[runCommand](...listeners);
-          
+
           else return await handler[runCommand](...listeners);
         });
 
@@ -145,7 +154,11 @@ export class Loader extends EventEmitter {
           if (event?.once) runType = "once";
 
           let base = this.client;
-          if (event?.process) base = process;
+          if (event?.process) {
+            base = process;
+
+            event["type"] = null;
+          };
 
           if (!event.database) base[runType](event.name, async (...listeners) => {
             if (event?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await event[runCommand](...listeners);
@@ -305,7 +318,7 @@ export class Loader extends EventEmitter {
       spinner.succeed("Connected to Gateway.");
     }).catch((err) => spinner.fail(`An error ocurred when connecting to gateway. | ${err}`));
 
-    return 0;
+    return;
   };
 
   #isFile(path, dir, file) {

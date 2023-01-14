@@ -1,11 +1,12 @@
-# Supported Versions
+# Versions
 
-| Version           | Supported |
+| Version           | State     |
 | ----------------- | ----------|
-| Beta Release 4    | ✅ |
-| Beta Release 3    | ✅ |
+| Release 1.0.0     | ✅ |
+| Beta Release 4    | ⚠️ |
+| Beta Release 3    | ⚠️ |
 | Beta Release 2    | ❌ |
-| Beta Release 1    | ⚠️ |
+| Beta Release 1    | ❌ |
 | Preview Release 5 | ❌ |
 | Preview Release 4 | ❌ |
 | Preview Release 3 | ❌ |
@@ -26,12 +27,25 @@
 
 # Warnings
 
-- Critical bugs have been fixed. If you are using 'Beta Release 2', upgrade to 'Beta Release 3' or 'Beta Release 4' immediately.
+- The stable version is out! If you are using versions below "Release 1.0.0", we strongly recommend that you upgrade.
 - We strongly recommend that you upgrade your version to 'Beta Release 4' for better performance.
 
 # Patch Notes
 
-> Beta Release 4 (01/11/2022)
+> Release 1.0.0 (01/14/2023)
+
+- Released to Wyvern.
+
+- <details>
+    <summary>Changes</summary>
+    <i>Storage Changed.</i>
+  </details>
+- <details>
+    <summary>Fixes</summary>
+    <i>Some fixes implemented.</i>
+  </details>
+
+> Beta Release 4 (01/11/2023)
 
 - <details>
     <summary>Changes</summary>
@@ -57,7 +71,7 @@
 
 > Beta Release 3 (12/31/2022)
 
-- [NOTE] This update includes only bug fix.
+- Bug fixes implemented.
 
 > Beta Release 2 (12/28/2022)
 

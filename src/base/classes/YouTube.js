@@ -80,8 +80,6 @@ export class YouTube {
         THUMBNAIL: `https://img.youtube.com/vi/${CODE}/hqdefault.jpg`
       };
 
-      if (!String(this.database.fetch("Subscribe.Settings.Videos.Posted")[0]?.LINK).includes(video.LINK)) this.database.push("Subscribe.Settings.Videos.Posted", video);
-
       lastVideoURL = `https://youtu.be/${CODE}`;
 
       if (String(lastVideo).includes(lastVideoURL)) return;

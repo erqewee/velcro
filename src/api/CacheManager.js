@@ -1,3 +1,3 @@
-import { Storage } from "../base/classes/Storage/Storage.js";
+import { Storage } from "@wumpjs/storage";
 
 export class CacheManager extends Storage {};

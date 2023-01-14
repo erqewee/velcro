@@ -29,6 +29,13 @@ export default class extends Command {
           .setDescription("Subscribe list")
       )
       .addSubcommand((c) =>
+        c.setName("password").setDescription("Provide password for button.")
+          .addStringOption((o) => o.setName("password").setDescription("Enter password.").setMinLength(16).setRequired(true))
+      )
+      .addSubcommand((c) =>
+        c.setName("reset").setDescription("Gets the subscriber role from users with the subscriber role.")
+      )
+      .addSubcommand((c) =>
         c.setName("set")
           .setDescription("Edit settings for subscribe system.")
           .addChannelOption((o) => o.setName("log-channel").setDescription("Provide log channel").addChannelTypes(0).setRequired(true))
@@ -40,7 +47,7 @@ export default class extends Command {
     );
   };
 
-  async execute({ interaction, member: m, channel, guild, options }) {
+  async execute({ interaction, member: m, channel, guild, options, command: c }) {
     const db = this.databases.subscribe;
 
     const config = {
@@ -51,18 +58,66 @@ export default class extends Command {
       subscribeChannel: db.fetch(`Subscribe.Settings.SubscribeChannel`)
     };
 
-    if (options.getSubcommand(false) === "set") {
-      if (!m.permissions.has("ManageGuild")) return interaction.reply({
-        embeds: [
-          new this.Embed({
-            title: `${this.client.user.username} - Abone Sistemi | Yetersiz Yetki & İzin`,
-            description: `${this.config.Emoji.State.ERROR} Abone sistemini \`Sunucuyu Yönet\` yetkisi olan birisinden ayarlamasını isteyiniz.`
-          })
-        ],
+    if (!m.roles.cache.has(config.employee) && !m.permissions.has(this.Permissions.ManageGuild)) return interaction.reply({
+      embeds: [
+        new this.Embed({
+          title: `${this.client.user.username} - Abone Sistemi | Geçersiz Yetki & İzin`,
+          description: `${this.config.Emoji.State.ERROR} Bu komutu kullanmak için yetkiniz yetmiyor.`,
+          thumbnail: {
+            url: guild?.iconURL()
+          },
+          fields: [
+            {
+              name: `${this.config.Emoji.Other.ADMIN} Gerekli Rol`,
+              value: `- \`${(await this.roles.get(guild.id, config.employee)).name}\``,
+              inline: true
+            },
+            {
+              name: `${this.config.Emoji.Other.PERMISSION} Gerekli İzin`,
+              value: `- \`Manage Guild\``,
+              inline: true
+            }
+          ]
+        })
+      ]
+    });
 
-        ephemeral: true
-      });
+    if (c === "reset") {
+      const subscribeRole = guild.roles.resolve(config.subscribe);
 
+      await interaction.reply({ content: `${this.config.Emoji.State.LOADING} Bu işlem bir kaç dakika sürebilir. Lütfen bekleyin.` });
+
+      const memberArray = db.fetch("Subscribe.Members");
+      const employeeArray = db.fetch("Subscribe.Employees");
+
+      await Promise.all(guild.members.cache.filter((member) => member.roles.cache.has(subscribeRole.id)).map((member) => {
+        const name = String(member.displayName);
+
+        if (name.startsWith("🔰")) member.setNickname(name.slice(1));
+
+        const memberEmployee = memberArray.filter((value) => value.id === member.id)[0]?.employee ?? m.id;
+        db.pull("Subscribe.Members", (data) => data.id === member.id);
+
+        const employeeData = employeeArray.filter((value) => value.id === memberEmployee)[0];
+        db.pull("Subscribe.Employees", (data) => data.id === employeeData?.id);
+
+        db.push("Subscribe.Employees", {
+          id: employeeData?.id ?? m.id,
+          count: employeeData?.count ? employeeData.count - 1 : 0,
+          date: employeeData?.date ?? this.time(Date.now(), null, { onlyNumberOutput: true })
+        });
+
+        return member.roles.remove(subscribeRole.id);
+      }));
+
+      return interaction.editReply({ content: `${this.config.Emoji.State.SUCCESS} Tamamlandı!` });
+    } else if (c === "password") {
+      const password = options.getString("password");
+
+      db.set("Subscribe.Settings.Password", password);
+
+      return interaction.reply({ content: `${this.config.Emoji.State.SUCCESS} Başarılı!`, ephemeral: true });
+    } else if (c === "set") {
       const role = options.getRole("employee").id;
       const log = options.getChannel("log-channel").id;
       const pw = options.getString("password");
@@ -74,6 +129,29 @@ export default class extends Command {
       db.set("Subscribe.Settings.LogChannel", log);
       db.set("Subscribe.Settings.SubscribeChannel", subChannel);
       db.set("Subscribe.Settings.SubscribeRole", subRole);
+
+      const notepad = await this.emojis.get(guild, "943886202547871825");
+      const emoji = {
+        name: notepad.name,
+        id: notepad.id,
+        animated: notepad.animated
+      };
+
+      const passwordButton = new this.Row({
+        components: [
+          new this.Button({
+            style: this.ButtonStyle.Secondary,
+            label: "Şifre",
+            customId: "password",
+            emoji
+          })
+        ]
+      });
+
+      if (db.has("Subscribe.Settings.PasswordButton")) {
+        const messageData = await this.client.channels.resolve("942879226346999848").messages.fetch(db.fetch("Subscribe.Settings.PasswordButton"));
+        messageData.edit({ components: [passwordButton] });
+      } else this.client.channels.resolve("942879226346999848").send({ components: [passwordButton] }).then((message) => db.set("Subscribe.Settings.PasswordButton", message.id));
 
       return interaction.reply({ content: `${this.config.Emoji.State.SUCCESS} Başarılı!`, ephemeral: true });
     };
@@ -105,7 +183,7 @@ export default class extends Command {
       ephemeral: true
     });
 
-    if (options.getSubcommand(false) === "add") {
+    if (c === "add") {
       const user = options.getUser("mention");
       const member = await guild.members.resolve(user.id);
 
@@ -126,10 +204,12 @@ export default class extends Command {
         ]
       });
 
-      if (db.has(`BlackList.Member_${member.id}`)) {
-        const time = db.fetch(`BlackList.Member_${member.id}.Date`);
-        const reason = db.fetch(`BlackList.Member_${member.id}.Reason`);
-        const author = db.fetch(`BlackList.Member_${member.id}.Employee`);
+      const checkBlackList = db.fetch("Subscribe.BlackList")?.filter((value) => value.id === member.id)[0];
+
+      if (checkBlackList?.date) {
+        const time = checkBlackList.date;
+        const reason = checkBlackList.reason;
+        const author = checkBlackList.employee;
 
         return interaction.reply({
           embeds: [
@@ -178,28 +258,29 @@ export default class extends Command {
         ]
       });
 
-
-      const date = Math.floor(Date.now() / 1000);
-      const formattedDate = `<t:${date}:R>`;
-
       member.roles.add(config.subscribe);
 
       if (interaction.channel.id === config.subscribeChannel) {
-        db.add(`Subscribe.Employee_${m.id}.Count`, 1);
-        db.set(`Subscribe.Employee_${m.id}.Date`, date);
+        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === m.id)[0];
+
+        db.pull("Subscribe.Employees", (data) => data.id === m.id);
+
+        db.push("Subscribe.Employees", {
+          id: m.id,
+          count: employeeData ? employeeData.count + 1 : 1,
+          date: this.time(Date.now(), null, { onlyNumberOutput: true })
+        });
       };
 
-      db.set(`Subscribe.Member_${member.id}`, {
-        Role: true,
-        Employee: m.id,
-        Date: date
+      db.push("Subscribe.Members", {
+        id: member.id,
+        date: this.time(Date.now(), null, { onlyNumberOutput: true }),
+        employee: m.id
       });
 
-      db.push(`Subscribe.Members`, member.id);
+      if (member.roles.highest.id == config.subscribe) member.displayName.startsWith("🔰") ? null : member.setNickname(`🔰 ${member.displayName}`);
 
-      if (member.roles.highest.id === config.subscribe) member.displayName.startsWith("🔰") ? null : member.setNickname(`🔰 ${member.displayName}`);
-
-      const subscribeCount = db.fetch(`Subscribe.Employee_${m.id}.Count`) ?? 0;
+      const subscribeCount = db.fetch(`Subscribe.Employees`)?.filter((value) => value.id === m.id)[0].count ?? 0;
 
       const subEmbed = new this.Embed({
         title: `${client.user.username} - Abone Sistemi | Rol Verildi`,
@@ -243,7 +324,7 @@ export default class extends Command {
           },
           {
             name: `${this.config.Emoji.Other.CALENDAR} Tarih`,
-            value: `- ${formattedDate}`,
+            value: `- ${this.time(Date.now())}`,
             inline: true
           }
         ],
@@ -254,7 +335,7 @@ export default class extends Command {
 
       this.client.channels.resolve((await this.channels.get(config.log)).id).send({ embeds: [logEmbed] });
       return interaction.reply({ embeds: [subEmbed] });
-    } else if (options.getSubcommand(false) === "delete") {
+    } else if (c === "delete") {
       const user = options.getUser("mention");
       const member = this.members.cache.get(user.id);
 
@@ -275,10 +356,12 @@ export default class extends Command {
         ]
       });
 
-      if (db.has(`BlackList.Member_${member.id}`)) {
-        const time = db.fetch(`BlackList.Member_${member.id}.Date`);
-        const reason = db.fetch(`BlackList.Member_${member.id}.Reason`);
-        const author = db.fetch(`BlackList.Member_${member.id}.Employee`);
+      const checkBlackList = db.fetch("Subscribe.BlackList")?.filter((value) => value.id === member.id)[0];
+
+      if (checkBlackList?.date) {
+        const time = checkBlackList.date;
+        const reason = checkBlackList.reason;
+        const author = checkBlackList.employee;
 
         if (member.roles.cache.has(config.subscribe)) {
 
@@ -328,18 +411,21 @@ export default class extends Command {
         ]
       });
 
-      const date = Math.floor(Date.now() / 1000);
-      const formattedDate = `<t:${date}:R>`;
-
       member.roles.remove(config.subscribe);
 
-      db.sub(`Subscribe.Employee_${m.id}.Count`, 1);
-      db.del(`Subscribe.Member_${member.id}`);
-      db.pull(`Subscribe.Members`, (data) => data === member.id);
+      const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === m.id)[0];
+      db.pull("Subscribe.Employees", (data) => data.id === m.id);
+      db.push("Subscribe.Employees", {
+        count: employeeData ? employeeData.count - 1 : 0,
+        date: employeeData ? employeeData.date : this.time(Date.now(), null, { onlyNumberOutput: true }),
+        id: m.id
+      });
+
+      db.pull("Subscribe.Members", (data) => data.id === member.id);
 
       if (member.roles.highest.id === config.subscribe) String(member.displayName).startsWith("🔰") ? member.setNickname(String(member.displayName).slice(1)) : null;
 
-      const subscribeCount = db.fetch(`Subscribe.Employee_${m.id}.Count`) ?? 0;
+      const subscribeCount = employeeData?.count ?? 0;
 
       const subEmbed = new this.Embed({
         title: `${client.user.username} - Abone Sistemi | Rol Alındı`,
@@ -379,7 +465,7 @@ export default class extends Command {
           },
           {
             name: `${this.config.Emoji.Other.CALENDAR} Tarih`,
-            value: `- ${formattedDate}`,
+            value: `- ${this.time(Date.now())}`,
             inline: true
           }
         ],
@@ -390,9 +476,9 @@ export default class extends Command {
 
       this.client.channels.resolve((await this.channels.get(config.log)).id).send({ embeds: [logEmbed] });
       return interaction.reply({ embeds: [subEmbed] });
-    } else if (options.getSubcommand(false) === "state") {
+    } else if (c === "state") {
       const user = options.getUser("mention");
-      const member = this.members.cache.get(user.id);
+      const member = this.client.guilds.resolve(guild.id).members.resolve(user.id);
 
       const subscribeRole = await this.roles.get(guild.id, config.subscribe);
 
@@ -403,7 +489,7 @@ export default class extends Command {
               title: `${this.client.user.username} - Abone Sistemi | Rol Mevcut Değil`,
               description: `${this.config.Emoji.State.WARNING} Bu kullanıcının \`${subscribeRole.name}\` isimli abone rolü mevcut değil!`,
               thumbnail: {
-                url: interaction.user?.avatarURL()
+                url: member?.displayAvatarURL()
               },
               fields: [
                 {
@@ -415,10 +501,11 @@ export default class extends Command {
           ]
         });
 
-        const date = db.fetch(`Subscribe.Member_${member.id}.Date`);
-        const employee = await guild.members.resolve(db.fetch(`Subscribe.Member_${member.id}.Employee`));
+        const memberData = db.fetch("Subscribe.Members")?.filter((value) => value.id === member.id)[0];
+        const date = memberData.date;
 
-        const subscribeCount = Number(db.fetch(`Subscribe.Employee_${employee.id}.Count`) ?? 0);
+        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === memberData.employee)[0];
+        const subscribeCount = Number(employeeData?.count ?? 0);
 
         const embed = new this.Embed({
           title: `${this.client.user.username} - Abone Sistemi | Kullanıcı Bilgisi`,
@@ -442,8 +529,10 @@ export default class extends Command {
 
         return interaction.reply({ embeds: [embed] });
       } else {
-        const date = db.fetch(`Subscribe.Employee_${member.id}.Date`);
-        const subscribeCount = Number(db.fetch(`Subscribe.Employee_${member.id}.Count`) ?? 0);
+        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === member.id)[0];
+
+        const date = employeeData?.date ?? this.time(Date.now(), null, { onlyNumberOutput: true });
+        const subscribeCount = Number(employeeData?.count ?? 0);
 
         const embed = new this.Embed({
           title: `${this.client.user.username} - Abone Sistemi | Görevli Bilgisi`,
@@ -467,8 +556,8 @@ export default class extends Command {
 
         return interaction.reply({ embeds: [embed] });
       };
-    } else if (options.getSubcommand(false) === "list") {
-      const data = new CacheManager();
+    } else if (c === "list") {
+      const employees = new CacheManager();
 
       await interaction.reply({ embeds: [new this.Embed({ description: `${this.config.Emoji.State.LOADING} Veriler yükleniyor...` })] });
 
@@ -479,8 +568,10 @@ export default class extends Command {
       const embeds = [];
 
       await Promise.all(guild.members.cache.filter((member) => member.roles.cache.has(config.employee)).map(async (member) => {
-        const subCount = Number(db.fetch(`Subscribe.Employee_${member.id}.Count`) ?? 0);
-        const date = db.fetch(`Subscribe.Employee_${member.id}.Date`);
+        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value?.id === member.id)[0];
+
+        const subCount = Number(employeeData?.count ?? 0);
+        const date = employeeData?.date;
 
         const user = await this.client.users.fetch(member.id);
 
@@ -506,7 +597,7 @@ export default class extends Command {
           else if (name("m")) cont = "in";
           else cont = "nin";
 
-          return data.set(member.id, {
+          return employees.set(member.id, {
             Count: subCount,
             Message: `<@${member.id}>'${cont}`,
             LastGavedRoleDate: date ? `<t:${date}:R>` : null,
@@ -516,11 +607,13 @@ export default class extends Command {
         };
       }));
 
-      await Promise.all(data.map((a) => a).sort((a, b) => b.Count - a.Count).map((data, index) => {
+      await Promise.all(employees.map((a) => a).sort((a, b) => b.Count - a.Count).map((data, index) => {
         return embeds.push(new this.Embed({
           title: `${this.client.user.username} - Abone Sistemi | Sıralama #${index + 1}`,
           description: `
-          ${this.config.Emoji.Other.USER} ${data.Member} (${data.User.tag} | ${data.Member.id})
+          ${this.config.Emoji.Other.USER} ${data.Member} 
+          ${this.config.Emoji.Other.GUILD} ${data.Member.id}
+          ${this.config.Emoji.Other.TRASH} ${data.User.tag}
 
           ${this.config.Emoji.Other.CHAT} ${data.Count}
           ${this.config.Emoji.Other.CALENDAR} ${data.LastGavedRoleDate ? data.LastGavedRoleDate : "Bilinmiyor"}

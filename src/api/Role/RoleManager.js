@@ -25,7 +25,7 @@ export class RoleManager {
     const roleChecker = new api.checker.BaseChecker(roleID);
     roleChecker.createError(!roleChecker.isString, "roleId", { expected: "String", received: roleChecker }).throw();
 
-    const guild = await GuildManager.get(guildID);
+    const guild = await GuildManager.get(client.guilds.resolve(guildID));
     const role = client.guilds.resolve(guild.id).roles.resolve(roleID);
 
     return role;

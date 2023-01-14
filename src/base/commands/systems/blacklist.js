@@ -73,7 +73,9 @@ export default class extends Command {
 
       const reason = options.getString("reason") ?? null;
 
-      if (db.fetch(`BlackList.Member_${member.id}`)) return interaction.reply({
+      const blacklistData = db.fetch("Subscribe.BlackList")?.filter((value) => value.id === member.id)[0];
+
+      if (blacklistData?.reason) return interaction.reply({
         embeds: [
           new this.Embed({
             title: `${this.client.user.username} - Kara Liste | Kara Liste Kullanıcısı`,
@@ -97,8 +99,11 @@ export default class extends Command {
         ]
       });
 
-      db.set(`BlackList.Member_${member.id}`, { State: true, Date: date, Reason: reason, Employee: m.id });
-      db.push("BlackList.Members", member.id);
+      db.push("Subscribe.BlackList", {
+        date: this.time(Date.now(), null, { onlyNumberOutput: true }),
+        reason: reason,
+        employee: m.id
+      });
 
       return interaction.reply({
         embeds: [
@@ -120,7 +125,9 @@ export default class extends Command {
     } else if (command === "delete") {
       const member = options.getUser("mention");
 
-      if (!db.fetch(`BlackList.Member_${member.id}`)) return interaction.reply({
+      const blacklistData = db.fetch("Subscribe.BlackList")?.filter((value) => value.id === member.id)[0];
+
+      if (!blacklistData?.reason) return interaction.reply({
         embeds: [
           new this.Embed({
             title: `${this.client.user.username} - Kara Liste | Kara Liste Kullanıcısı Değil`,
@@ -144,8 +151,7 @@ export default class extends Command {
         ]
       });
 
-      db.del(`BlackList.Member_${member.id}`);
-      db.pull("BlackList.Members", (data) => data === member.id);
+      db.pull("Subscribe.BlackList", (data) => data.id === member.id);
 
       return interaction.reply({
         embeds: [
@@ -167,7 +173,9 @@ export default class extends Command {
     } else if (command === "state") {
       const member = options.getUser("mention");
 
-      if (!db.fetch(`BlackList.Member_${member.id}`)) return interaction.reply({
+      const blacklistData = db.fetch("Subscribe.BlackList")?.filter((value) => value.id === member.id)[0];
+
+      if (!blacklistData?.reason) return interaction.reply({
         embeds: [
           new this.Embed({
             title: `${this.client.user.username} - Kara Liste | Kara Liste Kullanıcısı Değil`,
@@ -191,8 +199,8 @@ export default class extends Command {
         ]
       });
 
-      const reason = String(db.fetch(`BlackList.Member_${member.id}.Reason`) ?? "Sebep Belirtilmedi");
-      const employee = await (await this.client.guilds.resolve("942839259876958268")).members.resolve(String(db.fetch(`BlackList.Member_${member.id}.Employee`)));
+      const reason = String(blacklistData?.reason ?? "Sebep Belirtilmedi");
+      const employee = this.client.guilds.resolve("942839259876958268").members.resolve(String(blacklistData?.employee ?? m.id));
 
       return interaction.reply({
         embeds: [
@@ -222,26 +230,28 @@ export default class extends Command {
         ]
       });
     } else if (command === "list") {
-      const data = new CacheManager();
+      const storage = new CacheManager();
       const embeds = [];
 
       await interaction.reply({ embeds: [new this.Embed({ description: `${this.config.Emoji.State.LOADING} Veriler yükleniyor...` })] });
 
-      const blacklist = db.fetch(`BlackList.Members`);
+      const blacklist = db.fetch("Subscribe.BlackList");
       if (!blacklist || blacklist.length < 1) return interaction.editReply(`${this.config.Emoji.State.ERROR} Veri girdisi bulunamadı.`);
 
-      await Promise.all(blacklist.map(async (USER_ID, INDEX) => {
-        const user = await this.client.users.fetch(USER_ID);
+      await Promise.all(blacklist.map(async (data, INDEX) => {
+        const user = await this.client.users.fetch(data.id);
 
-        const reason = String(db.fetch(`BlackList.Member_${user.id}.Reason`) ?? "Sebep Belirtilmedi.");
-        const date = Number(db.fetch(`BlackList.Member_${user.id}.Date`));
-        const employee = this.client.guilds.resolve("942839259876958268").members.resolve(String(db.fetch(`BlackList.Member_${user.id}.Employee`)));
+        const blacklistData = blacklist.filter((value) => value.id === user.id)[0];
+
+        const reason = String(blacklistData?.reason ?? "Sebep Belirtilmedi.");
+        const date = Number(blacklistData?.date);
+        const employee = this.client.guilds.resolve("942839259876958268").members.resolve(String(blacklistData?.employee ?? m.id));
 
         await interaction.editReply({
           embeds: [
             new this.Embed({
               title: `${this.client.user.username} - Kara Liste | Sıralama Yükleniyor`,
-              description: `${this.config.Emoji.State.LOADING} Kullanıcılar alınıyor. Bu işlem uzun sürebilir.`,
+              description: `${this.config.Emoji.State.LOADING} Veri girdileri alınıyor. Bu işlem uzun sürebilir.`,
               fields: [
                 {
                   name: `${this.config.Emoji.Other.INFINITE} Tamamlandı`,
@@ -265,12 +275,13 @@ export default class extends Command {
           ]
         });
 
-        return data.set(user.id, {
+        return storage.set(user.id, {
           index: INDEX + 1,
           embed: new this.Embed({
             title: `${this.client.user.username} - Kara Liste | Sıralama #${INDEX + 1}`,
             description: `
               ${this.config.Emoji.Other.USER} ${user.tag} | ${user.id}
+              ${this.client.guilds.resolve("942839259876958268").members.resolve(user.id)?.displayName ? `${this.config.Emoji.Other.FIRE} Sunucuda Var` : `${this.config.Emoji.Other.TRASH} Sunucuda Yok`}
 
               ${this.config.Emoji.Other.ADMIN} <@${employee.id}>
               ${this.config.Emoji.Other.CALENDAR} <t:${date}:R>
@@ -292,7 +303,7 @@ export default class extends Command {
         ]
       });
 
-      await Promise.all(data.map((a) => a).sort((a, b) => a.index - b.index).map((dat) => embeds.push(dat.embed)));
+      await Promise.all(storage.map((a) => a).sort((a, b) => a.index - b.index).map((dat) => embeds.push(dat.embed)));
 
       return await this.pagination(interaction, { embeds }).catch((err) => console.log(err));
     };

@@ -78,3 +78,16 @@ export class DataLimitExceeded extends BaseError {
     this.maxLimit = maxLimit;
   };
 };
+
+const currentVersion = Number(String(process.versions.node).split(".")[0]);
+
+export class NodeVersion extends BaseError {
+  constructor(requiredVersion, message) {
+    super(message);
+
+    this.current = currentVersion;
+    this.required = requiredVersion;
+  };
+
+  static version = currentVersion;
+};

@@ -146,7 +146,7 @@ export class InviteManager {
     const storageChecker = new api.checker.BaseChecker(storage);
     storageChecker.createError(!storageChecker.isArray, "storage", { expected: "Array", received: storageChecker }).throw();
 
-    const guild = await GuildManager.get(guildID);
+    const guild = await GuildManager.get(client.guilds.resolve(guildID));
 
     const invites = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/invites`);
 

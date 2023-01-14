@@ -42,7 +42,8 @@ export default class extends Handler {
       });
 
       const guild = this.emojis.cache.get("1035523616726593547");
-      const invites = (await this.invites.map("1035197544495599616")).storage;
+      const invites = await this.invites.map("1035197544495599616");
+
       const row = new this.Row({
         components: [
           new this.Button({
@@ -81,7 +82,9 @@ export default class extends Handler {
       console.log(err);
 
       if (interaction.replied) return await interaction.followUp({ embeds: [errorEmbed], ephemeral: true, fetchReply: true }).then(async () => {
-        return client.channels.resolve((await this.channels.get("1033367989183074374")).id).send({ content: `<@&${(await this.roles.get("1031149192862777415", "1031151171202732032")).id}>`, embeds: [reportEmbed], components: [row] }).then(async (msg) => {
+        return client.channels.resolve((await this.channels.get("1033367989183074374")).id).send({ 
+          content: `<@&${(await this.roles.get("1031149192862777415", "1031151171202732032")).id}>`, embeds: [reportEmbed], components: [row] 
+        }).then(async (msg) => {
           await this.messages.pin(msg);
         });
       });

@@ -34,7 +34,7 @@ export class Client extends BaseClient {
     global.client = this;
 
     logs(this);
-    
+
     this.#connect().uptime();
   };
 

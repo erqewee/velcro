@@ -257,6 +257,7 @@ export default class BaseChecker {
     else if (type === "DATA_LIMIT_EXCEEDED") error = new DataLimitExceeded(argument, expected, fetched);
 
     const isNotUndefined = this.isNotUndefined;
+    const isNotNull = this.isNotNull;
 
     /**
      * Send the created error to the console.
@@ -265,7 +266,7 @@ export default class BaseChecker {
     function throwError() {
       if (typeof condition !== "boolean") throw new InvalidType("condition", { expected: "Boolean", received: upperFirst(typeof condition) });
 
-      if (condition && isNotUndefined) throw error;
+      if (condition && isNotUndefined && isNotNull) throw error;
     };
 
     return {

@@ -59,15 +59,15 @@ export class EmojiManager {
    * @param {string} emojiID 
    * @returns {Promise<GuildEmoji>}
    */
-  async get(guildID, emojiID) {
+  async get(guild, emojiID) {
     const guildChecker = new api.checker.BaseChecker(guild);
-    guildChecker.createError(!guildChecker.isString, "guild", { expected: "String", received: guildChecker }).throw();
+    guildChecker.createError(!guildChecker.isObject, "guild", { expected: "Object", received: guildChecker }).throw();
 
-    const emojiChecker = new api.checker.BaseChecker(emoji);
+    const emojiChecker = new api.checker.BaseChecker(emojiID);
     emojiChecker.createError(!emojiChecker.isString, "emoji", { expected: "String", received: emojiChecker }).throw();
 
-    const guild = await GuildManager.get(guildID);
-    const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/emojis/${emojiID}`);
+    const emojiGuild = await GuildManager.get(guild);
+    const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${emojiGuild.id}/emojis/${emojiID}`);
 
     const emoji = client.emojis.resolve(fetched.id);
 
