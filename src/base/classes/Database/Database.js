@@ -3,6 +3,8 @@ import chalk from "chalk";
 
 import { JsonDatabase, YamlDatabase } from "wio.db";
 
+import { readFile, writeFileSync } from "node:fs";
+
 import { Events } from "./Events.js";
 
 import { get } from "stack-trace";
@@ -323,6 +325,23 @@ export class Database extends EventEmitter {
     if (this.debug) this.emit(this.Events.Debug, path, line, column, "toJSON", this.name);
 
     return json;
+  };
+
+  backup(path) {
+    const pathChecker = new Checker(path);
+    pathChecker.createError(!pathChecker.isString, "path", { expected: "String", received: pathChecker }).throw();
+
+    const fullPath = this.database.path;
+
+    readFile(fullPath, (err, value) => {
+      if (err) throw err;
+
+      let data = JSON.parse(value);
+
+      return writeFileSync(path, `${data}`, { flag: "a+" });
+    });
+
+    this.emit(this.Events.DatabaseBackedUp, path);
   };
 
   destroy() {

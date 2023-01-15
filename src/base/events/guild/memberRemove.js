@@ -15,14 +15,19 @@ export default class extends Event {
 
     const guild = client.guilds.resolve("942839259876958268");
 
-    if (db.fetch(`Subscribe.Member_${user.id}`)) {
-      const date = Math.floor(Date.now() / 1000);
+    const fetchSubscribeData = db.fetch("Subscribe.Members")?.filter((value) => value.id === user.id)[0];
 
-      db.del(`Subscribe.Member_${user.id}`);
-      db.pull("Subscribe.Members", (data) => data === user.id);
+    if (fetchSubscribeData?.employee) {
+      const date = this.time(Date.now(), null, { onlyNumberOutput: true });
 
-      db.set(`BlackList.Member_${user.id}`, { State: true, Reason: "Automatic Process", Employee: client.user.id, Date: date });
-      db.push("BlackList.Members", user.id);
+      db.pull("Subscribe.Members", (data) => data.id === user.id);
+
+      db.push("Subscribe.BlackList", {
+        id: user.id,
+        reason: "Automatic Process",
+        employee: client.user.id,
+        date: date
+      });
 
       const embed = new this.Embed({
         title: `${client.user.username} - Kara Liste | Eklendi`,

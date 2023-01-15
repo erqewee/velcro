@@ -2,16 +2,17 @@
 
 | Version           | State     |
 | ----------------- | ----------|
-| Release 1.0.0     | ✅ |
-| Beta Release 4    | ⚠️ |
-| Beta Release 3    | ⚠️ |
+| Release 1.0.2     | ✅ |
+| Release 1.0.0     | ⚠️ |
+| Beta Release 4    | ❌ |
+| Beta Release 3    | ❌ |
 | Beta Release 2    | ❌ |
 | Beta Release 1    | ❌ |
-| Preview Release 5 | ❌ |
-| Preview Release 4 | ❌ |
-| Preview Release 3 | ❌ |
-| Preview Release 2 | ❌ |
-| Preview Release 1 | ❌ |
+| Alpha Release 5   | ❌ |
+| Alpha Release 4   | ❌ |
+| Alpha Release 3   | ❌ |
+| Alpha Release 2   | ❌ |
+| Alpha Release 1   | ❌ |
 
 ✅ Supported
 <br>
@@ -27,10 +28,26 @@
 
 # Warnings
 
-- The stable version is out! If you are using versions below "Release 1.0.0", we strongly recommend that you upgrade.
-- We strongly recommend that you upgrade your version to 'Beta Release 4' for better performance.
+- The stable version is out! If you are using versions below "Release 1.0.2", we strongly recommend that you upgrade.
 
 # Patch Notes
+
+> Release 1.0.2 (01/15/2023)
+
+- <details>
+    <summary>Changes</summary>
+    <details>
+      <summary>Subscribe System Updated</summary>
+      <i>Some fixes implemented.</i>
+    </details>
+  </details>
+- <details>
+    <summary>News</summary>
+    <details>
+      <summary>Database Updated</summary>
+      <i>Added new function. (backup)</i>
+    </details>
+  </details>
 
 > Release 1.0.0 (01/14/2023)
 
@@ -152,7 +169,7 @@
     <i>Added new functions <b>time</b>, <b>code</b>.</i>
   </details>
 
-> Preview Release 5 (12/18/2022)
+> Alpha Release 5 (12/18/2022)
 
 - <details>
     <summary>Fixes</summary>
@@ -177,7 +194,7 @@
     <i>Removed <b>Command#support</b> option. Added <b>Command#mode</b> option.</i>
   </details>
 
-> Preview Release 4 (12/12/2022)
+> Alpha Release 4 (12/12/2022)
 
 - <details>
     <summary>Fixes</summary>
@@ -215,7 +232,7 @@
   <h4>Removed <b>Database#get</b> and <b>Database#create</b>. Please use <b>Database#fetch</b> and <b>Database#constructor</b> instead.</h4>
   </details>
 
-> Preview Release 3 (12/01/2022)
+> Alpha Release 3 (12/01/2022)
 
 - <details>
     <summary>Fixes</summary>
@@ -230,7 +247,7 @@
     <i>Added database events support for Loader. (All database events available in "src/base/events/databases", 'databaseCreated'' event cannot work in events folder.)</i>
   </details>
 
-> Preview Release 2 (11/27/2022)
+> Alpha Release 2 (11/27/2022)
 
 - <details>
     <summary>New Caches</summary>
@@ -270,6 +287,6 @@
     </details>
   </details>
 
-> Preview Release (11/26/2022)
+> Alpha Release (11/26/2022)
 
 - Wyvern has been released preview version

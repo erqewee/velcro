@@ -58,7 +58,7 @@ export default class extends Command {
       subscribeChannel: db.fetch(`Subscribe.Settings.SubscribeChannel`)
     };
 
-    if (!m.roles.cache.has(config.employee) && !m.permissions.has(this.Permissions.ManageGuild)) return interaction.reply({
+    if (!m.roles.cache.has(config.employee) && !m.permissions.has(this.Permissions.ManageMessages)) return interaction.reply({
       embeds: [
         new this.Embed({
           title: `${this.client.user.username} - Abone Sistemi | Geçersiz Yetki & İzin`,
@@ -74,7 +74,7 @@ export default class extends Command {
             },
             {
               name: `${this.config.Emoji.Other.PERMISSION} Gerekli İzin`,
-              value: `- \`Manage Guild\``,
+              value: `- \`Manage Messages\``,
               inline: true
             }
           ]

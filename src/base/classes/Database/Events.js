@@ -1,4 +1,6 @@
 export const Events = {
+  DatabaseBackedUp: "databaseBackedUp",
+
   DatabaseDestroyRequest: "databaseDestroyRequest",
   DatabaseDestroyed: "databaseDestroyed",
 

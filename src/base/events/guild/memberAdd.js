@@ -4,7 +4,7 @@ import ms from "ms";
 
 export default class extends Event {
   constructor() {
-    super({ enabled: true });
+    super({ enabled: false });
 
     this.setName(this.Events.Discord.GuildMemberAdd);
   };

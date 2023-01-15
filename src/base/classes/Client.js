@@ -7,8 +7,6 @@ import { REST } from "./REST.js";
 
 import logs from "discord-logs";
 
-const app = express();
-
 export class Client extends BaseClient {
   constructor() {
     super({
@@ -16,11 +14,6 @@ export class Client extends BaseClient {
 
       intents: Object.values(Intents.Flags).filter((intent) => typeof intent === "string"),
       partials: Object.values(Partials).filter((partial) => typeof partial === "string"),
-
-      allowedMentions: {
-        parse: ["users"],
-        repliedUser: false
-      },
 
       ws: {
         compress: false,
@@ -35,13 +28,13 @@ export class Client extends BaseClient {
 
     logs(this);
 
-    this.#connect().uptime();
+    this.#connect().then(() => this.#uptime());
   };
 
   #REST = new REST(this);
   #LOADER = new Loader(this);
 
-  #connect() {
+  async #connect() {
     // this.#LOADER.on("error", ({ type, error, body }) => console.log(`[Loader] An error ocurred! In ${type}, ${error}`));
 
     this.#LOADER.once("ready", async () => {
@@ -51,28 +44,26 @@ export class Client extends BaseClient {
       // await this.#REST.PUT(storage);
     });
 
-    this.#LOADER.Setup();
+    return this.#LOADER.Setup();
+  };
 
-    const client = this;
+  #uptime(port = Math.floor(Math.random() * 9000)) {
+    const app = express();
 
-    function uptime(port = Math.floor(Math.random() * 9000)) {
-      app.get("/", (request, response) => {
-        response.statusCode = 200;
+    app.get("/", (request, response) => {
+      response.statusCode = 200;
 
-        response.send(`
-          <title>${client.user.username}'s Home</title>
-          <h1 style="color: blue;">
-          <button onclick="location.href='${client.generateInvite({ scopes: ["bot", "applications.commands"], permissions: ["Administrator"] })}'">Invite Bot</button>
-          <br><br>
-          <button onclick="location.href='https://discord.gg/HUuXnVAjbX'">Support Server</button>
-          <br>
-          <i>${client.user.tag}</i> is a multi-purpose discord bot for <a href="https://discord.gg/ZwhgJvXqm9">SkyLegend</a>. Coded with <a href="https://www.javascript.com/">JavaScript (ESM)</a>. And we used <a href="https://nodejs.org/en/about/">NodeJS (${process.version})</a> runtime.
-          </h1>`)
-      });
+      response.send(`
+        <title>${this.user.username}'s Home</title>
+        <h1 style="color: blue;">
+        <button onclick="location.href='${this.generateInvite({ scopes: ["bot", "applications.commands"], permissions: ["Administrator"] })}'">Invite Bot</button>
+        <br><br>
+        <button onclick="location.href='https://discord.gg/HUuXnVAjbX'">Support Server</button>
+        <br>
+        <i>${this.user.tag}</i> is a multi-purpose discord bot for <a href="https://discord.gg/ZwhgJvXqm9">SkyLegend</a>. Coded with <a href="https://www.javascript.com/">JavaScript (ESM)</a>. And we used <a href="https://nodejs.org/en/about/">NodeJS (${process.version})</a> runtime.
+        </h1>`)
+    });
 
-      app.listen(port);
-    };
-
-    return { uptime };
+    app.listen(port);
   };
 };
