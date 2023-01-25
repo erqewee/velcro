@@ -100,7 +100,7 @@ export default class extends Command {
       });
 
       db.push("Subscribe.BlackList", {
-        date: this.time(Date.now(), null, { onlyNumberOutput: true }),
+        date: this.time(Date.now(), { onlyNumberOutput: true }),
         reason: reason,
         employee: m.id
       });

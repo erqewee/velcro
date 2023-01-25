@@ -29,13 +29,13 @@ export default class extends Event {
     };
 
     const availableChannels = [config.subscribeChannel, "982987883344429066"];
-    const blacklist = db.fetch(`BlackList.Member_${member.id}`);
+    const blacklist = db.fetch(`Subscribe.BlackList`)?.filter((value) => value.id === member.id)[0];
 
     let mention = "";
     const embeds = [];
     const components = [];
 
-    if (!blacklist) components.push(new this.Row({
+    if (!blacklist?.employee) components.push(new this.Row({
       components: [
         new this.Button({
           style: this.ButtonStyle.Link,
@@ -47,27 +47,27 @@ export default class extends Event {
     }));
 
     if (availableChannels.includes(message.channel.id)) {
-      if (blacklist) {
-        const reason = db.fetch(`BlackList.Member_${member.id}.Reason`) ?? "Sebep Belirtilmedi.";
-        const employee = await guild.members.resolve(db.fetch(`BlackList.Member_${member.id}.Employee`));
-        const date = db.fetch(`BlackList.Member_${member.id}.Date`);
+      if (blacklist?.employee) {
+        const reason = blacklist?.reason;
+        const employee = await guild.members.resolve(blacklist?.employee);
+        const date = blacklist?.date;
 
         embeds.push(new this.Embed({
-          title: `${this.client.user.username} - Abone Sistemi | KaraListe Kullanıcısı`,
-          description: `${this.config.Emoji.Other.TRASH} Maalesef karalistede bulunuyorsun aşağıdan neden karalistede olduğun hakkında bilgi edin!`,
+          title: this.translate("data:events.util.message.blacklist.title", { variables: [{ name: "client.user.username", value: client.user.username }] }),
+          description: this.translate("data:events.util.message.blacklist.description", { variables: [{ name: "trashEmote", value: this.config.Emoji.Other.TRASH }] }),
           fields: [
             {
-              name: `${this.config.Emoji.Other.ADMIN} Yetkili`,
+              name: this.translate("data:events.util.message.blacklist.fields.employee", { variables: [{ name: "employeeEmote", value: this.config.Emoji.Other.ADMIN }] }),
               value: `- ${employee}`,
               inline: true
             },
             {
-              name: `${this.config.Emoji.Other.CALENDAR} Tarih`,
+              name: this.translate("data:events.util.message.blacklist.fields.date", { variables: [{ name: "calendarEmote", value: this.config.Emoji.Other.CALENDAR }] }),
               value: `- <t:${date}:R>`,
               inline: true
             },
             {
-              name: `${this.config.Emoji.Other.NOTEPAD} Sebep`,
+              name: this.translate("data:events.util.message.blacklist.fields.reason", { variables: [{ name: "notepadEmote", value: this.config.Emoji.Other.NOTEPAD }] }),
               value: `- ${reason}`
             }
           ],
@@ -79,38 +79,36 @@ export default class extends Event {
             url: user?.avatarURL()
           }
         }));
-      } else {
-        embeds.push(new this.Embed({
-          title: `${this.client.user.username} - Abone Sistemi`,
-          description: `Attığın Fotoğraf Eğer \`SON VIDEO\` __**DEĞİL**__ ise \`Like\`, \`Yorum\` ve \`Bildirim\` __**YOKSA**__ Abone Rolünüz __**VERİLME*Z***__ \n\n**Bilgisayar Saatinin Gözüktüğünden __EMİN OL__**`,
-          fields: [
-            {
-              name: `${this.config.Emoji.Other.YES} Rolü Ver`,
-              value: `\`/subscribe add mention:${member.id}\``
-            }
-          ],
-          author: {
-            name: `${user.tag} | ${user.id}`,
-            iconURL: guild?.iconURL()
-          },
-          thumbnail: {
-            url: member?.displayAvatarURL()
+      } else embeds.push(new this.Embed({
+        title: this.translate("data:events.util.message.subscribe.title", { variables: [{ name: "client.user.username", value: client.user.username }] }),
+        description: this.translate("data:events.util.message.subscribe.description"),
+        fields: [
+          {
+            name: this.translate("data:events.util.message.subscribe.fields.add", { variables: [{ name: "checkEmote", value: this.config.Emoji.Other.YES }] }),
+            value: `\`/subscribe add mention:${member.id}\``
           }
-        }));
-      };
+        ],
+        author: {
+          name: `${user.tag} | ${user.id}`,
+          iconURL: guild?.iconURL()
+        },
+        thumbnail: {
+          url: member?.displayAvatarURL()
+        }
+      }));
 
       if (message.channel.id === availableChannels[0]) {
         if (this.client.user.id !== "944965150358790185") return;
 
         mention = blacklist ? `<@${member.id}>` : `<@${member.id}> | <@&${config.employee}>`;
 
-        return (await client.channels.resolve(availableChannels[0])).send({ content: `${this.config.Emoji.Other.ACTIVITY} ${mention}`, embeds, components });
+        return client.channels.resolve(availableChannels[0]).send({ content: `${this.config.Emoji.Other.ACTIVITY} ${mention}`, embeds, components });
       };
 
       if (message.channel.id === availableChannels[1]) {
         mention = `<@${member.id}>`;
 
-        return (await client.channels.resolve(availableChannels[1])).send({ content: `${this.config.Emoji.Other.ACTIVITY} ${mention}`, embeds, components });
+        return client.channels.resolve(availableChannels[1]).send({ content: `${this.config.Emoji.Other.ACTIVITY} ${mention}`, embeds, components });
       };
     };
   };

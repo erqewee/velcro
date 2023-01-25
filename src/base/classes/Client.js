@@ -1,4 +1,5 @@
 import { Client as BaseClient, IntentsBitField as Intents, Partials } from "discord.js";
+import { ClusterClient } from "discord-hybrid-sharding";
 
 import express from "express";
 
@@ -6,6 +7,8 @@ import { Loader } from "./Loader/Loader.js";
 import { REST } from "./REST.js";
 
 import logs from "discord-logs";
+
+import Data from "../../config/Data.js";
 
 export class Client extends BaseClient {
   constructor() {
@@ -28,11 +31,15 @@ export class Client extends BaseClient {
 
     logs(this);
 
-    this.#connect().then(() => this.#uptime());
+    this.#connect().then((client) => this.#uptime(client));
   };
 
+  TOKEN = Data.Bot.TOKEN;
+  
   #REST = new REST(this);
   #LOADER = new Loader(this);
+
+  cluster = new ClusterClient(this);
 
   async #connect() {
     // this.#LOADER.on("error", ({ type, error, body }) => console.log(`[Loader] An error ocurred! In ${type}, ${error}`));
@@ -40,30 +47,42 @@ export class Client extends BaseClient {
     this.#LOADER.once("ready", async () => {
       const storage = this.#LOADER.storage;
 
-      // await this.#REST.PUT([]);
-      // await this.#REST.PUT(storage);
+      await this.#REST.PUT();
+      await this.#REST.PUT(storage);
     });
 
-    return this.#LOADER.Setup();
+    this.#LOADER.Setup();
+
+    return this;
   };
 
-  #uptime(port = Math.floor(Math.random() * 9000)) {
-    const app = express();
+  #uptime(client = this, port = Math.floor(Math.random() * 9000)) {
+    let connected = false;
 
-    app.get("/", (request, response) => {
-      response.statusCode = 200;
+    setInterval(() => {
+      if (client.isReady()) {
+        if (connected) return;
 
-      response.send(`
-        <title>${this.user.username}'s Home</title>
-        <h1 style="color: blue;">
-        <button onclick="location.href='${this.generateInvite({ scopes: ["bot", "applications.commands"], permissions: ["Administrator"] })}'">Invite Bot</button>
-        <br><br>
-        <button onclick="location.href='https://discord.gg/HUuXnVAjbX'">Support Server</button>
-        <br>
-        <i>${this.user.tag}</i> is a multi-purpose discord bot for <a href="https://discord.gg/ZwhgJvXqm9">SkyLegend</a>. Coded with <a href="https://www.javascript.com/">JavaScript (ESM)</a>. And we used <a href="https://nodejs.org/en/about/">NodeJS (${process.version})</a> runtime.
-        </h1>`)
-    });
+        connected = true;
 
-    app.listen(port);
+        const app = express();
+
+        app.get("/", (request, response) => {
+          response.statusCode = 200;
+
+          response.send(`
+            <title>${client.user.username}'s Home</title>
+            <h1 style="color: blue;">
+            <button onclick="location.href='${client.generateInvite({ scopes: ["bot", "applications.commands"], permissions: ["Administrator"] })}'">Invite Bot</button>
+            <br><br>
+            <button onclick="location.href='https://discord.gg/HUuXnVAjbX'">Support Server</button>
+            <br>
+            <i>${client.user.tag}</i> is a multi-purpose discord bot for <a href="https://discord.gg/ZwhgJvXqm9">SkyLegend</a>. Coded with <a href="https://www.javascript.com/">JavaScript (ESM)</a>. And we used <a href="https://nodejs.org/en/about/">NodeJS (${process.version})</a> runtime.
+            </h1>`)
+        });
+
+        app.listen(port, () => console.log(port));
+      } else if (!connected) process.exit(1);
+    }, 5000);
   };
 };

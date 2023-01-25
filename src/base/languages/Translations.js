@@ -1,4 +1,6 @@
 import { Turkish } from "./tr-TR.js";
+import { English } from "./en-US.js";
+import { Azerbaijan } from "./az-AZ.js";
 
 export class Translations {
   constructor() {};
@@ -10,19 +12,11 @@ export class Translations {
     },
     {
       code: "en-US",
-      source: {
-        data: {
-          welcomer: "Hello!"
-        }
-      }
+      source: English
     },
     {
       code: "az-AZ",
-      source: {
-        data: {
-          welcomer: "Salam!"
-        }
-      }
+      source: Azerbaijan
     }
   ];
 };

@@ -15,12 +15,12 @@ export default class extends Event {
 
     const guild = client.guilds.resolve("942839259876958268");
 
-    const user = client.users.resolve(m.id);
+    const user = await client.users.fetch(m.id);
     const member = guild.members.resolve(user.id);
     member.setNickname(db.fetch(`Guild_${guild.id}.Settings.Register.UnregisteredName`));
 
-    const accountDate = Math.floor((user?.createdAt ? user.createdAt : Date.now()) / 1000);
-    const check = user.createdAt < ms("30d");
+    const accountDate = Math.floor(this.time(user.createdAt, { onlyNumberOutput: true }));
+    const check = accountDate < this.time(ms("30d"), { onlyNumberOutput: true });
 
     const channel = client.channels.resolve(db.fetch(`Guild_${guild.id}.Settings.Register.Channel`));
 

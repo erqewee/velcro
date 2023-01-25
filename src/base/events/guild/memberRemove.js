@@ -16,12 +16,10 @@ export default class extends Event {
     const guild = client.guilds.resolve("942839259876958268");
 
     const fetchSubscribeData = db.fetch("Subscribe.Members")?.filter((value) => value.id === user.id)[0];
+    const date = this.time(Date.now(), { onlyNumberOutput: true });
 
     if (fetchSubscribeData?.employee) {
-      const date = this.time(Date.now(), null, { onlyNumberOutput: true });
-
       db.pull("Subscribe.Members", (data) => data.id === user.id);
-
       db.push("Subscribe.BlackList", {
         id: user.id,
         reason: "Automatic Process",

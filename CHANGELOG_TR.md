@@ -1,10 +1,10 @@
-## Turkish & Azerbaijan 
-- Turkish: [Click Here](https://github.com/erqewee/wyvern/blob/master/CHANGELOG_TR.md)
+## English & Azerbaijan 
+- English: [Click Here](https://github.com/erqewee/wyvern/blob/master/CHANGELOG.md)
 - Azerbaijan: [Click Here](https://github.com/erqewee/wyvern/blob/master/CHANGELOG_AZ.md)
 
-## Versions
+## Sürümler
 
-| Version           | State     |
+| Sürüm             | Durum     |
 | ----------------- | ----------|
 | Release 1.0.5     | ✅ |
 | Release 1.0.2     | ❌ |
@@ -19,211 +19,211 @@
 | Alpha Release 2   | ❌ |
 | Alpha Release 1   | ❌ |
 
-✅ Supported
+✅ Destekleniyor
 <br>
-⚠️ Deprecated
+⚠️ Kullanımdan Kaldırıldı
 <br>
-❌ Not Supported
+❌ Desteklenmiyor
 <br>
-📛 Not Working
+📛 Artık Çalışmıyor
 
-## Known Issues
+## Bilinen Sorunlar
 
-- We are investigating the issue not detecting saved changes after using the 'REBOOT' command.
+- We are investigating the issue not detecting saved D after using the 'REBOOT' command.
 
-## Warnings
+## Uyarılar
 
-- Critical fixes implemented in "Release 1.0.5" version. If you are using "Release 1.0.0" or "Release 1.0.2" we strongly recommend that you upgrade.
-- The stable version is out! If you are using versions below "Release 1.0.5", we strongly recommend that you upgrade.
+- "Release 1.0.5" sürümü ile kritik düzeltmeler uygulandı. Eğer "Release 1.0.0" veya "Release 1.0.2" sürümünü kullanıyorsanız yükseltme yapmanızı kesinlikle öneririz.
+- Kararlı sürüm çıktı! "Release 1.0.5" altındaki sürümleri kullanıyorsanız yükseltme yapmanızı kesinlikle öneririz.
 
-## Patch Notes
+## Yama Notları
 
 > Release 1.0.5 (01/23/2023)
 
 - <details>
-    <summary>Fixes</summary>
+    <summary>Düzeltmeler</summary>
     <details>
-      <summary>Subscribe System</summary>
-      <i>Critical fixes implemented.</i>
+      <summary>Abone Sistemi</summary>
+      <i>Kritik sorunlar düzeltildi ve uygulandı.</i>
     </details>
   </details>
 - <details>
-    <summary>News</summary>
+    <summary>Yenilikler</summary>
     <details>
-      <summary>Language System </summary>
-      <i>Some improves.</i>
+      <summary>Dil Sistemi</summary>
+      <i>Bazı yenilikler uygulandı.</i>
       <br>
-      <i>Added new language: Azerbaijan</i>
+      <i>Yeni Dil Eklendi: Azerbaycan</i>
       <br>
-      <i>English and Turkish languages sources are updated.</i>
+      <i>İngilizce ve Türkçe dilleri için kaynak güncellendi.</i>
       <br>
-      <i>Added variables for 'translate' function.</i>
+      <i>'translate' fonksiyonuna değişkenler eklendi.</i>
     </details>
   </details>
 
 > Release 1.0.2 (01/15/2023)
 
 - <details>
-    <summary>Changes</summary>
+    <summary>Değişiklikler</summary>
     <details>
-      <summary>Subscribe System Updated</summary>
-      <i>Some fixes implemented.</i>
+      <summary>Abone Sistemi Güncellendi</summary>
+      <i>Bazi düzeltmeler uygulandı.</i>
     </details>
   </details>
 - <details>
-    <summary>News</summary>
+    <summary>Yenilikler</summary>
     <details>
-      <summary>Database Updated</summary>
-      <i>Added new function. (backup)</i>
+      <summary>Veri Tabanı Güncellendi</summary>
+      <i>Yeni Fonksiyon Eklendi: Backup</i>
     </details>
   </details>
 
 > Release 1.0.0 (01/14/2023)
 
-- Released to Wyvern.
+- Wyvern'e yayınlandı.
 
 - <details>
-    <summary>Changes</summary>
-    <i>Storage Changed.</i>
+    <summary>Değişiklikler</summary>
+    <i>Depolama güncellendi.</i>
   </details>
 - <details>
-    <summary>Fixes</summary>
-    <i>Some fixes implemented.</i>
+    <summary>Düzeltmeler</summary>
+    <i>Bazı düzeltmeler uygulandı.</i>
   </details>
 
 > Beta Release 4 (01/11/2023)
 
 - <details>
-    <summary>Changes</summary>
+    <summary>Değişiklikler</summary>
     <details>
-      <summary>Command Updated</summary>
-      <i><b>ticket</b> command updated.</i>
+      <summary>Komutlar Güncellendi</summary>
+      <i><b>ticket</b> komutu güncellendi.</i>
     </details>
     <details>
-      <summary>Structures Updated</summary>
-      <i>Improved 'translate' function.</i>
+      <summary>Yapılar Güncellendi</summary>
+      <i>'translate' fonksiyonu yenilendi.</i>
       <br>
-      <i>Some changes.</i>
+      <i>Bazı değişiklikler uygulandı.</i>
     </details>
     <details>
-      <summary>Checkers Updated</summary>
-      <i>Improved checker.</i>
+      <summary>Kontrolcüler Güncellendi</summary>
+      <i>Kontrülcüler yenilendi.</i>
     </details>
     <details>
-      <summary>Cache Updated</summary>
-      <i>Cache is now built-in this project.</i>
+      <summary>Önbellek Güncellendi</summary>
+      <i>Önbellek artık bu proje içinde gömülü.</i>
     </details>
   </details>
 
 > Beta Release 3 (12/31/2022)
 
-- Bug fixes implemented.
+- Hata düzeltmeleri uygulandı.
 
 > Beta Release 2 (12/28/2022)
 
 - <details>
-    <summary>News</summary>
+    <summary>Yenilikler</summary>
     <details>
-      <summary>Custom Errors</summary>
-      <i>We added new custom errors. (Structure)</i>
+      <summary>Özel Hatalar</summary>
+      <i>Özel hatalar eklendi. (Yapı)</i>
     </details>
   </details>
 - <details>
-    <summary>Changes</summary>
+    <summary>Değişiklikler</summary>
   <details>
-    <summary>Database Updated</summary>
-    <i>New database functions added. (With events)</i>
+    <summary>Veri Tabanı Güncellendi</summary>
+    <i>Yeni fonksiyonlar eklendi. (Etkinlikler ile)</i>
     <br>
-    <i>Added debug mode. (Shows where functions are used.)</i>
+    <i>Debug modu eklendi. (Fonksiyonların nerede kullanıldığını gösteriyor.)</i>
   </details>
   <details>
-    <summary>Structures Updated</summary>
-    <i>If you like using functions. We added <b>setExecute</b> function.</i>
+    <summary>Yapılar Güncellendi</summary>
+    <i>'setExecute' fonksiyonu eklendi.</i>
     <br>
-    <i>Command and Event structures functions are optimized.</i>
+    <i>Komut ve Etkinlik yapıları güncellendi ve optimize edildi.</i>
   </details>
   <details>
-    <summary>Language System Updated</summary>
-    <i>Language system loader has been moved to Loader.</i>
+    <summary>Dil Sistemi Güncellendi</summary>
+    <i>Dil Sistemi yükleyicisi, Ana Yükleyiciye taşındı.</i>
     <br>
-    <i>Language system 'translate' function has been moved to 'Structure'</i>
+    <i>'translate' fonksiyonu Yapıya geçirildi.</i>
   </details>
   <details>
-    <summary>Checker Updated</summary>
-    <i>Updated with new functions. (new cool view)</i>
+    <summary>Kontrolcüler Güncellendi</summary>
+    <i>Yeni fonskiyonlar ile güncellendi. (Yeni havalı görünüm)</i>
   </details>
   <details>
-    <summary>API System Updated</summary>
-    <i>We removed promises from functions. (Not tested new functions)</i>
+    <summary>API Sistemi Güncellendi</summary>
+    <i>Fonksiyonlardan Promise kaldırıldı. (Test Edilmedi)</i>
     <br>
-    <i>Some improves.</i>
+    <i>Bazı değişiklikler uygulandı..</i>
   </details>
   <details>
-    <summary>Loader Updated</summary>
-    <i>Some optimizes.</i>
+    <summary>Yükleyici Güncellendi</summary>
+    <i>Optimize amaçlı değişiklikler yapıldı.</i>
     <br>
-    <i>Added Language Loader</i>
+    <i>Dil yükleyicisi eklendi.</i>
   </details>
   </details>
 - <details>
-    <summary>Fixes</summary>
+    <summary>Düzeltmeler</summary>
     <details>
-      <summary>Language System</summary>
-      <i>We fixed language cache.</i>
+      <summary>Dil Sistemi</summary>
+      <i>Dil önbelleğindeki sorunlar düzeltildi.</i>
     </details>
     <details>
-      <summary>Structures</summary>
-      <i>In <b>defineProperty</b> function, Minor bug fixed and applied optimizes.</i>
+      <summary>Yapılar</summary>
+      <i>'defineProperty' fonksiyonunda kritik hatalar giderildi ve optimize çalışmaları yapıldı.</i>
     </details>
   </details>
 
 > Beta Release 1 (12/23/2022)
 
 - <details>
-    <summary>Added Checker</summary>
-    <i>Includes new functions. (Integrated with Structures.)</i>
+    <summary>Kontrolcü Eklendi</summary>
+    <i>Yeni fonksiyonlar içerir. (Yapılar ile entegre edildi.)</i>
   </details>
 - <details>
     <summary>Added Exporter</summary>
     <i>We added a new exporter to 'src/base' folder. ('export.js', this file includes all events, classes, structures and helpers.)</i>
   </details>
 - <details>
-    <summary>Database Updated</summary>
-    <i>Some improves for <b>fetch</b>, <b>has</b>, <b>exists</b> functions.</i>
+    <summary>Veri Tabanı Güncellendi</summary>
+    <i>'fetch', 'has' ve 'exists' fonksiyonları için bazı iyileştirmeler yapıldı.</i>
   </details>
 - <details>
-    <summary>Structures Updated</summary>
-    <i>Added new function <b>defineProperty</b>. (You can define properties easy.)</i>
-    <br>
-    <i>Added new functions <b>time</b>, <b>code</b>.</i>
+    <summary>Yapılar Güncellendi</summary>
+    <i>Yeni fonksiyonlar eklendi: 'defineProperty', 'time' ve 'code'</i>
   </details>
 
 > Alpha Release 5 (12/18/2022)
 
 - <details>
-    <summary>Fixes</summary>
-    <i>We fixed 'Process' and 'Database' are events doesn't work.</i>
+    <summary>Düzeltmeler</summary>
+    <i>'process' ve 'database' etkinliklerinin çalışmamasına neden olan sorun giderildi.</i>
   </details>
 - <details>
-    <summary>Database Updated.</summary>
-    <i>New database events: <b>dataAddRequest</b>, <b>dataAdded</b></i>
+    <summary>Veri Tabanı Güncellendi</summary>
+    <i>Yeni etkinlikler eklendi: 'dataAddRequest', 'dataAdded'</i>
     <br>
-    <i>Database events files updated with new outputs.</i>
+    <i>Veri Tabanı etkinlik dosyaları yeni çıkışlarla güncellendi.</i>
   </details>
 - <details>
-    <summary>Structures Updated</summary>
-    <i>If you want to set 'Process', 'Once' or 'Database' property to "true", Please use "setProperty" function or "Event#modes" option.</i>
+    <summary>Yapılar Güncellendi</summary>
+    <i>Eğer 'process', 'once! veya 'database' modunu etkinliğe ayarlamak istiyorsanız 'setProperty' fonksiyonunu veya 'modes' seçeneğini kullanabilirsiniz.</i>
     <br>
-    <i><b>setProperty</b> and <b>getProperty</b> functions are updated.</i>
+    <i>'setProperty' ve 'getProperty' fonksiyonları güncellendi.</i>
     <br>
-    <i><b>setProperties</b> and <b>getProperties</b> functions are removed.</i>
+    <i>'setProperties' ve 'getProperties' fonksiyonları kaldırıldı.</i>
     <br>
-    <i>Added new functions for <b>getProperty</b>. (editProperty added, not global only this function.)</i>
+    <i>'getProperty' fonksiyonu için yeni gömülü fonksiyon eklendi.</i>
     <br>
-    <i>Removed <b>Command#support</b> option. Added <b>Command#mode</b> option.</i>
+    <i>'Command#support' seçeneği kaldırıldı. 'Command#mode' seçeneği eklendi.</i>
   </details>
 
 > Alpha Release 4 (12/12/2022)
+
+- AR4 ve Alt sürümlerinde dil desteği yoktur.
 
 - <details>
     <summary>Fixes</summary>
@@ -288,7 +288,7 @@
     <details>
       <summary>Available Events</summary>
       <i>
-       databaseCreated<br>
+       databaseCreated !<br>
        databaseDeleted<br>
        dataSaveRequest<br>
        dataSaved<br>
@@ -304,8 +304,8 @@
        dataFetched<br>
        dataGetRequest !<br>
        dataGetted !<br>
-       dataHasRequest<br>
-       dataHased<br>
+       dataHasRequest &<br>
+       dataHased &<br>
        error<br>
       </i>
       <i>

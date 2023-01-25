@@ -8,6 +8,6 @@ export default class extends Event {
   };
 
   execute(data) {
-    return this.createWebhook({ url: this.config.Data.WEBHOOKURL }).send({ content: `${data}` });
+    return this.createWebhook({ url: this.config.Data.WEBHOOK_URL }).send({ content: `${data}` });
   };
 };

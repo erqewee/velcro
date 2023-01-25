@@ -104,7 +104,7 @@ export default class extends Command {
         db.push("Subscribe.Employees", {
           id: employeeData?.id ?? m.id,
           count: employeeData?.count ? employeeData.count - 1 : 0,
-          date: employeeData?.date ?? this.time(Date.now(), null, { onlyNumberOutput: true })
+          date: employeeData?.date ?? this.time(Date.now(), { onlyNumberOutput: true })
         });
 
         return member.roles.remove(subscribeRole.id);
@@ -268,13 +268,13 @@ export default class extends Command {
         db.push("Subscribe.Employees", {
           id: m.id,
           count: employeeData ? employeeData.count + 1 : 1,
-          date: this.time(Date.now(), null, { onlyNumberOutput: true })
+          date: this.time(Date.now(), { onlyNumberOutput: true })
         });
       };
 
       db.push("Subscribe.Members", {
         id: member.id,
-        date: this.time(Date.now(), null, { onlyNumberOutput: true }),
+        date: this.time(Date.now(), { onlyNumberOutput: true }),
         employee: m.id
       });
 
@@ -417,7 +417,7 @@ export default class extends Command {
       db.pull("Subscribe.Employees", (data) => data.id === m.id);
       db.push("Subscribe.Employees", {
         count: employeeData ? employeeData.count - 1 : 0,
-        date: employeeData ? employeeData.date : this.time(Date.now(), null, { onlyNumberOutput: true }),
+        date: employeeData ? employeeData.date : this.time(Date.now(), { onlyNumberOutput: true }),
         id: m.id
       });
 
@@ -531,7 +531,7 @@ export default class extends Command {
       } else {
         const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === member.id)[0];
 
-        const date = employeeData?.date ?? this.time(Date.now(), null, { onlyNumberOutput: true });
+        const date = employeeData?.date ?? this.time(Date.now(), { onlyNumberOutput: true });
         const subscribeCount = Number(employeeData?.count ?? 0);
 
         const embed = new this.Embed({

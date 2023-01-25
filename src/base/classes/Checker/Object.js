@@ -1,18 +1,19 @@
-import Checker from "./BaseChecker.js";
-
-export class ObjectChecker extends Checker {
-  constructor(value) {
+export class ObjectChecker {
+  constructor(checker, value) {
     this.data = value;
+
+    this.checker = checker;
   };
 
   /**
    * Determines whether an object has a property with the specified name.
-   * @param {object} object 
    * @param {string} name 
    * @returns {boolean}
    */
-  hasProperty(object = {}, name) {
-    const obj = new Object(object);
+  has(name) {
+    if (this.checker.isNotObject) return false;
+
+    const obj = new Object(JSON.parse(JSON.stringify(this.data)));
 
     if (obj.hasOwnProperty(name)) return true;
     else return false;

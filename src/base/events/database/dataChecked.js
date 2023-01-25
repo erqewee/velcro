@@ -4,10 +4,10 @@ export default class extends Event {
   constructor() {
     super({ enabled: false, modes: ["Database"] });
 
-    this.setName(this.Events.Database.DataHashed);
+    this.setName(this.Events.Database.DataChecked);
   };
 
   async execute(key, data, available, name) {
-    return console.log(`[Database(${name})] Data hashed. \nKey: ${key} | Data: ${available ? data : "No data."}`);
+    return console.log(`[Database(${name})] Data checked. \nKey: ${key} | Data: ${available ? data : "No data."}`);
   };
 };

@@ -4,10 +4,10 @@ export default class extends Event {
   constructor() {
     super({ enabled: false, modes: ["Database"] });
 
-    this.setName(this.Events.Database.DataHasRequest);
+    this.setName(this.Events.Database.DataCheckRequest);
   };
 
   async execute(key, name) {
-    return console.log(`[Database(${name})] Data has request. \nKey: ${key}`);
+    return console.log(`[Database(${name})] Data check request. \nKey: ${key}`);
   };
 };

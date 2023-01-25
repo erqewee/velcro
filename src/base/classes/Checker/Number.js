@@ -1,8 +1,8 @@
-import Checker from "./BaseChecker.js";
-
-export class NumberChecker extends Checker {
-  constructor(value = 0) {
+export class NumberChecker {
+  constructor(checker, value = 0) {
     this.data = value;
+
+    this.checker = checker;
   };
 
   /** 
@@ -10,9 +10,9 @@ export class NumberChecker extends Checker {
   * @returns {boolean|null}
   */
   get isPositive() {
-    if (!this.isNumber || this.isUndefined || this.isNull) return null;
+    if (this.checker.isNotNumber || this.checker.isUndefined || this.checker.isNull) return null;
 
-    if (this.data > (-1)) return true;
+    if (this.data >= 0) return true;
     else return false;
   };
 
@@ -21,7 +21,7 @@ export class NumberChecker extends Checker {
   * @returns {boolean|null}
   */
   get isNegative() {
-    if (!this.isNumber || this.isUndefined || this.isNull) return null;
+    if (this.checker.isNotNumber || this.checker.isUndefined || this.checker.isNull) return null;
 
     if (this.data < 0) return true;
     else return false;

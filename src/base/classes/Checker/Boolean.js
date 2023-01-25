@@ -1,8 +1,8 @@
-import Checker from "./BaseChecker.js";
-
-export class BooleanChecker extends Checker {
-  constructor(value) {
+export class BooleanChecker {
+  constructor(checker, value) {
     this.data = value;
+
+    this.checker = checker;
   };
 
   /**
@@ -10,9 +10,9 @@ export class BooleanChecker extends Checker {
    * @returns {boolean}
    */
   get isFalse() {
-    if (!this.isBoolean) return false;
+    if (this.checker.isNotBoolean) return false;
 
-    if (this.data == false) return true;
+    if (this.data == false || this.data == "false") return true;
     else return false;
   };
 
@@ -21,9 +21,9 @@ export class BooleanChecker extends Checker {
    * @returns {boolean}
    */
   get isTrue() {
-    if (!this.isBoolean) return false;
+    if (this.checker.isNotBoolean) return false;
 
-    if (this.data == true) return true;
+    if (this.data == true || this.data == "true") return true;
     else return false;
   };
 };

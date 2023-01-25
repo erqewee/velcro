@@ -1,7 +1,7 @@
-import Checker from "./BaseChecker.js";
-
-export class SymbolChecker extends Checker {
-  constructor(value) {
+export class SymbolChecker {
+  constructor(checker, value) {
     this.data = value;
+
+    this.checker = checker;
   };
 };

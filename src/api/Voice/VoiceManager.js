@@ -32,7 +32,7 @@ export class VoiceManager {
   /**
    * It checks if the bot is on the voice channel on the server you specify.
    * @param {Guild} guild
-   * @returns {VoiceConnection | undefined}
+   * @returns {Promise<VoiceConnection | undefined>}
    */
   async get(guild) {
     const guildChecker = new api.checker.BaseChecker(guild);

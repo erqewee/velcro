@@ -1,20 +1,23 @@
 import { REST as Rest, Routes } from "discord.js";
 
-import { Data } from "../../config/export.js";
-
 export class REST {
   constructor(client) {
     this.client = client;
+
+    this.rest = new Rest();
+
+    this.rest.setToken(this.client.TOKEN)
   };
 
   #routes = Routes;
-  #rest = new Rest().setToken(Data.Bot.TOKEN);
 
   async PUT(body = []) {
     let completed = false;
 
-    await this.#rest.put(this.#routes.applicationGuildCommands(this.client.user?.id, "942839259876958268"), { body }).then(() => completed = true);
+    await this.rest.put(this.#routes.applicationCommands(this.client.user?.id), { body });
 
+    completed = true;
+    
     return completed;
   };
 };

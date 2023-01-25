@@ -1,13 +1,13 @@
-import Checker from "./BaseChecker.js";
-
-export class FunctionChecker extends Checker {
-  constructor(value) {
+export class FunctionChecker {
+  constructor(checker, value) {
     this.data = value;
+
+    this.checker = checker;
   };
 
   /**
    * Creates a new function.
-   * @param {Function|PromiseLike<Function>} functionCallback 
+   * @param {Function | PromiseLike<Function>} functionCallback 
    */
   newFunction(functionCallback) {
     let _function = function () { };
@@ -28,7 +28,7 @@ export class FunctionChecker extends Checker {
 
     if (typeof functionCallback !== "function") return 1;
 
-    await functionCallback(...args).then(() => code = 0).catch(() => code = 1);
+    await functionCallback(...args).catch(() => code = 1);
 
     return code;
   };

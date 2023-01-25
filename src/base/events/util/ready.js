@@ -43,7 +43,7 @@ export default class extends Event {
       activityStatusCounter++;
     }, 10000);
 
-    const date = Math.floor(Date.now() / 1000);
+    const date = this.time(Date.now(), { onlyNumberOutput: true });
 
     const client = this.client;
     const db = this.databases.subscribe;
@@ -61,7 +61,7 @@ export default class extends Event {
       subscribeChannel: db.fetch(`Subscribe.Settings.SubscribeChannel`)
     };
 
-    if (!this.connections.get(channel.guild)) this.connections.create(channel);
+    if (!await this.connections.get(channel.guild)) this.connections.create(channel);
 
     const Embed = this.Embed;
     const configDef = this.config;
@@ -70,27 +70,26 @@ export default class extends Event {
       const subscribes = db.fetch("Subscribe.Members");
       if (!subscribes || subscribes.length < 1) return;
 
-      subscribes.map(async (USER_ID) => {
-        const user = await client.users.fetch(USER_ID);
+      subscribes.map(async (data) => {
+        const user = await client.users.fetch(data.id);
 
-        if (db.fetch(`Subscribe.Member_${user.id}`) && !guild.members.cache.get(user.id)) {
-          db.del(`Subscribe.Member_${user.id}`);
-          db.pull("Subscribe.Members", (data) => data === user.id);
+        const fetchData = db.fetch("Subscribe.Members")?.filter((value) => value.id === user.id)[0];
 
-          db.set(`BlackList.Member_${user.id}`, { State: true, Reason: "Automatic Process", Employee: client.user.id, Date: date });
-          db.push("BlackList.Members", user.id);
+        if (fetchData?.employee && !guild.members.cache.get(user.id)) {
+          db.pull("Subscribe.Members", (value) => value.id === user.id);
+          db.push("Subscribe.BlackList", { id: user.id, reason: "Automatic Process", employee: client.user.id, date: date });
 
           const embed = new Embed({
-            title: `${client.user.username} - Kara Liste | Eklendi`,
-            description: `${configDef.Emoji.State.SUCCESS} Bir kullanıcı karalisteye eklendi.`,
+            title: this.translate("data:events.ready.blacklist.title", { variables: [{ name: "client.user.tag", value: client.user.tag }] }),
+            description: this.translate("data:events.ready.blacklist.description", { variables: [{ name: "successEmote", value: configDef.Emoji.State.SUCCESS }] }),
             fields: [
               {
-                name: `${configDef.Emoji.Other.ADMIN} Yetkili`,
+                name: this.translate("data:events.ready.blacklist.fields.employee", { variables: [{ name: "employeeEmote", value: configDef.Emoji.Other.ADMIN }] }),
                 value: `- ${client.user}`,
                 inline: true
               },
               {
-                name: `${configDef.Emoji.Other.CALENDAR} Tarih`,
+                name: this.translate("data:events.ready.blacklist.fields.date", { variables: [{ name: "calendarEmote", value: configDef.Emoji.Other.CALENDAR }] }),
                 value: `- <t:${date}:R>`,
                 inline: true
               }
@@ -111,18 +110,20 @@ export default class extends Event {
 
     setInterval(() => {
       guild.members.cache.map((member) => {
-        if (member.roles.highest.id === config.subscribe) member.displayName.startsWith("🔰") ? null : member.setNickname(`🔰 ${member.displayName}`);
+        if (member.roles.highest.id === config.subscribe) {
+          const name = String(member.displayName);
 
-        if (member.roles.cache.has(config.subscribe) && !db.fetch(`Subscribe.Member_${member.id}`)) {
-          db.set(`Subscribe.Member_${member.id}`, { Role: true, Employee: client.user.id, Date: date });
-          db.push("Subscribe.Members", member.id);
+          if (!name.startsWith("🔰")) member.setNickname(`🔰 ${name}`);
         };
 
-        if (!member.roles.cache.has(config.subscribe) && db.fetch(`Subscribe.Member_${member.id}`)) {
-          db.del(`Subscribe.Member_${member.id}`);
-          db.pull("Subscribe.Members", (data) => data === member.id);
+        const fetchData = db.fetch("Subscribe.Members")?.filter((data) => data.id === member.id)[0];
 
-          member.displayName.startsWith("🔰") ? member.setNickname(String(member.displayName).slice(1)) : null;
+        if (member.roles.cache.has(config.subscribe) && !fetchData?.employee) db.push("Subscribe.Members", { id: member.id, employee: client.user.id, date: date });
+        if (!member.roles.cache.has(config.subscribe) && fetchData?.employee) {
+          db.pull("Subscribe.Members", (data) => data.id === member.id);
+
+          const name = String(member.displayName);
+          if (name.startsWith("🔰")) member.setNickname(name.slice(1));
         };
       });
     }, ms("1h"));

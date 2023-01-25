@@ -6,8 +6,6 @@ import { Events as LoaderEvents } from "./Events.js";
 
 import { Structure } from "../../structures/export.js";
 
-import { Data } from "../../../config/export.js";
-
 import EventEmitter from "node:events";
 
 import ora from "ora";
@@ -16,10 +14,12 @@ import { Checker as BaseChecker } from "../Checker/Checker.js";
 const Checker = BaseChecker.BaseChecker;
 
 import { Translations } from "../../languages/Translations.js";
-
-const dbs = new Structure().databases;
+const strc = new Structure();
+const dbs = strc.databases;
 
 import { NodeVersion } from "../../structures/base/error/Error.js";
+
+const WAIT = async () => new Promise((resolve) => setTimeout(resolve, 1000));
 
 export class Loader extends EventEmitter {
   constructor(client = null, databases = [dbs.economy, dbs.general, dbs.subscribe]) {
@@ -31,7 +31,7 @@ export class Loader extends EventEmitter {
     this.setMaxListeners(0);
 
     let required = 16;
-    if (NodeVersion.version < required) throw new NodeVersion(required, "The project is not compatible with this NodeJS version.");
+    if (NodeVersion.version < required) throw new NodeVersion(required, strc.translate("data:loader.nodeError"));
   };
 
   commands = CommandsCache;
@@ -43,9 +43,14 @@ export class Loader extends EventEmitter {
 
   Events = LoaderEvents;
 
+  /**
+   * Install handlers.
+   * @param {string} runner 
+   * @returns {Promise<string[]>}
+   */
   async Handler(runner) {
     const runnerChecker = new Checker(runner);
-    runnerChecker.createError(!runnerChecker.isString, "runner", { expected: "String", received: runnerChecker }).throw();
+    runnerChecker.createError(runnerChecker.isNotString, "runner", { expected: "String" }).throw();
 
     const path = this.#resolve("./src/base/events/handlers");
 
@@ -53,12 +58,16 @@ export class Loader extends EventEmitter {
 
     const loadedHandlers = [];
 
-    const spinner = ora("Handlers Loading").start();
+    const spinner = ora(strc.translate("data:loader.handlers.loading")).start();
+
+    let total = this.#read(path).length;
 
     await Promise.all(this.#read(path).filter((file) => this.#isFile(path, "/../handlers", file) && file.endsWith(".js")).map(async (file) => {
       const handlerBase = new (await import(`../../events/handlers/${file}`)).default;
 
       if (handlerBase?.name && handlerBase?.enabled) {
+        spinner.text = strc.translate("data:loader.handlers.loading", { variables: [{ name: "loaded", value: loadedHandlers.length }, { name: "total", value: total }] });
+
         this.handlers.set(handlerBase.name, handlerBase);
 
         const handler = this.handlers.get(handlerBase.name);
@@ -68,7 +77,7 @@ export class Loader extends EventEmitter {
         else if (runner && handler?.[runner]) runCommand = runner;
 
         const runCommandChecker = new Checker(handler?.[runCommand]);
-        runCommandChecker.createError(!runCommandChecker.isFunction, "runner", { expected: "Function", received: handler?.[runCommand] }).throw();
+        runCommandChecker.createError(runCommandChecker.isNotFunction, "runner", { expected: "Function" }).throw();
 
         let runType = "on";
         if (handler?.once) {
@@ -96,7 +105,7 @@ export class Loader extends EventEmitter {
           name: handler.name,
           type: handler?.type,
           size: (path.length + 1),
-          loaded: ((loadedHandlers.length + 1) - 1)
+          loaded: (loadedHandlers.length + 1)
         };
 
         this.emit(this.Events.HandlerLoaded, body);
@@ -108,19 +117,24 @@ export class Loader extends EventEmitter {
         body: body
       });
 
-      spinner.fail(`An error ocurred when loading handlers. | ${err}`);
+      spinner.fail(strc.translate("data:loader.handlers.loadingError", { variables: [{ name: "err", value: err }] }));
     }).finally(() => {
       this.emit(this.Events.HandlersReady, loadedHandlers);
 
-      spinner.succeed("Handlers Loaded.");
+      spinner.succeed(strc.translate("data:loader.handlers.loaded", { variables: [{ name: "loaded", value: loadedHandlers.length }, { name: "total", value: total }] }));
     });
 
     return loadedHandlers;
   };
 
+  /**
+   * Install events.
+   * @param {string} runner 
+   * @returns {Promise<string[]>}
+   */
   async Event(runner) {
     const runnerChecker = new Checker(runner);
-    runnerChecker.createError(!runnerChecker.isString, "runner", { expected: "String", received: runnerChecker }).throw();
+    runnerChecker.createError(runnerChecker.isNotString, "runner", { expected: "String" }).throw();
 
     const path = this.#resolve("./src/base/events");
 
@@ -128,17 +142,22 @@ export class Loader extends EventEmitter {
 
     let body = {};
 
-    const spinner = ora("Events Loading").start();
+    const spinner = ora(strc.translate("data:loader.events.loading")).start();
+
+    let total = 0;
 
     await Promise.all(this.#read(path).filter((dir) => this.#isFolder(path, dir)).map(async (dir) => {
       if (dir === "handlers") return;
 
       const events = this.#read(`${path}/${dir}`);
+      total += events.length;
 
       await Promise.all(events.filter((file) => this.#isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
         const eventBase = new (await import(`../../events/${dir}/${file}`)).default;
 
         if (eventBase?.name && eventBase?.enabled) {
+          spinner.text = strc.translate("data:loader.events.loading", { variables: [{ name: "loaded", value: loadedEvents.length }, { name: "total", value: total }] });
+
           this.events.set(eventBase.name, eventBase);
 
           const event = this.events.get(eventBase.name);
@@ -148,7 +167,7 @@ export class Loader extends EventEmitter {
           else if (runner && event?.[runner]) runCommand = runner;
 
           const runCommandChecker = new Checker(event?.[runCommand]);
-          runCommandChecker.createError(!runCommandChecker.isFunction, "runner", { expected: "Function", received: event?.[runCommand] }).throw();
+          runCommandChecker.createError(runCommandChecker.isNotFunction, "runner", { expected: "Function" }).throw();
 
           let runType = "on";
           if (event?.once) runType = "once";
@@ -197,19 +216,24 @@ export class Loader extends EventEmitter {
         body: body
       });
 
-      spinner.fail(`An error ocurred when loading events. | ${err}`);
+      spinner.fail(strc.translate("data:loader.events.loadingError", { variables: [{ name: "err", value: err }] }));
     }).finally(() => {
       this.emit(this.Events.EventsReady, loadedEvents);
 
-      spinner.succeed("Events Loaded.");
+      spinner.succeed(strc.translate("data:loader.events.loaded", { variables: [{ name: "loaded", value: loadedEvents.length }, { name: "total", value: total }] }));
     });
 
     return loadedEvents;
   };
 
+  /**
+   * Install commands.
+   * @param {string} runner 
+   * @returns {Promise<string[]>}
+   */
   async Command(runner) {
     const runnerChecker = new Checker(runner);
-    runnerChecker.createError(!runnerChecker.isString, "runner", { expected: "String", received: runnerChecker }).throw();
+    runnerChecker.createError(runnerChecker.isNotString, "runner", { expected: "String" }).throw();
 
     const path = this.#resolve("./src/base/commands");
 
@@ -217,15 +241,20 @@ export class Loader extends EventEmitter {
 
     let body = {};
 
-    const spinner = ora("Commands Loading").start();
+    const spinner = ora(strc.translate("data:loader.commands.loading")).start();
+
+    let total = 0;
 
     await Promise.all(this.#read(path).filter((dir) => this.#isFolder(path, dir)).map(async (dir) => {
-      const commands = this.#read(`${path}/${dir}/`);
+      const commands = this.#read(`${path}/${dir}`);
+      total += commands.length;
 
       await Promise.all(commands.filter((file) => this.#isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
         const commandBase = new (await import(`../../commands/${dir}/${file}`)).default;
 
         if (commandBase?.data && commandBase?.enabled) {
+          spinner.text = strc.translate("data:loader.commands.loading", { variables: [{ name: "loaded", value: loadedCommands.length }, { name: "total", value: total }] });
+
           this.commands.set(commandBase.data.name, commandBase);
 
           const command = this.commands.get(commandBase.data.name);
@@ -253,16 +282,20 @@ export class Loader extends EventEmitter {
         body: body
       });
 
-      spinner.fail(`An error ocurred when loading commands. | ${err}`);
+      spinner.fail(strc.translate("data:loader.commands.loadingError", { variables: [{ name: "err", value: err }] }));
     }).finally(() => {
       this.emit(this.Events.CommandsReady, loadedCommands);
 
-      spinner.succeed("Commands Loaded.");
+      spinner.succeed(strc.translate("data:loader.commands.loaded", { variables: [{ name: "loaded", value: loadedCommands.length }, { name: "total", value: total }] }));
     });
 
     return loadedCommands;
   };
 
+  /**
+   * Install languages
+   * @returns {Promise<object[]>}
+   */
   async Language() {
     const loadedLanguages = [];
 
@@ -271,9 +304,14 @@ export class Loader extends EventEmitter {
     const spinner = ora("Languages Loading").start();
     const languageSource = new Translations();
 
+    let total = languageSource.Languages.length;
+
     await Promise.all(languageSource.Languages.map((lang) => {
       const { code, source } = lang;
       const directCode = String(code).split("-")[0];
+
+      const sourceChecker = new Checker(source?.data);
+      sourceChecker.createError(sourceChecker.isNotObject, "source", { expected: "Object" }).throw();
 
       this.languages.set(code, source.data);
       this.languages.set(directCode, source.data);
@@ -294,29 +332,35 @@ export class Loader extends EventEmitter {
         body: body
       });
 
-      spinner.fail(`An error ocurred when loading languages. | ${err}`);
+      spinner.fail("An error ocurred when loading languages. | {err}".replace("{err}", err));
     }).finally(() => {
       this.emit(this.Events.LanguagesReady, loadedLanguages);
 
-      spinner.succeed("Languages Loaded.");
+      spinner.succeed("Languages Loaded. ({loaded}/{total})".replace("{loaded}", loadedLanguages.length).replace("{total}", total));
     });
 
     return loadedLanguages;
   };
 
-  Setup() {
-    const spinner = ora("Connecting to Gateway...").start();
+  /**
+   * Setup all utils for bot.
+   * @returns {Promise<void>}
+   */
+  async Setup() {
+    await this.Language();
 
-    this.Language();
-    this.Event();
-    this.Handler();
-    this.Command();
+    const spinner = ora(strc.translate("data:loader.gateway.connecting")).start();
 
-    this.client.login(Data.Bot.TOKEN).then(() => {
+    await this.Event().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [{ name: "processing", value: 2 }, { name: "total", value: 5 }] }));
+    await this.Handler().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [{ name: "processing", value: 3 }, { name: "total", value: 5 }] }));
+    await WAIT();
+    await this.Command().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [{ name: "processing", value: 4 }, { name: "total", value: 5 }] }));;
+
+    await this.client.login(this.client.TOKEN).then(() => {
       this.emit("ready", 0);
 
-      spinner.succeed("Connected to Gateway.");
-    }).catch((err) => spinner.fail(`An error ocurred when connecting to gateway. | ${err}`));
+      spinner.succeed(strc.translate("data:loader.gateway.connected", { variables: [{ name: "processing", value: 5 }, { name: "total", value: 5 }] }));
+    }).catch((err) => spinner.fail(strc.translate("data:loader.gateway.connectionError", { variables: [{ name: "err", value: err }] })));
 
     return;
   };

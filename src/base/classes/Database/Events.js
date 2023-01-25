@@ -25,11 +25,8 @@ export const Events = {
   DataFetchRequest: "dataFetchRequest",
   DataFetched: "dataFetched",
 
-  DataHasRequest: "dataHasRequest",
-  DataHashed: "dataHashed",
-
-  DataExistsRequest: "dataExistsRequest",
-  DataExisted: "dataExisted",
+  DataCheckRequest: "dataCheckRequest",
+  DataChecked: "dataChecked",
 
   DataFilterRequest: "dataFilterRequest",
   DataFiltered: "dataFiltered",

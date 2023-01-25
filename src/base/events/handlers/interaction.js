@@ -1,4 +1,4 @@
-import { Handler } from "../../structures/export.js";
+import { Command, Handler } from "../../structures/export.js";
 
 export default class extends Handler {
   constructor() {
@@ -14,27 +14,38 @@ export default class extends Handler {
     const member = interaction.member;
     const channel = interaction.channel;
     const guild = interaction.guild;
-
-    const command = this.loader.commands.get(interaction.commandName);
-
-    if (command.developer && !this.checker.isOwner(member.id)) return interaction.reply({ content: `${this.config.Emoji.State.ERROR} ${member}, Are you \`${client.user.tag}\` developer?`, ephemeral: true });
-
     const options = interaction.options;
     const commandName = String(options.getSubcommand(false)).toLowerCase();
 
-    await command.execute({
-      interaction: interaction,
-      options: options,
-      member: member,
-      channel: channel,
-      guild: guild,
-      command: commandName
-    }).catch(async (err) => {
+    const command = this.loader.commands.get(interaction.commandName);
+
+    if (command.developer && !this.checker.isOwner(member.id)) return interaction.reply({
+      content: this.translate("data:events.handlers.interaction.developerMessage", {
+        variables: [
+          {
+            name: "errorEmote",
+            value: this.config.Emoji.State.ERROR
+          },
+          {
+            name: "member",
+            value: member
+          },
+          {
+            name: "client.user",
+            value: client.user
+          }
+        ]
+      }), ephemeral: true
+    });
+
+    try {
+      await command.execute({ interaction: interaction, options: options, member: member, channel: channel, guild: guild, command: commandName });
+    } catch (err) {
       const errorEmbed = new this.Embed({
-        title: `${this.config.Emoji.State.ERROR} An error ocurred.`,
-        description: `${this.config.Emoji.Other.NOTEPAD} I'm reported this error to my Developers.`,
+        title: this.translate("data:events.handlers.interaction.error.userData.title", { variables: [{ name: "errorEmote", value: this.config.Emoji.State.ERROR }] }),
+        description: this.translate("data:events.handlers.interaction.error.userData.description", { variables: [{ name: "notepadEmote", value: this.config.Emoji.Other.NOTEPAD }] }),
         footer: {
-          text: `> Please check again later...`
+          text: this.translate("data:events.handlers.interaction.error.userData.footer.text")
         },
         thumbnail: {
           url: interaction.user?.avatarURL()
@@ -50,49 +61,46 @@ export default class extends Handler {
             style: this.ButtonStyle.Link,
             label: "Support Server",
             emoji: { id: guild.id, name: guild.name, animated: guild.animated },
-            url: invites.length > 0 ? `https://discord.gg/${invites[0]}` : "https://discord.com",
+            url: invites.length > 0 ? `https://discord.gg/${invites[0].code}` : "https://discord.com",
             disabled: invites.length > 0 ? false : true
           })
         ]
       });
 
       const reportEmbed = new this.Embed({
-        title: `${this.config.Emoji.State.ERROR} An error ocurred when executing command.`,
-        description: `\`\`\`js\n${err}\`\`\``,
+        title: this.translate("data:events.handlers.interaction.error.reportData.title", { variables: [{ name: "errorEmote", value: this.config.Emoji.State.ERROR }] }),
+        description: this.translate("data:events.handlers.interaction.error.reportData.description", { variables: [{ name: "err", value: err }] }),
         fields: [
           {
-            name: `${this.config.Emoji.Other.USER} Author`,
+            name: this.translate("data:events.handlers.interaction.error.reportData.fields.author", { variables: [{ name: "userEmote", value: this.config.Emoji.Other.USER }] }),
             value: `- ${member} (${member.id})`,
             inline: true
           },
           {
-            name: `${this.config.Emoji.Other.CALENDAR} Time`,
-            value: `- <t:${Math.floor(interaction.createdTimestamp / 1000)}:R>`,
+            name: this.translate("data:events.handlers.interaction.error.reportData.fields.time", { variables: [{ name: "calendarEmote", value: this.config.Emoji.Other.CALENDAR }] }),
+            value: `- ${this.time(Date.now())}`,
             inline: true
           },
           {
-            name: `${this.config.Emoji.Other.PROTOTIP} Command`,
+            name: this.translate("data:events.handlers.interaction.error.reportData.fields.command", { variables: [{ name: "prototipEmote", value: this.config.Emoji.Other.PROTOTIP }] }),
             value: `- ${command.data.name}`,
             inline: true
           }
         ]
       });
 
-
       console.log(err);
 
-      if (interaction.replied) return await interaction.followUp({ embeds: [errorEmbed], ephemeral: true, fetchReply: true }).then(async () => {
-        return client.channels.resolve((await this.channels.get("1033367989183074374")).id).send({ 
-          content: `<@&${(await this.roles.get("1031149192862777415", "1031151171202732032")).id}>`, embeds: [reportEmbed], components: [row] 
-        }).then(async (msg) => {
-          await this.messages.pin(msg);
-        });
+      if (interaction.replied) return interaction.followUp({ embeds: [errorEmbed], ephemeral: true, fetchReply: true }).then(async () => {
+        return client.channels.resolve("1033367989183074374").send({
+          content: `<@&1031151171202732032>`, embeds: [reportEmbed], components: [row]
+        }).then((msg) => this.messages.pin(msg));
       });
       else return interaction.reply({ embeds: [errorEmbed], ephemeral: true, fetchReply: true }).then(async () => {
-        return client.channels.resolve((await this.channels.get("1033367989183074374")).id).send({ content: `<@&${(await this.roles.get("1031149192862777415", "1031151171202732032")).id}>`, embeds: [reportEmbed], components: [row] }).then(async (msg) => {
-          await this.messages.pin(msg);
-        });
+        return client.channels.resolve("1033367989183074374").send({
+          content: `<@&1031151171202732032>`, embeds: [reportEmbed], components: [row]
+        }).then((msg) => this.messages.pin(msg));
       });
-    });
+    };
   };
 };

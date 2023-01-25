@@ -36,11 +36,12 @@ export class Command extends CommandStructure {
    * @param {object|string} data 
    * @returns {object}
    */
-  toJSON(data = {}) {
-    const dataChecker = new this.checker.BaseChecker(data);
-    dataChecker.createError(!dataChecker.isObject && !dataChecker.isString, "data", { expected: ["Object", "String"], received: dataChecker }).throw();
+  toJSON(data = new this.SlashCommand()) {
+    const Command = this.Command;
 
-    const object = new Object(JSON.parse(JSON.stringify(data)));
+    if (!(data instanceof Command)) throw new Error("UNEXPECTED_BUILDER", "This builder is not a 'SlashCommand'");
+
+    const object = new Object(data);
 
     return object;
   };

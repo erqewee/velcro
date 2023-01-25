@@ -6,6 +6,14 @@ import {
   DataLimitExceeded
 } from "../../structures/base/error/Error.js";
 
+import { StringChecker } from "./String.js";
+import { BooleanChecker } from "./Boolean.js";
+import { SymbolChecker } from "./Symbol.js";
+import { ArrayChecker } from "./Array.js";
+import { FunctionChecker } from "./Function.js";
+import { ObjectChecker } from "./Object.js";
+import { NumberChecker } from "./Number.js";
+
 const upperFirst = (str = "string!") => String(str).replace(/^\w/, (c) => c.toUpperCase());
 
 export default class BaseChecker {
@@ -16,6 +24,14 @@ export default class BaseChecker {
   constructor(data) {
     this.data = data;
   };
+
+  string = new StringChecker(this, this.data);
+  boolean = new BooleanChecker(this, this.data);
+  symbol = new SymbolChecker(this, this.data);
+  array = new ArrayChecker(this, this.data);
+  function = new FunctionChecker(this, this.data);
+  object = new ObjectChecker(this, this.data);
+  number = new NumberChecker(this, this.data);
 
   /**
    * Checks if data is Boolean.
@@ -99,7 +115,7 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isUndefined() {
-    if (typeof this.data == "undefined" || this.data == "undefined") return true;
+    if (typeof this.data == "undefined" || this.data == "undefined" || this.data == undefined) return true;
     else return false;
   };
 
@@ -108,7 +124,7 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isNull() {
-    if (this.data == null || this.data == "null") return true;
+    if (this.data == null || this.data == "null" || this.data == null) return true;
     else return false;
   };
 
@@ -235,16 +251,27 @@ export default class BaseChecker {
    * Creates a new Error.
    * @param {boolean} condition 
    * @param {string} argument 
-   * @param {{errorType?: string, expected?: string, received: string | null}}
+   * @param {{errorType?: string, expected?: string, received?: string | null}} options
    * @returns {{throw: () => void}}
    */
-  createError(condition, argument, { errorType = "InvalidType", expected = "String", received }) {
+  createError(condition, argument, options = { errorType: "InvalidType", expected: "String", received: null }) {
+    const { errorType: eType, expected: e, received: r } = options;
+
+    let errorType = eType;
+    if (!errorType) errorType = "InvalidType";
+
+    let expected = e;
+    if (!expected) expected = "String";
+
+    let received = r;
+    if (!received) received = this.toString();
+
     if (typeof argument !== "string") throw new InvalidType("argument", { expected: "String", received: upperFirst(typeof argument) });
     if (typeof errorType !== "string") throw new InvalidType("type", { expected: "String", received: upperFirst(typeof errorType) });
 
     const type = (errorType.replace(/ /g, "_")).toUpperCase();
 
-    const fetched = upperFirst(received ?? this.toString());
+    const fetched = upperFirst(received);
 
     let error = new InvalidType(argument, { expected, received: fetched });
 
@@ -258,7 +285,6 @@ export default class BaseChecker {
 
     const isNotUndefined = this.isNotUndefined;
     const isNotNull = this.isNotNull;
-
     /**
      * Send the created error to the console.
      * @returns {void}
@@ -266,7 +292,7 @@ export default class BaseChecker {
     function throwError() {
       if (typeof condition !== "boolean") throw new InvalidType("condition", { expected: "Boolean", received: upperFirst(typeof condition) });
 
-      if (condition && isNotUndefined && isNotNull) throw error;
+      if (condition === true && isNotUndefined && isNotNull) throw error;
     };
 
     return {
@@ -291,8 +317,6 @@ export default class BaseChecker {
     else if (this.isObject) type = "object";
     else if (this.isSymbol) type = "symbol";
 
-    type = (upperFirstChar ? upperFirst(type) : type);
-
-    return type;
+    return (upperFirstChar ? upperFirst(type) : type);
   };
 };

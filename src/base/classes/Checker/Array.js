@@ -1,18 +1,18 @@
-import Checker from "./BaseChecker.js";
-
-export class ArrayChecker extends Checker {
-  constructor(value = []) {
+export class ArrayChecker {
+  constructor(checker, value = []) {
     this.data = value;
+
+    this.checker = checker;
   };
 
   /**
    * Determines whether an array includes a certain element, returning true or false as appropriate.
    * @param {string} element The element to search for.
-   * @param {number} index The position in this array at which to begin searching for searchElement.
+   * @param {number?} index The position in this array at which to begin searching for element.
    * @returns {boolean}
    */
   includes(element, index) {
-    if (!this.isArray || this.isUndefined || this.isNull) return false;
+    if (this.checker.isNotArray || this.checker.isUndefined || this.checker.isNull) return false;
 
     if (this.data.includes(element, index)) return true;
     else return false;
@@ -26,7 +26,7 @@ export class ArrayChecker extends Checker {
   push(...items) {
     const array = [];
 
-    if (!this.isArray || this.isUndefined || this.isNull) return array;
+    if (this.checker.isNotArray || this.checker.isUndefined || this.checker.isNull) return array;
 
     for (let index = 0; index < items.length; index++) array.push(items[index]);
 
@@ -61,12 +61,12 @@ export class ArrayChecker extends Checker {
 
   /**
    * Converts array to readable object.
-   * @returns {object}
+   * @returns {object | false}
    */
   toJSON() {
     let body = {};
 
-    if (!this.isArray || this.isUndefined || this.isNull) return false;
+    if (this.isNotArray || this.checker.isUndefined || this.checker.isNull) return false;
 
     for (let index = 0; index < this.data.length; index++) body[array[index]] = array[index];
 

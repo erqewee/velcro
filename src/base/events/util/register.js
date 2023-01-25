@@ -32,20 +32,20 @@ export default class extends Event {
       const fetchRegCount = db.fetch(`Guild_${guild.id}.Register.Employee_${interaction.user.id}.Number`);
 
       const embed = new this.Embed({
-        title: `${client.user.username} - ${this.translate("data:events.register.title")}`,
+        title: `${client.user.username} - ${this.translate("data:events.util.register.title")}`,
         fields: [
           {
-            name: `${this.config.Emoji.Other.USER} ${this.translate("data:events.register.user")}`,
+            name: `${this.config.Emoji.Other.USER} ${this.translate("data:events.util.register.user")}`,
             value: `- ${member}`,
             inline: true
           },
           {
-            name: `${this.config.Emoji.Other.NOTEPAD} ${this.translate("data:events.register.name")}`,
+            name: `${this.config.Emoji.Other.NOTEPAD} ${this.translate("data:events.util.register.name")}`,
             value: `- ${name}`,
             inline: true
           },
           {
-            name: `${this.config.Emoji.Other.USER} ${this.translate("data:events.register.employee")}`,
+            name: `${this.config.Emoji.Other.USER} ${this.translate("data:events.util.register.employee")}`,
             value: `- ${interaction.user}`,
             inline: true
           },
@@ -54,7 +54,7 @@ export default class extends Event {
           url: interaction.user?.avatarURL()
         },
         footer: {
-          text: `${interaction.user.tag}, ${this.translate("data:events.register.totalRegisterCount")} ${fetchRegCount}`
+          text: this.translate("data:events.util.register.totalRegisterCount", { variables: [{ name: "count", value: fetchRegCount }, { name: "user.tag", value: interaction.user.tag }] })
         }
       });
 
@@ -63,7 +63,7 @@ export default class extends Event {
           components: [
             new this.Button({
               style: this.ButtonStyle.Success,
-              label: this.translate("data:events.register.editMemberName"),
+              label: this.translate("data:events.util.register.editMemberName"),
               customId: "registerBtn-editMemberName",
               disabled: true
             })

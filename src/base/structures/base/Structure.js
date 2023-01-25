@@ -1,4 +1,4 @@
-import Discord,  {
+import Discord, {
   ButtonStyle, ChannelType, PermissionsBitField,
   EmbedBuilder, StringSelectMenuBuilder,
   UserSelectMenuBuilder, ButtonBuilder,
@@ -35,8 +35,6 @@ import lodash from "lodash";
 const { get } = lodash;
 
 export class Structure {
-  constructor() { };
-
   client = global.client;
 
   Embed = EmbedBuilder;
@@ -118,13 +116,13 @@ export class Structure {
    */
   deprecate(functionStructure = function () { }, options = { name: "myCoolFunction()", code: 0, use: "myCoolGoldFunction()" }) {
     const structureChecker = new Checker.BaseChecker(functionStructure);
-    structureChecker.createError(!structureChecker.isFunction, "structure", "InvalidType", { expected: "Function", received: structureChecker }).throw();
+    structureChecker.createError(structureChecker.isNotFunction, "structure", "InvalidType", { expected: "Function" }).throw();
 
     const nameChecker = new Checker.BaseChecker(options?.name);
-    nameChecker.createError(!nameChecker.isString, "options#name", "InvalidType", { expected: "String", received: nameChecker });
+    nameChecker.createError(nameChecker.isNotString, "options#name", "InvalidType", { expected: "String" });
 
     const codeChecker = new Checker.BaseChecker(options?.code);
-    codeChecker.createError(!codeChecker.isNumber, "options#code", "InvalidType", { expected: "Number", received: codeChecker });
+    codeChecker.createError(codeChecker.isNotNumber, "options#code", "InvalidType", { expected: "Number" });
 
     const deprecateFunction = deprecated(functionStructure, `${options.name.endsWith("()") ? options.name : options.name + "()"} is deprecated. Please use ${options.use.endsWith("()") ? options.use : options.use + "()"} instead.`, String(code));
 
@@ -135,20 +133,20 @@ export class Structure {
    * Transform time.
    * @param {number} unixCode 
    * @param {string} format 
-   * @param {{onlyNumberOutput: boolean}} options 
+   * @param {{format?: string, onlyNumberOutput?: boolean}} options 
    * @returns {string | number}
    */
-  time(unixCode = Date.now(), format, options = { onlyNumberOutput: false }) {
+  time(unixCode = Date.now(), options = { format: "R", onlyNumberOutput: false }) {
+    const { format, onlyNumberOutput: OnO } = options;
+
     const unixCodeChecker = new Checker.BaseChecker(unixCode);
-    unixCodeChecker.createError(!unixCodeChecker.isNumber, "unixCode", "InvalidType", { expected: "Number", received: unixCodeChecker }).throw();
+    unixCodeChecker.createError(unixCodeChecker.isNotNumber, "unixCode", "InvalidType", { expected: "Number" }).throw();
 
     const formatChecker = new Checker.BaseChecker(format);
-    formatChecker.createError(!formatChecker.isString, "format", "InvalidType", { expected: "String", received: formatChecker }).throw();
+    formatChecker.createError(formatChecker.isNotString, "format", "InvalidType", { expected: "String" }).throw();
 
     const optionsChecker = new Checker.BaseChecker(options);
-    optionsChecker.createError(!optionsChecker.isObject, "options", "InvalidType", { expected: "Object", received: optionsChecker }).throw();
-
-    const { onlyNumberOutput: OnO } = options;
+    optionsChecker.createError(optionsChecker.isNotObject, "options", "InvalidType", { expected: "Object" }).throw();
 
     let formattedTime = Math.floor(unixCode / 1000);
 
@@ -175,10 +173,10 @@ export class Structure {
    */
   code(text = "console.log('Hello World!');", fType = "JS") {
     const textChecker = new Checker.BaseChecker(text);
-    textChecker.createError(!textChecker.isString, "text", "InvalidType", { expected: "String", received: textChecker }).throw();
+    textChecker.createError(textChecker.isNotString, "text", "InvalidType", { expected: "String" }).throw();
 
     const typeChecker = new Checker.BaseChecker(fType);
-    typeChecker.createError(!typeChecker.isString, "type", "InvalidType", { expected: "String", received: typeChecker }).throw();
+    typeChecker.createError(typeChecker.isNotString, "type", "InvalidType", { expected: "String" }).throw();
 
     const content = String(text);
     let type = String(fType).trim().toLowerCase();
@@ -191,22 +189,33 @@ export class Structure {
   /**
    * Translate the entered string.
    * @param {string} fKey 
-   * @param {string} locate 
+   * @param {{locate: string, variables: { name: string, value: any }[]}} options 
    * @returns {string}
    */
-  translate(fKey = null, locate = "en-US") {
+  translate(fKey, options = { locate: Data.LANG, variables: [] }) {
+    let key = fKey;
+
+    const { locate: l, variables: v } = options;
+
+    let locate = l;
+    if (!locate) locate = Data.LANG;
+
+    let variables = v;
+    if (!variables) variables = [];
+
     const keyChecker = new Checker.BaseChecker(fKey);
-    keyChecker.createError(!keyChecker.isString, "key", "InvalidType", { expected: "String" }).throw();
+    keyChecker.createError(keyChecker.isNotString, "key", "InvalidType", { expected: "String" }).throw();
 
     const locateChecker = new Checker.BaseChecker(locate);
-    locateChecker.createError(!locateChecker.isString, "locate", "InvalidType", { expected: "String" }).throw();
+    locateChecker.createError(locateChecker.isNotString, "locate", "InvalidType", { expected: "String" }).throw();
 
-    const key = String(fKey).trim();
+    const variableChecker = new Checker.BaseChecker(variables);
+    variableChecker.createError(variableChecker.isNotArray, "variable", "InvalidType", { expected: "Array" }).throw();
 
-    const requestedPathFormat = /^[a-z]+:[a-z]+(\.[a-z]+){0,10}$/;
+    const requestedPathFormat = /^[a-z]+:[a-z]+(\.[a-z]+){0,15}$/;
     const requestedLocateFormat = /^[a-z]{2}(?:-[A-Z]{2})?$/;
-    
-    const checker = new Checker.BaseChecker(0);
+
+    const checker = new Checker.BaseChecker(" ");
 
     checker.createError(!key.match(requestedPathFormat), "key", "Not Requested Format", { expected: ["data:events", "data:examples.source"], received: (key) }).throw();
     checker.createError(!locate.match(requestedLocateFormat), "locate", "Not Requested Format", { expected: ["az-AZ", "tr", "xx", "xx-XX"], received: (locate) }).throw();
@@ -220,9 +229,19 @@ export class Structure {
     const translationSource = get(object, key.slice(5));
 
     const sourceControlChecker = new Checker.BaseChecker(translationSource);
-    sourceControlChecker.createError(sourceControlChecker.isUndefined(), "locate", "Language Not Found", { received: key }).throw();
+    sourceControlChecker.createError(sourceControlChecker.isUndefined, "locate", "Language Not Found", { received: key }).throw();
 
-    const translation = String(translationSource);
+    let translation = String(translationSource);
+    for (let index = 0; index < variables.length; index++) {
+      const variable = variables[index];
+
+      const variableNameChecker = new Checker.BaseChecker(variable?.name);
+      variableNameChecker.createError(variableNameChecker.isNotString, "variable#name", "Not Found").throw();
+
+      checker.createError(!translation.includes(`{${variable.name}}`), "variable", "Not Found").throw();
+
+      translation = translation.replaceAll(`{${variable.name}}`, variable?.value ?? undefined);
+    };
 
     return translation;
   };
@@ -233,7 +252,7 @@ export class Structure {
    */
   first(string = "Hello World!") {
     const stringChecker = new Checker.BaseChecker(string);
-    stringChecker.createError(!stringChecker.isString, "string", "InvalidType", { expected: "String", received: stringChecker }).throw();
+    stringChecker.createError(stringChecker.isNotString, "string", "InvalidType", { expected: "String" }).throw();
 
     let firstCharacter;
 
@@ -270,7 +289,7 @@ export class Structure {
    */
   last(string = "Hello World!") {
     const stringChecker = new Checker.BaseChecker(string);
-    stringChecker.createError(!stringChecker.isString, "string", "InvalidType", { expected: "String", received: stringChecker }).throw();
+    stringChecker.createError(stringChecker.isNotString, "string", "InvalidType", { expected: "String" }).throw();
 
     const lastCharacter = string.substring(0, (string.length - 1)) + string[(string.length - 1)];
 

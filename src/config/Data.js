@@ -7,5 +7,7 @@ export default {
         Developers: ["744835491643260988"]
     },
 
-    WEBHOOKURL: process.env.WEBHOOK
+    WEBHOOK_URL: process.env.WEBHOOK,
+
+    LANG: "en-US"
 };
