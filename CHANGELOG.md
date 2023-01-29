@@ -5,7 +5,8 @@
 ## Versions
 
 | Version           | State     |
-| ----------------- | ----------|
+| ----------------- | --------- |
+| Release 1.0.9     | ✅ |
 | Release 1.0.5     | ✅ |
 | Release 1.0.2     | ❌ |
 | Release 1.0.0     | ❌ |
@@ -29,14 +30,30 @@
 
 ## Known Issues
 
-- We are investigating the issue not detecting saved changes after using the 'REBOOT' command.
+- We are investigating an issue where changes are not saving after using the command in subcommands of the 'REBOOT' command.
 
 ## Warnings
 
-- Critical fixes implemented in "Release 1.0.5" version. If you are using "Release 1.0.0" or "Release 1.0.2" we strongly recommend that you upgrade.
-- The stable version is out! If you are using versions below "Release 1.0.5", we strongly recommend that you upgrade.
+- Critical fixes implemented in "Release 1.0.5" version. If you are using "Release 1.0.2" or "Lower". We strongly recommend that you upgrade.
 
 ## Patch Notes
+
+> Release 1.0.9 (01/27/2023)
+
+- <details>
+    <summary>News</summary>
+    <i>This update does not contain any innovations.</i>
+  </details>
+- <details>
+    <summary>Changes</summary>
+    <i>'Reboot' command updated.</i>
+    <br>
+    <i>Loader updated. (Some improves.)</i>
+  </details>
+- <details>
+    <summary>Fixes</summary>
+    <i>The problem that caused the data entered to the Checker to not appear in other parts of the Checker (string, function, array etc.) has been fixed.</i>
+  </details>
 
 > Release 1.0.5 (01/23/2023)
 

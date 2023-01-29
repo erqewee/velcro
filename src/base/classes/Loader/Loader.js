@@ -22,8 +22,8 @@ import { NodeVersion } from "../../structures/base/error/Error.js";
 const WAIT = async () => new Promise((resolve) => setTimeout(resolve, 1000));
 
 export class Loader extends EventEmitter {
-  constructor(client = null, databases = [dbs.economy, dbs.general, dbs.subscribe]) {
-    super();
+  constructor(client = null, databases = [ dbs.economy, dbs.general, dbs.subscribe ]) {
+    super({ captureRejections: true });
 
     this.client = client;
     this.databases = databases;
@@ -46,190 +46,190 @@ export class Loader extends EventEmitter {
   /**
    * Install handlers.
    * @param {string} runner 
-   * @returns {Promise<string[]>}
+   * @returns {Promise<void>}
    */
   async Handler(runner) {
     const runnerChecker = new Checker(runner);
     runnerChecker.createError(runnerChecker.isNotString, "runner", { expected: "String" }).throw();
 
-    const path = this.#resolve("./src/base/events/handlers");
+    const path = this.#resolve("./src/base/utils/handlers");
 
     let body = {};
 
-    const loadedHandlers = [];
-
     const spinner = ora(strc.translate("data:loader.handlers.loading")).start();
 
-    let total = this.#read(path).length;
+    const source = this.#read(path).filter((file) => this.#isFile(`${path}/${file}`) && file.endsWith(".js"));
 
-    await Promise.all(this.#read(path).filter((file) => this.#isFile(path, "/../handlers", file) && file.endsWith(".js")).map(async (file) => {
-      const handlerBase = new (await import(`../../events/handlers/${file}`)).default;
+    let total = source.length;
+    let loaded = 0;
 
-      if (handlerBase?.name && handlerBase?.enabled) {
-        spinner.text = strc.translate("data:loader.handlers.loading", { variables: [{ name: "loaded", value: loadedHandlers.length }, { name: "total", value: total }] });
+    for (let index = 0; index < source.length; index++) {
+      const file = source[ index ];
 
-        this.handlers.set(handlerBase.name, handlerBase);
+      await (import(`../../utils/handlers/${file}`)).then((handlerSource) => {
+        const handler = new (handlerSource).default();
 
-        const handler = this.handlers.get(handlerBase.name);
+        if (handler?.name && handler?.enabled) {
+          this.handlers.set(handler.name, handler);
 
-        let runCommand = "execute";
-        if (handler?.run) runCommand = "run";
-        else if (runner && handler?.[runner]) runCommand = runner;
+          const fetchErrors = (error) => handler.error({ error });
 
-        const runCommandChecker = new Checker(handler?.[runCommand]);
-        runCommandChecker.createError(runCommandChecker.isNotFunction, "runner", { expected: "Function" }).throw();
+          let runCommand = "execute";
+          if (handler?.run) runCommand = "run";
+          else if (runner && handler?.[ runner ]) runCommand = runner;
 
-        let runType = "on";
-        if (handler?.once) {
-          runType = "once";
+          const runCommandChecker = new Checker(handler?.[ runCommand ]);
+          runCommandChecker.createError(runCommandChecker.isNotFunction, "runner", { expected: "Function" }).throw();
 
-          handler["type"] = null;
+          let runType = "on";
+          if (handler?.once) runType = "once";
+
+          this.client[ runType ](handler.name, async (...listeners) => {
+            if (handler?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await handler[ runCommand ](...listeners).catch(fetchErrors);
+            else if (handler?.type === "StringMenu" && listeners.map((listener) => listener?.customId && listener.isStringSelectMenu())) return await handler[ runCommand ](...listeners).catch(fetchErrors);
+            else if (handler?.type === "Button" && listeners.map((listener) => listener?.customId && listener.isButton())) return await handler[ runCommand ](...listeners).catch(fetchErrors);
+            else if (handler?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await handler[ runCommand ](...listeners).catch(fetchErrors);
+            else if (handler?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await handler[ runCommand ](...listeners).catch(fetchErrors);
+            else if (handler?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await handler[ runCommand ](...listeners).catch(fetchErrors);
+
+            else return await handler[ runCommand ](...listeners).catch(fetchErrors);
+          });
+
+          loaded++;
+          spinner.text = strc.translate("data:loader.handlers.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
+
+          body = {
+            path: path,
+            file: file,
+            name: handler.name,
+            type: handler?.type,
+            total: total,
+            loaded: loaded
+          };
+
+          this.emit(this.Events.HandlerLoaded, body);
         };
-
-        this.client[runType](handler.name, async (...listeners) => {
-          if (handler?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await handler[runCommand](...listeners);
-          else if (handler?.type === "StringMenu" && listeners.map((listener) => listener?.customId && listener.isStringSelectMenu())) return await handler[runCommand](...listeners);
-          else if (handler?.type === "Button" && listeners.map((listener) => listener?.customId && listener.isButton())) return await handler[runCommand](...listeners);
-          else if (handler?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await handler[runCommand](...listeners);
-          else if (handler?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await handler[runCommand](...listeners);
-          else if (handler?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await handler[runCommand](...listeners);
-
-          else return await handler[runCommand](...listeners);
+      }).catch((err) => {
+        this.emit(this.Events.Error, {
+          type: "HANDLER",
+          error: err,
+          body: body
         });
 
-        loadedHandlers.push(handler.name);
-
-        body = {
-          path: path,
-          file: file,
-          name: handler.name,
-          type: handler?.type,
-          size: (path.length + 1),
-          loaded: (loadedHandlers.length + 1)
-        };
-
-        this.emit(this.Events.HandlerLoaded, body);
-      };
-    })).catch((err) => {
-      this.emit(this.Events.Error, {
-        type: "HANDLER",
-        error: err,
-        body: body
+        spinner.fail(strc.translate("data:loader.handlers.loadingError", { variables: [ { name: "err", value: err } ] }));
       });
+    };
 
-      spinner.fail(strc.translate("data:loader.handlers.loadingError", { variables: [{ name: "err", value: err }] }));
-    }).finally(() => {
-      this.emit(this.Events.HandlersReady, loadedHandlers);
+    this.emit(this.Events.HandlersReady, loaded, total);
 
-      spinner.succeed(strc.translate("data:loader.handlers.loaded", { variables: [{ name: "loaded", value: loadedHandlers.length }, { name: "total", value: total }] }));
-    });
+    spinner.succeed(strc.translate("data:loader.handlers.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
 
-    return loadedHandlers;
+    return void total;
   };
 
   /**
    * Install events.
    * @param {string} runner 
-   * @returns {Promise<string[]>}
+   * @returns {Promise<void>}
    */
   async Event(runner) {
     const runnerChecker = new Checker(runner);
     runnerChecker.createError(runnerChecker.isNotString, "runner", { expected: "String" }).throw();
 
-    const path = this.#resolve("./src/base/events");
-
-    const loadedEvents = [];
+    const path = this.#resolve("./src/base/utils/events");
 
     let body = {};
 
     const spinner = ora(strc.translate("data:loader.events.loading")).start();
 
     let total = 0;
+    let loaded = 0;
 
-    await Promise.all(this.#read(path).filter((dir) => this.#isFolder(path, dir)).map(async (dir) => {
-      if (dir === "handlers") return;
+    const source = this.#read(path).filter((dir) => this.#isFolder(`${path}/${dir}`));
 
-      const events = this.#read(`${path}/${dir}`);
+    for (let index = 0; index < source.length; index++) {
+      const dir = source[ index ];
+
+      const events = this.#read(`${path}/${dir}`).filter((file) => this.#isFile(`${path}/${dir}/${file}`) && file.endsWith(".js"));
       total += events.length;
 
-      await Promise.all(events.filter((file) => this.#isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
-        const eventBase = new (await import(`../../events/${dir}/${file}`)).default;
+      for (let size = 0; size < events.length; size++) {
+        const file = events[ size ];
 
-        if (eventBase?.name && eventBase?.enabled) {
-          spinner.text = strc.translate("data:loader.events.loading", { variables: [{ name: "loaded", value: loadedEvents.length }, { name: "total", value: total }] });
+        await (import(`../../utils/events/${dir}/${file}`)).then((eventSource) => {
+          const event = new (eventSource).default();
 
-          this.events.set(eventBase.name, eventBase);
+          if (event?.name && event?.enabled) {
+            this.events.set(event.name, event);
 
-          const event = this.events.get(eventBase.name);
+            const fetchErrors = (error) => event.error({ error });
 
-          let runCommand = "execute";
-          if (event?.run) runCommand = "run";
-          else if (runner && event?.[runner]) runCommand = runner;
+            let runCommand = "execute";
+            if (event?.run) runCommand = "run";
+            else if (runner && event?.[ runner ]) runCommand = runner;
 
-          const runCommandChecker = new Checker(event?.[runCommand]);
-          runCommandChecker.createError(runCommandChecker.isNotFunction, "runner", { expected: "Function" }).throw();
+            const runCommandChecker = new Checker(event?.[ runCommand ]);
+            runCommandChecker.createError(runCommandChecker.isNotFunction, "runner", { expected: "Function" }).throw();
 
-          let runType = "on";
-          if (event?.once) runType = "once";
+            let runType = "on";
+            if (event?.once) runType = "once";
 
-          let base = this.client;
-          if (event?.process) {
-            base = process;
+            let base = this.client;
+            if (event?.process) base = process;
 
-            event["type"] = null;
+            if (!event.database) base[ runType ](event.name, async (...listeners) => {
+              if (event?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await event[ runCommand ](...listeners).catch(fetchErrors);
+              else if (event?.type === "StringMenu" && listeners.map((listener) => listener?.customId && listener.isStringSelectMenu())) return await event[ runCommand ](...listeners).catch(fetchErrors);
+              else if (event?.type === "Button" && listeners.map((listener) => listener?.customId && listener.isButton())) return await event[ runCommand ](...listeners).catch(fetchErrors);
+              else if (event?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await event[ runCommand ](...listeners).catch(fetchErrors);
+              else if (event?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await event[ runCommand ](...listeners).catch(fetchErrors);
+              else if (event?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await event[ runCommand ](...listeners).catch(fetchErrors);
+
+              else return await event[ runCommand ](...listeners).catch(fetchErrors);
+            });
+
+            if (event.database && !event._client && !event.process) this.databases.map((database) => database[ runType ](event.name, async (...args) => await event[ runCommand ](...args).catch(fetchErrors)));
+
+            loaded++;
+            spinner.text = strc.translate("data:loader.events.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
+
+            body = {
+              path: path,
+              dir: dir,
+              file: file,
+              name: event.name,
+              type: event?.type,
+              process: event.process,
+              total: total,
+              loaded: loaded,
+              once: event.once
+            };
+
+            this.emit(this.Events.EventLoaded, body);
           };
-
-          if (!event.database) base[runType](event.name, async (...listeners) => {
-            if (event?.type === "UserMenu" && listeners.map((listener) => listener?.customId && listener.isUserSelectMenu())) return await event[runCommand](...listeners);
-            else if (event?.type === "StringMenu" && listeners.map((listener) => listener?.customId && listener.isStringSelectMenu())) return await event[runCommand](...listeners);
-            else if (event?.type === "Button" && listeners.map((listener) => listener?.customId && listener.isButton())) return await event[runCommand](...listeners);
-            else if (event?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await event[runCommand](...listeners);
-            else if (event?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await event[runCommand](...listeners);
-            else if (event?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await event[runCommand](...listeners);
-
-            else return await event[runCommand](...listeners);
+        }).catch((err) => {
+          this.emit(this.Events.Error, {
+            type: "EVENT",
+            error: err,
+            body: body
           });
 
-          if (!event._client && event.database && !event.process) this.databases.map((database) => database[runType](event.name, async (...args) => await event[runCommand](...args)));
+          spinner.fail(strc.translate("data:loader.events.loadingError", { variables: [ { name: "err", value: err } ] }));
+        });
+      }
+    };
 
-          loadedEvents.push(event.name);
+    this.emit(this.Events.EventsReady, loaded, total);
 
-          body = {
-            path: path,
-            dir: dir,
-            file: file,
-            name: event.name,
-            type: event?.type,
-            process: event.process,
-            size: (events.length + 1),
-            loaded: ((loadedEvents.length + 1) - 1),
-            once: event.once
-          };
+    spinner.succeed(strc.translate("data:loader.events.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
 
-          this.emit(this.Events.EventLoaded, body);
-        };
-      }))
-    })).catch((err) => {
-      this.emit(this.Events.Error, {
-        type: "EVENT",
-        error: err,
-        body: body
-      });
-
-      spinner.fail(strc.translate("data:loader.events.loadingError", { variables: [{ name: "err", value: err }] }));
-    }).finally(() => {
-      this.emit(this.Events.EventsReady, loadedEvents);
-
-      spinner.succeed(strc.translate("data:loader.events.loaded", { variables: [{ name: "loaded", value: loadedEvents.length }, { name: "total", value: total }] }));
-    });
-
-    return loadedEvents;
+    return void total;
   };
 
   /**
    * Install commands.
    * @param {string} runner 
-   * @returns {Promise<string[]>}
+   * @returns {Promise<void>}
    */
   async Command(runner) {
     const runnerChecker = new Checker(runner);
@@ -237,109 +237,123 @@ export class Loader extends EventEmitter {
 
     const path = this.#resolve("./src/base/commands");
 
-    const loadedCommands = [];
-
     let body = {};
 
     const spinner = ora(strc.translate("data:loader.commands.loading")).start();
 
-    let total = 0;
+    const source = this.#read(path).filter((dir) => this.#isFolder(`${path}/${dir}`));
 
-    await Promise.all(this.#read(path).filter((dir) => this.#isFolder(path, dir)).map(async (dir) => {
+    let total = 0;
+    let loaded = 0;
+
+    const commandsData = [];
+
+    for (let index = 0; index < source.length; index++) {
+      const dir = source[ index ];
+
       const commands = this.#read(`${path}/${dir}`);
       total += commands.length;
 
-      await Promise.all(commands.filter((file) => this.#isFile(path, dir, file) && file.endsWith(".js")).map(async (file) => {
-        const commandBase = new (await import(`../../commands/${dir}/${file}`)).default;
+      for (let index2 = 0; index2 < commands.length; index2++) {
+        const file = commands[ index2 ];
 
-        if (commandBase?.data && commandBase?.enabled) {
-          spinner.text = strc.translate("data:loader.commands.loading", { variables: [{ name: "loaded", value: loadedCommands.length }, { name: "total", value: total }] });
+        await (import(`../../commands/${dir}/${file}`)).then((commandSource) => {
+          const command = new (commandSource).default();
 
-          this.commands.set(commandBase.data.name, commandBase);
+          if (command.data?.name && command?.enabled) {
+            this.commands.set(command.data.name, command);
 
-          const command = this.commands.get(commandBase.data.name);
+            this.storage.push(command.data);
+            commandsData.push(command.data);
 
-          this.storage.push(command.data);
+            loaded++;
+            spinner.text = strc.translate("data:loader.commands.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
 
-          loadedCommands.push(command.data);
+            body = {
+              path: path,
+              dir: dir,
+              file: file,
+              name: command.data.name,
+              total: total,
+              loaded: loaded
+            };
 
-          body = {
-            path: path,
-            dir: dir,
-            file: file,
-            name: command.data.name,
-            size: (commands.length + 1),
-            loaded: ((loadedCommands.length + 1) - 1)
+            this.emit(this.Events.CommandLoaded, body);
           };
+        }).catch((err) => {
+          this.emit(this.Events.Error, {
+            type: "COMMAND",
+            error: err,
+            body: body
+          });
 
-          this.emit(this.Events.CommandLoaded, body);
-        };
-      }));
-    })).catch((err) => {
-      this.emit(this.Events.Error, {
-        type: "COMMAND",
-        error: err,
-        body: body
-      });
+          spinner.fail(strc.translate("data:loader.commands.loadingError", { variables: [ { name: "err", value: err } ] }));
+        });
+      };
+    };
 
-      spinner.fail(strc.translate("data:loader.commands.loadingError", { variables: [{ name: "err", value: err }] }));
-    }).finally(() => {
-      this.emit(this.Events.CommandsReady, loadedCommands);
+    this.emit(this.Events.CommandsReady, commandsData, loaded, total);
 
-      spinner.succeed(strc.translate("data:loader.commands.loaded", { variables: [{ name: "loaded", value: loadedCommands.length }, { name: "total", value: total }] }));
-    });
+    spinner.succeed(strc.translate("data:loader.commands.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
 
-    return loadedCommands;
+    return void loaded;
   };
 
   /**
    * Install languages
-   * @returns {Promise<object[]>}
+   * @returns {void}
    */
-  async Language() {
-    const loadedLanguages = [];
-
+  Language() {
     let body = {};
 
     const spinner = ora("Languages Loading").start();
-    const languageSource = new Translations();
+    const languages = new Translations().Languages;
 
-    let total = languageSource.Languages.length;
+    let total = languages.length;
+    let loaded = 0;
 
-    await Promise.all(languageSource.Languages.map((lang) => {
-      const { code, source } = lang;
-      const directCode = String(code).split("-")[0];
+    for (let index = 0; index < languages.length; index++) {
+      const language = languages[ index ];
 
-      const sourceChecker = new Checker(source?.data);
-      sourceChecker.createError(sourceChecker.isNotObject, "source", { expected: "Object" }).throw();
+      try {
+        const { code, source } = language;
 
-      this.languages.set(code, source.data);
-      this.languages.set(directCode, source.data);
+        const directCode = code.split("-")[ 0 ].toLowerCase();
 
-      loadedLanguages.push(lang);
+        const sourceChecker = new Checker(source?.data);
+        sourceChecker.createError(sourceChecker.isNotObject, "source", { expected: "Object" }).throw();
 
-      body = {
-        code: code,
-        directCode: directCode,
-        source: source
+        this.languages.set(code, source.data);
+        this.languages.set(directCode, source.data);
+
+        loaded++;
+        spinner.text = `Languages Loading (${loaded}/${total})`;
+
+        body = {
+          code: code,
+          directCode: directCode,
+          source: source,
+          total: total,
+          loaded: loaded
+        };
+
+        this.emit(this.Events.LanguageLoaded, body);
+      } catch (err) {
+        this.emit(this.Events.Error, {
+          type: "LANG",
+          error: err,
+          body: body
+        });
+
+        spinner.fail("An error ocurred when loading languages. | {err}".replace("{err}", err));
       };
+    };
 
-      this.emit(this.Events.LanguageLoaded, body);
-    })).catch((err) => {
-      this.emit(this.Events.Error, {
-        type: "LANG",
-        error: err,
-        body: body
-      });
+    this.emit(this.Events.LanguagesReady, loaded, total);
 
-      spinner.fail("An error ocurred when loading languages. | {err}".replace("{err}", err));
-    }).finally(() => {
-      this.emit(this.Events.LanguagesReady, loadedLanguages);
+    spinner.succeed(`Languages Loaded. (${loaded}/${total})`);
 
-      spinner.succeed("Languages Loaded. ({loaded}/{total})".replace("{loaded}", loadedLanguages.length).replace("{total}", total));
-    });
-
-    return loadedLanguages;
+    return void loaded;
   };
 
   /**
@@ -347,41 +361,37 @@ export class Loader extends EventEmitter {
    * @returns {Promise<void>}
    */
   async Setup() {
-    await this.Language();
+    this.Language();
 
     const spinner = ora(strc.translate("data:loader.gateway.connecting")).start();
 
-    await this.Event().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [{ name: "processing", value: 2 }, { name: "total", value: 5 }] }));
-    await this.Handler().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [{ name: "processing", value: 3 }, { name: "total", value: 5 }] }));
-    await WAIT();
-    await this.Command().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [{ name: "processing", value: 4 }, { name: "total", value: 5 }] }));;
+    await this.Event().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 2 }, { name: "total", value: 5 } ] }));
+    await this.Handler().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 3 }, { name: "total", value: 5 } ] }));
+    // await WAIT();
+    await this.Command().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 4 }, { name: "total", value: 5 } ] }));
 
-    await this.client.login(this.client.TOKEN).then(() => {
+    this.client.login(this.client.TOKEN).then(() => {
       this.emit("ready", 0);
 
-      spinner.succeed(strc.translate("data:loader.gateway.connected", { variables: [{ name: "processing", value: 5 }, { name: "total", value: 5 }] }));
-    }).catch((err) => spinner.fail(strc.translate("data:loader.gateway.connectionError", { variables: [{ name: "err", value: err }] })));
+      spinner.succeed(strc.translate("data:loader.gateway.connected", { variables: [ { name: "processing", value: 5 }, { name: "total", value: 5 } ] }));
+    }).catch((err) => spinner.fail(strc.translate("data:loader.gateway.connectionError", { variables: [ { name: "err", value: err } ] })));
 
     return;
   };
 
-  #isFile(path, dir, file) {
-    const scanFile = statSync(this.#resolve(path + "/" + dir + "/" + file)).isFile();
-
-    return scanFile;
+  #isFile(path) {
+    return (statSync(this.#resolve(path)).isFile());
   };
 
-  #isFolder(path, dir) {
-    const scanFolder = statSync(this.#resolve(path + "/" + dir)).isDirectory();
-
-    return scanFolder;
+  #isFolder(path) {
+    return (statSync(this.#resolve(path)).isDirectory());
   };
 
   #resolve(path = "./src") {
-    return resolve(path);
+    return (resolve(path));
   };
 
   #read(path) {
-    return readdirSync(this.#resolve(path));
+    return (readdirSync(this.#resolve(path)));
   };
 };

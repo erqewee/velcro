@@ -14,30 +14,35 @@ export class Event extends EventStructure {
     const enabledChecker = new this.checker.BaseChecker(eventOptions?.enabled);
     const modesChecker = new this.checker.BaseChecker(eventOptions?.modes);
 
-    if (enabledChecker.isBoolean && eventOptions.enabled === true) this.setEnabled();
-    if (modesChecker.isArray) this.setModes(eventOptions.modes);
+    if (enabledChecker.isBoolean && eventOptions.enabled) this.setEnabled();
+    if (modesChecker.isArray) this.setModes(...eventOptions.modes);
   };
 
   /**
    * Event Enabled.
    */
   enabled = false;
+
   /**
    * Event Client.
    */
   _client = true;
+
   /**
    * Event Process.
    */
   process = false;
+
   /**
    * Event Once.
    */
   once = false;
+
   /**
    * Event Database.
    */
   database = false;
+
   /**
    * Event Language
    */
@@ -52,6 +57,7 @@ export class Event extends EventStructure {
    * Event Type.
    */
   type = "ChatCommand";
+
   /**
    * Event Modes.
    */
@@ -66,9 +72,9 @@ export class Event extends EventStructure {
    */
   setName(name = null) {
     const nameChecker = new this.checker.BaseChecker(name);
-    nameChecker.createError(!nameChecker.isString, "name", { expected: "String", received: nameChecker }).throw();
+    nameChecker.createError(nameChecker.isNotString, "name", { expected: "String" }).throw();
 
-    this["name"] = name;
+    this.name = name;
 
     return name;
   };
@@ -80,9 +86,9 @@ export class Event extends EventStructure {
    */
   setEnabled(state = true) {
     const stateChecker = new this.checker.BaseChecker(state);
-    stateChecker.createError(!stateChecker.isBoolean, "state", { expected: "Boolean", received: stateChecker }).throw();
-    
-    this["enabled"] = state;
+    stateChecker.createError(stateChecker.isNotBoolean, "state", { expected: "Boolean" }).throw();
+
+    this.enabled = state;
 
     return state;
   };
@@ -92,27 +98,27 @@ export class Event extends EventStructure {
    * @param {string[]} modes 
    * @returns {string[]}
    */
-  setModes(modes = []) {
+  setModes(...modes) {
     const modesChecker = new this.checker.BaseChecker(modes);
-    modesChecker.createError(!modesChecker.isArray, "modes", { expected: "Array", received: modesChecker }).throw();
+    modesChecker.createError(modesChecker.isNotArray, "modes", { expected: "Array" }).throw();
 
-    const editedModes = [];
+    const availableModes = [ "once", "process", "database", "language", "client" ];
 
-    modes.map((m) => {
-      const mode = String(m).trim().toLowerCase();
+    for (let index = 0; index < modes.length; index++) {
+      let mode = modes[ index ].toLowerCase();
 
-      if (mode === "once") this["once"] = true;
-      if (mode === "process") this["process"] = true;
-      if (mode === "database") this["database"] = true;
-      if (mode === "language") this["language"] = true;
-      if (mode === "client") this["_client"] = true;
+      if (availableModes.includes(mode)) {
+        if (mode === "client") mode = "_client";
 
-      return editedModes.push(mode);
-    });
+        let state = this[ mode ];
+        if (state) this[ mode ] = false;
+        else this[ mode ] = true;
+      } else return console.log(`Error[Structure[${this.constructor.name}[Modes[${mode}]]]]: An invalid mode was provided.`);
 
-    this["modes"] = editedModes;
+      this.modes.push({ mode, enabled: this[ mode ] });
+    };
 
-    return editedModes;
+    return this.modes;
   };
 
   /**
@@ -122,9 +128,9 @@ export class Event extends EventStructure {
    */
   setType(type = "ChatCommand") {
     const typeChecker = new this.checker.BaseChecker(type);
-    typeChecker.createError(!typeChecker.isString, "type", { expected: "String", received: typeChecker }).throw();
+    typeChecker.createError(typeChecker.isNotString, "type", { expected: "String" }).throw();
 
-    this["type"] = type;
+    this.type = type;
 
     return type;
   };
@@ -136,117 +142,115 @@ export class Event extends EventStructure {
    */
   setExecute(callback = () => { }) {
     const callbackChecker = new this.checker.BaseChecker(type);
-    callbackChecker.createError(!callbackChecker.isFunction, "callback", { expected: "Function", received: callbackChecker }).throw();
+    callbackChecker.createError(callbackChecker.isNotFunction, "callback", { expected: "Function" }).throw();
 
-    this["execute"] = callback;
+    this.execute = callback;
 
     return callback;
   };
 
   /**
    * Define properties.
-   * @param {object[]} propertyData 
+   * @param {{ key: string, value?: any }[]} propertyData 
    * @returns {number}
    */
-  #defineProperty(propertyData = [{ key: "oneUses", value: true }]) {
+  #defineProperty(...propertyData) {
     const propertyDataChecker = new this.checker.BaseChecker(propertyData);
-    propertyDataChecker.createError(!propertyDataChecker.isArray, "propertyData", { expected: "Array", received: propertyDataChecker }).throw();
+    propertyDataChecker.createError(propertyDataChecker.isNotArray, "propertyData", { expected: "Array" }).throw();
 
-    propertyData.map((property) => {
-      const propertyObject = new Object(property);
-      const baseObject = new Object(this);
+    let processed = 0;
 
-      if (!propertyObject.hasOwnProperty("key")) return;
-      if (!propertyObject.hasOwnProperty("value")) property["value"] = 0;
+    for (let index = 0; index < propertyData.length; index++) {
+      const property = propertyData[ index ];
 
-      if (baseObject.hasOwnProperty(property["key"])) return;
+      if (!property?.key) return;
 
-      const key = String(property["key"]).toLowerCase().trim().replaceAll(" ", "_");
-      const value = property["value"];
+      const key = property.key.toLowerCase().replaceAll(" ", "_");
 
-      this[key] = value;
+      if (this[ key ]) return;
 
-      return this[key];
-    });
+      this[ key ] = property?.value ?? null;
 
-    return 0;
+      if (this[ key ]) processed++;
+    };
+
+    return processed;
   };
 
   /**
-   * @param {object[]} propertyData 
+   * @param {{ key: string, value?: any }[]} propertyData
+   * @returns {{ getProperty: ({ key: string }[]) => results: { key: string, value: any }[], editProperty: (propertyEditData: { value: any }[], debug?: boolean) => { key: string, oldValue: any, newValue: any}[]}}
    */
-  setProperty(propertyData = [{ key: "Enabled", value: null }, { key: "Name", value: null }, { key: "Once", value: false }, { key: "Database", value: false }, { key: "Process", value: false }, { key: "Type", value: "ChatCommand" }, { key: "Webhook", value: null }, { key: "Execute", value: () => { } }]) {
+  setProperty(...propertyData) {
     const propertyDataChecker = new this.checker.BaseChecker(propertyData);
-    propertyDataChecker.createError(!propertyDataChecker.isArray, "propertyData", { expected: "Array", received: propertyDataChecker }).throw();
+    propertyDataChecker.createError(propertyDataChecker.isNotArray, "propertyData", { expected: "Array" }).throw();
 
     const properties = [];
 
-    propertyData.map((property) => {
-      const propertyObject = new Object(property);
-      if (!propertyObject.hasOwnProperty("key") || !propertyObject.hasOwnProperty("value")) return;
+    for (let index = 0; index < propertyData.length; index++) {
+      const property = propertyData[ index ];
 
-      const key = String(property["key"]).trim().toLowerCase();
-      const value = property["value"];
+      if (!property?.key) return;
 
-      return properties.push({ key, value });
-    });
+      properties.push({ key: property.key.toLowerCase(), value: property?.value });
+    };
 
-    this.#defineProperty(properties);
+    this.#defineProperty(...properties);
 
     return { getProperty: this.getProperty };
   };
 
   /**
    * Get the properties.
-   * @param {object[]} propertyData 
+   * @param {{ key: string }[]} propertyData
+   * @returns {{ results: { key: string, value: any }[], editProperty: (propertyEditData: { value: any }[], debug?: boolean) => { key: string, oldValue: any, newValue: any}[] }}
    */
-  getProperty(propertyData = [{ key: "Enabled" }, { key: "Name" }, { key: "Once" }, { key: "Process" }, { key: "Type" }, { key: "Webhook" }, { key: "Database" }, { key: "Execute" }]) {
+  getProperty(...propertyData) {
     const propertyDataChecker = new this.checker.BaseChecker(propertyData);
-    propertyDataChecker.createError(!propertyDataChecker.isArray, "propertyData", { expected: "Array", received: propertyDataChecker }).throw();
+    propertyDataChecker.createError(propertyDataChecker.isNotArray, "propertyData", { expected: "Array" }).throw();
 
     const results = [];
 
-    (async () => {
-      await Promise.all(propertyData.map((property) => {
-        const propertyObject = new Object(property);
-        if (!propertyObject.hasOwnProperty("key")) return;
+    for (let index = 0; index < propertyData.length; index++) {
+      const property = propertyData[ index ];
 
-        const key = String(property["key"]).trim().toLowerCase();
-        const value = this[key];
+      if (!property?.key) return;
 
-        return results.push({ key, value });
-      }));
-    })();
+      const key = property.key.toLowerCase();
+
+      results.push({ key, value: this[ key ] });
+    };
 
     const base = this;
 
     /**
      * Edit the properties.
-     * @param {object[]} propertyEditData 
      * @param {boolean} debug
-     * @returns {object[]}
+     * @param {{ value: any }[]} propertyEditData 
+     * @returns {{ key: string, oldValue: any, newValue: any }[]}
      */
-    function editProperty(propertyEditData = [{ value: null /* ENABLED */ }, { value: null /* NAME*/ }, { value: false /* ONCE */ }, { value: false /* PROCESS */ }, { value: "ChatCommand" /* TYPE */ }, { value: null /* WEBHOOK DATA */ }, { value: false /* DATABASE */ }, { value: () => { } /* EXECUTE */ }], debug = false) {
+    function editProperty(debug = false, ...propertyEditData) {
       const propertyEditDataChecker = new this.checker.BaseChecker(propertyEditData);
-      propertyEditDataChecker.createError(!propertyEditDataChecker.isArray, "propertyEditData", { expected: "Array", received: propertyEditDataChecker }).throw();
+      propertyEditDataChecker.createError(propertyEditDataChecker.isNotArray, "propertyEditData", { expected: "Array" }).throw();
 
-      const storage = [];
+      const data = [];
 
-      (async () => {
-        await Promise.all(propertyEditData.map((property, index) => {
-          const key = results[index]["key"];
+      for (let index = 0; index < propertyEditData.length; index++) {
+        const property = results[ index ];
+        const editData = propertyEditData[ index ];
 
-          const oldValue = base[key];
-          base[key] = property["value"];
-          const newValue = base[key];
+        const key = property[ key ];
 
-          if (debug) console.log(`[Structure#Event?key=${key}] Value changed from '${oldValue}' to '${newValue}'`);
+        const oldValue = base[ key ];
+        base[ key ] = editData?.value ?? null;
+        const newValue = base[ key ];
 
-          return storage.push({ key, oldValue, newValue });
-        }));
-      })();
+        if (debug) console.log(`Structure[${base.constructor.name}[Property[${key}[${newValue}]]]]: Value changed from '${oldValue}' to '${newValue}'`);
 
-      return storage;
+        data.push({ key, oldValue, newValue });
+      };
+
+      return data;
     };
 
     return { results, editProperty };
@@ -254,11 +258,11 @@ export class Event extends EventStructure {
 
   /**
    * Create a new Discord Webhook.
-   * @param {object} options 
+   * @param {{ url?: string, id?: string, token?: string}} options 
    */
   createWebhook(options = { url: null, id: null, token: null }) {
     const optionsChecker = new this.checker.BaseChecker(options);
-    optionsChecker.createError(!optionsChecker.isObject, "options", { expected: "Object", received: optionsChecker }).throw();
+    optionsChecker.createError(optionsChecker.isNotObject, "options", { expected: "Object", received: optionsChecker }).throw();
 
     const { id, token, url } = options;
 
@@ -267,7 +271,7 @@ export class Event extends EventStructure {
 
     /**
      * Send message with created webhook.
-     * @param {object} sendOptions 
+     * @param {{ content?: string, embeds?: EmbedBuilder[], components?: ActionRowBuilder[] }} sendOptions 
      */
     function send(sendOptions = { content: "New Message!", embeds: [], components: [] }) {
       return webhook.send({ content: sendOptions?.content, embeds: sendOptions?.embeds, components: sendOptions?.components });
@@ -278,8 +282,23 @@ export class Event extends EventStructure {
 
   /**
    * The command to execute the event.
+   * @returns {void}
    */
-  async execute() { };
+  execute() {
+    console.log("This function is not implemented.");
+
+    return void 0;
+  };
+
+  /**
+   * It is triggered when there is an error in the event.
+   * @returns {void}
+   */
+  error({ error: err }) {
+    console.log(err);
+
+    return void 0;
+  };
 
   static version = "v1.0.10";
 };

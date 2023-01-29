@@ -1,13 +1,20 @@
 import { Structure as CommandStructure } from "../Structure.js";
 
+import { PermissionsBitField as P } from "discord.js";
+import { PermissionsBitField } from "discord.js";
+const Permissions = P.Flags;
+
 export class Command extends CommandStructure {
-  constructor(commandOptions = { enabled: true, mode: "Global" }) {
+  constructor(commandOptions = { enabled: true, mode: "Global", permissions: [] }) {
     super();
 
-    const { enabled, mode } = commandOptions;
+    const { enabled, mode, permissions } = commandOptions;
 
     const enabledChecker = new this.checker.BaseChecker(enabled);
     const modeChecker = new this.checker.BaseChecker(mode);
+    const permissionsChecker = new this.checker.BaseChecker(permissions);
+
+    if (permissionsChecker.isNotArray) this.permissions = [];
 
     if (enabledChecker.isBoolean && enabled === true) this.setEnabled();
     if (modeChecker.isString && mode.toLowerCase() === "developer") this.setMode();
@@ -22,21 +29,28 @@ export class Command extends CommandStructure {
    * Command Enabled.
    */
   enabled = false;
+
   /**
    * Command Mode.
    */
   mode = "Global";
+
   /**
    * Command Developer Mode.
    */
   developer = false;
 
   /**
+   * Command Permissions
+   */
+  permissions = [];
+
+  /**
    * Converts the string to a readable object.
    * @param {object|string} data 
    * @returns {object}
    */
-  toJSON(data = new this.SlashCommand()) {
+  toJSON(data = new this.Command()) {
     const Command = this.Command;
 
     if (!(data instanceof Command)) throw new Error("UNEXPECTED_BUILDER", "This builder is not a 'SlashCommand'");
@@ -54,7 +68,7 @@ export class Command extends CommandStructure {
   setCommand(commandData = {}) {
     const json = this.toJSON(commandData);
 
-    this["data"] = json;
+    this.data = json;
 
     return json;
   };
@@ -66,9 +80,9 @@ export class Command extends CommandStructure {
    */
   setEnabled(state = true) {
     const stateChecker = new this.checker.BaseChecker(state);
-    stateChecker.createError(!stateChecker.isBoolean, "state", { expected: "Boolean", received: stateChecker }).throw();
+    stateChecker.createError(stateChecker.isNotBoolean, "state", { expected: "Boolean" }).throw();
 
-    this["enabled"] = state;
+    this.enabled = state;
 
     return state;
   };
@@ -80,11 +94,32 @@ export class Command extends CommandStructure {
    */
   setExecute(callback = () => { }) {
     const callbackChecker = new this.checker.BaseChecker(callback);
-    callbackChecker.createError(!callbackChecker.isFunction, "callback", { expected: "Function", received: callbackChecker }).throw();
+    callbackChecker.createError(callbackChecker.isNotFunction, "callback", { expected: "Function" }).throw();
 
-    this["execute"] = callback;
+    this.execute = callback;
 
     return callback;
+  };
+
+  /**
+   * Set the command's permissions.
+   * @param {Permissions[]} permissions
+   * @returns {Permissions[]}
+   */
+  setPermissions(...permissions) {
+    const permissionChecker = new this.checker.BaseChecker(permissions);
+    permissionChecker.createError(permissionChecker.isNotArray, "permissions", { expected: "Array" }).throw();
+
+    for (let index = 0; index < permissions.length; index++) {
+      const permission = permissions[ index ];
+
+      const resolvePermission = PermissionsBitField.resolve(permission);
+
+      if (resolvePermission) this.permissions.push(permission);
+      else console.log(`Error[InvalidPermission]: '${permission}' is not valid a discord permission.`);
+    };
+
+    return this.permissions;
   };
 
   /**
@@ -94,107 +129,120 @@ export class Command extends CommandStructure {
    */
   setMode(mode = "Developer") {
     const modeChecker = new this.checker.BaseChecker(mode);
-    modeChecker.createError(!modeChecker.isString, "mode", { expected: "String", received: modeChecker }).throw();
+    modeChecker.createError(modeChecker.isNotString, "mode", { expected: "String" }).throw();
 
-    const m = String(mode).trim().toLowerCase();
+    const availableModes = [ "global", "developer" ];
 
-    this["mode"] = m;
-    this["developer"] = m.includes("developer") ? true : false;
+    const m = String(mode).toLowerCase();
+
+    if (!availableModes.includes(m)) throw new Error("InvalidMode", `'${m}' is not a valid mode.`);
+
+    this.mode = m;
+    this.developer = m.includes("developer") ? true : false;
 
     return mode;
   };
 
   /**
    * Define properties.
-   * @param {object[]} propertyData 
-   * @returns {number}
+   * @param {{ key: string, value: any }[]} propertyData 
+   * @returns {void}
    */
-  #defineProperty(propertyData = [{ key: "newFunction", value: true }]) {
+  #defineProperty(...propertyData) {
     const propertyDataChecker = new this.checker.BaseChecker(propertyData);
-    propertyDataChecker.createError(!propertyDataChecker.isArray, "propertyData", { expected: "Array", received: propertyDataChecker }).throw();
+    propertyDataChecker.createError(propertyDataChecker.isNotArray, "propertyData", { expected: "Array" }).throw();
 
-    propertyData.map((property) => {
-      const propertyObject = new Object(property);
+    let processed = 0;
 
-      if (!propertyObject.hasOwnProperty("key")) return;
-      if (!propertyObject.hasOwnProperty("value")) property["value"] = 0;
+    for (let index = 0; index < propertyData.length; index++) {
+      const property = propertyData[ index ];
 
-      if (this[property["key"]]) return;
+      if (!property?.key) return;
 
-      const key = String(property["key"]).trim().toLowerCase().replaceAll(" ", "_");
-      const value = property["value"];
+      const key = property.key.toLowerCase().replaceAll(" ", "_");
 
-      this[key] = value;
+      if (this[ key ]) return;
 
-      return this[key];
-    });
+      this[ key ] = property?.value ?? null;
 
-    return 0;
+      if (this[ key ]) processed++;
+    };
+
+    return processed;
   };
 
   /**
-   * @param {object[]} propertyData 
+   * @param {{ key: string, value?: any }[]} propertyData
+   * @returns {{ getProperty: ({ key: string }[]) => results: { key: string, value: any }[], editProperty: (propertyEditData: { value: any }[], debug?: boolean) => { key: string, oldValue: any, newValue: any}[]}}
    */
-  setProperty(propertyData = [{ key: "Enabled", value: null }, { key: "Mode", value: "Global" }, { key: "Command", value: {} }, { key: "Execute", value: () => { } }]) {
+  setProperty(...propertyData) {
     const propertyDataChecker = new this.checker.BaseChecker(propertyData);
-    propertyDataChecker.createError(!propertyDataChecker.isArray, "propertyData", { expected: "Array", received: propertyDataChecker }).throw();
+    propertyDataChecker.createError(propertyDataChecker.isNotArray, "propertyData", { expected: "Array" }).throw();
 
     const properties = [];
 
-    propertyData.map((property) => {
-      const data = new Object(property);
-      if (!data.hasOwnProperty("key") || !data.hasOwnProperty("value")) return;
+    for (let index = 0; index < propertyData.length; index++) {
+      const property = propertyData[ index ];
 
-      const key = String(property["key"]).trim().toLowerCase();
-      const value = property["value"];
+      if (!property?.key) return;
 
-      return properties.push({ key, value });
-    });
+      properties.push({ key: property.key.toLowerCase(), value: property?.value });
+    };
 
-    this.#defineProperty(properties);
+    this.#defineProperty(...properties);
 
     return { getProperty: this.getProperty };
   };
 
   /**
    * Get the properties.
-   * @param {object[]} propertyData 
+   * @param {{ key: string }[]} propertyData
+   * @returns {{ results: { key: string, value: any }[], editProperty: (propertyEditData: { value: any }[], debug?: boolean) => { key: string, oldValue: any, newValue: any}[] }}
    */
-  getProperty(propertyData = [{ key: "Enabled" }, { key: "Mode" }, { key: "Command" }, { key: "Execute" }]) {
+  getProperty(propertyData = []) {
     const propertyDataChecker = new this.checker.BaseChecker(propertyData);
-    propertyDataChecker.createError(!propertyDataChecker.isArray, "propertyData", { expected: "Array", received: propertyDataChecker }).throw();
+    propertyDataChecker.createError(propertyDataChecker.isNotArray, "propertyData", { expected: "Array" }).throw();
 
     const results = [];
 
-    (async () => {
-      await Promise.all(propertyData.map((property) => {
-        const key = String(property["key"]).trim().toLowerCase();
-        const value = this[key];
+    for (let index = 0; index < propertyData.length; index++) {
+      const property = propertyData[ index ];
 
-        return results.push({ key, value });
-      }));
-    })();
+      const key = property.key.trim().toLowerCase();
+
+      results.push({ key, value: this[ key ] });
+    };
 
     const base = this;
 
     /**
      * Edit the properties.
-     * @param {object[]} propertyEditData 
-     * @param {boolean} debug 
+     * @param {boolean} debug
+     * @param {{ value: any }[]} propertyEditData 
+     * @returns {{ key: string, oldValue: any, newValue: any }[]}
      */
-    function editProperty(propertyEditData = [{ value: true /* ENABLED */ }, { value: "Global" /* MODE */ }, { value: {} /* COMMAND DATA */ }, { value: () => { } /* EXECUTE */ }], debug = false) {
+    function editProperty(debug = false, ...propertyEditData) {
       const propertyEditDataChecker = new this.checker.BaseChecker(propertyEditData);
-      propertyEditDataChecker.createError(!propertyEditDataChecker.isArray, "propertyEditData", { expected: "Array", received: propertyEditDataChecker }).throw();
+      propertyEditDataChecker.createError(propertyEditDataChecker.isNotArray, "propertyEditData", { expected: "Array" }).throw();
 
-      propertyEditData.map((property, index) => {
-        const key = results[index]["key"];
+      const data = [];
 
-        const oldValue = base[key];
-        base[key] = property["value"];
-        const newValue = base[key];
+      for (let index = 0; index < propertyEditData.length; index++) {
+        const property = results[ index ];
+        const editData = propertyEditData[ index ];
 
-        if (debug) console.log(`[Structure#Command?key=${key}] Value changed from '${oldValue}' to '${newValue}'`);
-      });
+        const key = property[ key ];
+
+        const oldValue = base[ key ];
+        base[ key ] = editData?.value ?? null;
+        const newValue = base[ key ];
+
+        if (debug) console.log(`Structure[Command[${key}[${newValue}]]]: Value changed from '${oldValue}' to '${newValue}'`);
+
+        data.push({ key, oldValue, newValue });
+      };
+
+      return data;
     };
 
     return { results, editProperty };
@@ -202,8 +250,84 @@ export class Command extends CommandStructure {
 
   /**
    * The command to execute the command.
+   * @returns {Promise<void>}
    */
-  async execute() { };
+  async execute({ interaction, member }) {
+    await interaction.reply({ content: `${member}, This command function is not implemented.`, ephemeral: true });
+
+    return void 0;
+  };
+
+  /**
+   * It is triggered when there is an error in the command.
+   * @returns {Promise<void>}
+   */
+  async error({ interaction, error: err, command }) {
+    const member = interaction.member;
+
+    const errorEmbed = new this.Embed({
+      title: `${this.config.Emoji.State.ERROR} An error ocurred.`,
+      description: `${this.config.Emoji.Other.NOTEPAD} I'm reported this error to my Developers.`,
+      footer: {
+        text: `> Please check again later...`
+      },
+      thumbnail: {
+        url: interaction.user?.avatarURL()
+      }
+    });
+
+    const guild = this.emojis.cache.get("1035523616726593547");
+    const invites = await this.invites.map(this.config.Data.Configurations.SUPPORT_SERVER);
+
+    const row = new this.Row({
+      components: [
+        new this.Button({
+          style: this.ButtonStyle.Link,
+          label: "Support Server",
+          emoji: { id: guild.id, name: guild.name, animated: guild.animated },
+          url: invites.length > 0 ? `https://discord.gg/${invites[ 0 ].code}` : "https://discord.com",
+          disabled: invites.length > 0 ? false : true
+        })
+      ]
+    });
+
+    const reportEmbed = new this.Embed({
+      title: `${this.config.Emoji.State.ERROR} An error ocurred when executing command.`,
+      description: `\`\`\`js\n${err}\`\`\``,
+      fields: [
+        {
+          name: `${this.config.Emoji.Other.USER} Author`,
+          value: `- ${member} (${member.id})`,
+          inline: true
+        },
+        {
+          name: `${this.config.Emoji.Other.CALENDAR} Time`,
+          value: `- ${this.time(Date.now())}`,
+          inline: true
+        },
+        {
+          name: `${this.config.Emoji.Other.PROTOTIP} Command`,
+          value: `- ${command.data.name}`,
+          inline: true
+        }
+      ]
+    });
+
+    console.log(err);
+
+    const log = client.channels.resolve(this.config.Data.Configurations.LOG_CHANNEL);
+
+    if (interaction.replied) await interaction.followUp({ embeds: [ errorEmbed ], ephemeral: true, fetchReply: true }).then(async () => log.send({
+      content: `<@&1031151171202732032>`, embeds: [ reportEmbed ], components: [ row ]
+    })
+      .then((msg) => this.messages.pin(msg)));
+    else await interaction.reply({ embeds: [ errorEmbed ], ephemeral: true, fetchReply: true }).then(async () => log.send({
+      content: `<@&1031151171202732032>`, embeds: [ reportEmbed ], components: [ row ]
+    })
+      .then((msg) => this.messages.pin(msg)));
+
+    return void 0;
+  };
 
   static version = "v1.0.0";
 };

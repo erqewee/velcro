@@ -1,5 +1,50 @@
 export const Turkish = {
   data: {
+    permissions: {
+      body: "{p}",
+
+      CreateInstantInvite: "Davet Oluştur",
+      KickMembers: "Üyeleri At",
+      BanMembers: "Üyeleri Yasakla",
+      Administrator: "Yönetici",
+      ManageChannels: "Kanalları Yönet",
+      ManageGuild: "Sunucuyu Yönet",
+      AddReactions: "Tepki Ekle",
+      ViewAuditLog: "Denetim Kaydını Görüntüle",
+      PrioritySpeaker: "Öncelikli Konuşmacı",
+      Stream: "Yayın",
+      ViewChannel: "Kanalı Görüntüle",
+      SendMessages: "Mesaj Gönder",
+      SendTTSMessages: "Sesli Mesaj Gönder",
+      ManageMessages: "Mesajları Yönet",
+      EmbedLinks: "Gömülü Mesajlar",
+      AttachFiles: "Dosya Ekle",
+      ReadMessageHistory: "Mesaj Geçmişini Oku",
+      MentionEveryone: "Herkesten Bahset",
+      UseExternalEmojis: "Harici Emojiler Kullan",
+      ViewGuildInsights: "Sunucu Bilgilerini Görüntüle",
+      Connect: "Bağlan",
+      Speak: "Konuş",
+      MuteMembers: "Kullanıcıları Sustur",
+      DeafenMembers: "Kullanıcıları Sağırlaştır",
+      MoveMembers: "Kullanıcıları Taşı",
+      UseVad: "Kullanıcı Etkinlikleri",
+      ChangeNickname: "Kullanıcı Adını Değiştir",
+      ManageNicknames: "Kullanıcı Adlarını Yönet",
+      ManageRoles: "Rolleri Yönet",
+      ManageWebhooks: "Webhookları Yönet",
+      ManageEmojisAndStickers: "Emojileri ve Çıkartmaları Yönet",
+      UseApplicationCommands: "Uygulama Komutlarını Kullan",
+      RequestToSpeak: "Konuşma İzni İste",
+      ManageEvents: "Etkinlikleri Yönet",
+      ManageThreads: "Alt Başlıkları Yönet",
+      CreatePublicThreads: "Herkese Açık Alt Başlıklar Oluştur",
+      CreatePrivateThreads: "Herkese Kapalı Alt Başlıklar Oluştur",
+      UseExternalStickers: "Harici Çıkartmalar Kullan",
+      SendMessagesInThreads: "Alt Başlıklarda Mesaj Gönder",
+      UseEmbeddedActivities: "Gömülü Etkinlikleri Kullan",
+      ModerateMembers: "Üyelere Zaman Aşımı Uygula"
+    },
     loader: {
       nodeError: "Proje, bu NodeJS sürümüyle uyumlu değil.",
       handlers: {
@@ -86,6 +131,13 @@ export const Turkish = {
                 time: "{calendarEmote} Tarih",
                 command: "{prototipEmote} Komut"
               }
+            }
+          },
+          permission: {
+            title: "{permissionEmote} Yetersiz Yetki",
+            description: "{errorEmote} Bu komutu kullanmak için yetkiniz yetersiz.",
+            fields: {
+              required: "{editorEmote} Gerekli Yetkiler"
             }
           }
         }

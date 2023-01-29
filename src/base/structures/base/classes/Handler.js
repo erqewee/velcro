@@ -11,26 +11,7 @@ export class Handler extends HandlerStructure {
     const enabledChecker = new this.checker.BaseChecker(handlerOptions?.enabled);
     const modesChecker = new this.checker.BaseChecker(handlerOptions?.modes);
 
-    if (enabledChecker.isBoolean && handlerOptions.enabled === true) this.setEnabled();
-    if (modesChecker.isArray) {
-      const modes = [];
-
-      handlerOptions.modes.map((m) => {
-        const mode = String(m).trim().toLowerCase();
-
-        if (mode.includes("once")) this.setOnce();
-        else if (mode.includes("process")) this.setProcess();
-        else if (mode.includes("database")) this.setDatabase();
-        else if (mode.includes("language")) this.setLanguage();
-
-        return modes.push(mode);
-      });
-
-      this["modes"] = modes;
-    };
+    if (enabledChecker.isBoolean && handlerOptions.enabled) this.setEnabled();
+    if (modesChecker.isArray) this.setModes(...handlerOptions.modes);
   };
-
-  enabled = false;
-  process = false;
-  once = false;
 };

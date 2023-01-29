@@ -1,5 +1,4 @@
 import { Client as BaseClient, IntentsBitField as Intents, Partials } from "discord.js";
-import { ClusterClient } from "discord-hybrid-sharding";
 
 import express from "express";
 
@@ -10,20 +9,12 @@ import logs from "discord-logs";
 
 import Data from "../../config/Data.js";
 
+const intents = Object.values(Intents.Flags).filter((intent) => typeof intent === "string");
+const partials = Object.values(Partials).filter((partial) => typeof partial === "string");
+
 export class Client extends BaseClient {
   constructor() {
-    super({
-      failIfNotExists: false,
-
-      intents: Object.values(Intents.Flags).filter((intent) => typeof intent === "string"),
-      partials: Object.values(Partials).filter((partial) => typeof partial === "string"),
-
-      ws: {
-        compress: false,
-        large_threshold: 250,
-        version: 10
-      }
-    });
+    super({ intents, partials });
 
     this.setMaxListeners(0);
 
@@ -35,11 +26,9 @@ export class Client extends BaseClient {
   };
 
   TOKEN = Data.Bot.TOKEN;
-  
-  #REST = new REST(this);
-  #LOADER = new Loader(this);
 
-  cluster = new ClusterClient(this);
+  REST = new REST(this);
+  #LOADER = new Loader(this);
 
   async #connect() {
     // this.#LOADER.on("error", ({ type, error, body }) => console.log(`[Loader] An error ocurred! In ${type}, ${error}`));
@@ -47,8 +36,8 @@ export class Client extends BaseClient {
     this.#LOADER.once("ready", async () => {
       const storage = this.#LOADER.storage;
 
-      await this.#REST.PUT();
-      await this.#REST.PUT(storage);
+      // await this.REST.PUT();
+      // await this.REST.PUT(storage);
     });
 
     this.#LOADER.Setup();
@@ -73,7 +62,7 @@ export class Client extends BaseClient {
           response.send(`
             <title>${client.user.username}'s Home</title>
             <h1 style="color: blue;">
-            <button onclick="location.href='${client.generateInvite({ scopes: ["bot", "applications.commands"], permissions: ["Administrator"] })}'">Invite Bot</button>
+            <button onclick="location.href='${client.generateInvite({ scopes: [ "bot", "applications.commands" ], permissions: [ "Administrator" ] })}'">Invite Bot</button>
             <br><br>
             <button onclick="location.href='https://discord.gg/HUuXnVAjbX'">Support Server</button>
             <br>

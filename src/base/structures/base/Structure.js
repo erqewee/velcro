@@ -5,7 +5,7 @@ import Discord, {
   ActionRowBuilder, TextInputBuilder,
   TextInputStyle, ModalBuilder,
   AttachmentBuilder, SlashCommandBuilder,
-  Client
+  Client, WebhookClient
 } from "discord.js";
 const { Interaction } = Discord;
 
@@ -45,6 +45,7 @@ export class Structure {
   StringMenu = StringSelectMenuBuilder;
   UserMenu = UserSelectMenuBuilder;
   Attachment = AttachmentBuilder;
+  Webhook = WebhookClient;
 
   SlashCommand = SlashCommandBuilder;
   Command = this.SlashCommand;
@@ -171,30 +172,25 @@ export class Structure {
    * @param {string} blockType 
    * @returns {string}
    */
-  code(text = "console.log('Hello World!');", fType = "JS") {
+  code(text = "console.log('Hello World!');", type = "JS") {
     const textChecker = new Checker.BaseChecker(text);
     textChecker.createError(textChecker.isNotString, "text", "InvalidType", { expected: "String" }).throw();
 
-    const typeChecker = new Checker.BaseChecker(fType);
+    const typeChecker = new Checker.BaseChecker(type);
     typeChecker.createError(typeChecker.isNotString, "type", "InvalidType", { expected: "String" }).throw();
 
-    const content = String(text);
-    let type = String(fType).trim().toLowerCase();
-
-    const output = `\`\`\`${type}\n${content}\`\`\``;
+    const output = `\`\`\`${type?.toLowerCase() ?? ""}\n${String(text)}\`\`\``;
 
     return output;
   };
 
   /**
    * Translate the entered string.
-   * @param {string} fKey 
+   * @param {string} key 
    * @param {{locate: string, variables: { name: string, value: any }[]}} options 
    * @returns {string}
    */
-  translate(fKey, options = { locate: Data.LANG, variables: [] }) {
-    let key = fKey;
-
+  translate(key, options = { locate: Data.LANG, variables: [] }) {
     const { locate: l, variables: v } = options;
 
     let locate = l;
@@ -203,7 +199,7 @@ export class Structure {
     let variables = v;
     if (!variables) variables = [];
 
-    const keyChecker = new Checker.BaseChecker(fKey);
+    const keyChecker = new Checker.BaseChecker(key);
     keyChecker.createError(keyChecker.isNotString, "key", "InvalidType", { expected: "String" }).throw();
 
     const locateChecker = new Checker.BaseChecker(locate);

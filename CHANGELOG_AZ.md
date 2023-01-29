@@ -6,6 +6,7 @@
 
 | Versiya           | Vəziyyət  |
 | ----------------- | ----------|
+| Release 1.0.9     | ✅ |
 | Release 1.0.5     | ✅ |
 | Release 1.0.2     | ❌ |
 | Release 1.0.0     | ❌ |
@@ -29,13 +30,26 @@
 
 ## Məlum Məsələlər
 
-- 'REBOOT' əmrindən istifadə etdikdən sonra yadda saxlanılanların aşkar edilməməsi ilə bağlı problemi araşdırırıq.
+- Biz 'REBOOT' əmrinin alt komandalarında əmrdən istifadə etdikdən sonra dəyişikliklərin yadda saxlanılmaması məsələsini araşdırırıq.
 
 ## Xəbərdarlıqlar
 
 - "Release 1.0.5" buraxılışı ilə kritik düzəlişlər tətbiq edilmişdir. Əgər "Release 1.0.0" və ya "Release 1.0.2" istifadə edirsinizsə, təkmilləşdirmənizi şiddətlə tövsiyə edirik.
-- Stabil versiya çıxdı! Əgər siz "Release 1.0.5" altındakı versiyalardan istifadə edirsinizsə, təkmilləşdirmənizi şiddətlə tövsiyə edirik.
 
 ## Yamaq Qeydləri
 
-- Azərbaycan Dili Tezliklə Əlavə olunacaq.
+> Release 1.0.9 (01/26/2023)
+
+- <details>
+    <summary>Nə Yenilik Var</summary>
+    <i>Bu yeniləmədə heç bir yenilik yoxdur.</i>
+  </details>
+- <details>
+    <summary>Dəyişikliklər</summary>
+    <i>Yenilənmiş 'Reboot' əmri.
+    <i>Quraşdırıcı yeniləndi. (Daha sürətli)</i>
+  </details>
+- <details>
+    <summary>Düzəlişlər</summary>
+    <i>Yoxlayıcıya daxil edilmiş məlumatların Yoxlayıcının digər hissələrində (sətir, funksiya, massiv və s.) görünməməsinə səbəb olan problem aradan qaldırıldı.</i>
+  </details>

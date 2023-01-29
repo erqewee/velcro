@@ -6,6 +6,7 @@
 
 | Sürüm             | Durum     |
 | ----------------- | ----------|
+| Release 1.0.9     | ✅ |
 | Release 1.0.5     | ✅ |
 | Release 1.0.2     | ❌ |
 | Release 1.0.0     | ❌ |
@@ -29,14 +30,28 @@
 
 ## Bilinen Sorunlar
 
-- We are investigating the issue not detecting saved D after using the 'REBOOT' command.
+- 'REBOOT' komutunun alt komutlarında komutu kullandıktan sonra değişiklikleri kaydetmemesine neden olan sorunu araştırıyoruz.
 
 ## Uyarılar
 
 - "Release 1.0.5" sürümü ile kritik düzeltmeler uygulandı. Eğer "Release 1.0.0" veya "Release 1.0.2" sürümünü kullanıyorsanız yükseltme yapmanızı kesinlikle öneririz.
-- Kararlı sürüm çıktı! "Release 1.0.5" altındaki sürümleri kullanıyorsanız yükseltme yapmanızı kesinlikle öneririz.
 
 ## Yama Notları
+
+> Release 1.0.9 (01/26/2023)
+
+- <details>
+    <summary>Yenilikler</summary>
+    <i>Bu güncelleme herhangi bir yenilik içermiyor.</i>
+  </details>
+- <details>
+    <summary>Değişiklikler</summary>
+    <i>Yükleyici güncellendi. (Daha hızlı)</i>
+  </details>
+- <details>
+    <summary>Düzeltmeler</summary>
+    <i>Checker'a girilen verilerin Checker'ın diğer bölümlerinde (string, function, array vb.) görünmemesine neden olan sorun giderildi.</i>
+  </details>
 
 > Release 1.0.5 (01/23/2023)
 

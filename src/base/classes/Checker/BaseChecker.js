@@ -23,15 +23,15 @@ export default class BaseChecker {
    */
   constructor(data) {
     this.data = data;
-  };
 
-  string = new StringChecker(this, this.data);
-  boolean = new BooleanChecker(this, this.data);
-  symbol = new SymbolChecker(this, this.data);
-  array = new ArrayChecker(this, this.data);
-  function = new FunctionChecker(this, this.data);
-  object = new ObjectChecker(this, this.data);
-  number = new NumberChecker(this, this.data);
+    this.string = new StringChecker(this, data);
+    this.boolean = new BooleanChecker(this, data);
+    this.symbol = new SymbolChecker(this, data);
+    this.array = new ArrayChecker(this, data);
+    this.function = new FunctionChecker(this, data);
+    this.object = new ObjectChecker(this, data);
+    this.number = new NumberChecker(this, data);
+  };
 
   /**
    * Checks if data is Boolean.

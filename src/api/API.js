@@ -24,19 +24,11 @@ export class API {
    * @param {string} url 
    * @param {{json: {}}} options 
    */
-  async GET(url, options = { json: {} }) {
+  async GET(url) {
     const urlChecker = new checker.BaseChecker(url);
-    urlChecker.createError(!urlChecker.isString, "url", { expected: "String" }).throw();
+    urlChecker.createError(urlChecker.isNotString, "url", { expected: "String" }).throw();
 
-    const { json } = options;
-
-    if (!json) json = {};
-
-    let response;
-
-    response = await got(url, { headers }).json();
-
-    return response;
+    return (await got(url, { headers }).json());
   };
 
   /**
@@ -47,17 +39,13 @@ export class API {
    */
   async PATCH(url, options = { json: {} }) {
     const urlChecker = new checker.BaseChecker(url);
-    urlChecker.createError(!urlChecker.isString, "url", { expected: "String" }).throw();
+    urlChecker.createError(urlChecker.isNotString, "url", { expected: "String" }).throw();
 
     const { json } = options;
 
     if (!json) json = {};
 
-    let response;
-
-    response = await got(url, { method: "PATCH", headers }).json();
-
-    return response;
+    return (await got(url, { method: "PATCH", headers, json }).json());
   };
 
   /**
@@ -68,17 +56,13 @@ export class API {
    */
   async PUT(url, options = { json: {} }) {
     const urlChecker = new checker.BaseChecker(url);
-    urlChecker.createError(!urlChecker.isString, "url", { expected: "String" }).throw();
+    urlChecker.createError(urlChecker.isNotString, "url", { expected: "String" }).throw();
 
     const { json } = options;
 
     if (!json) json = {};
 
-    let response;
-
-    response = await got(url, { method: "PUT", headers }).json();
-
-    return response;
+    return (await got(url, { method: "PUT", headers, json }).json());
   };
 
   /**
@@ -88,7 +72,7 @@ export class API {
    */
   DELETE(url) {
     const urlChecker = new checker.BaseChecker(url);
-    urlChecker.createError(!urlChecker.isString, "url", { expected: "String" }).throw();
+    urlChecker.createError(urlChecker.isNotString, "url", { expected: "String" }).throw();
 
     (async () => await got(url, { method: "DELETE", headers }))();
   };
@@ -101,17 +85,13 @@ export class API {
    */
   async POST(url, options = { json: {} }) {
     const urlChecker = new checker.BaseChecker(url);
-    urlChecker.createError(!urlChecker.isString, "url", { expected: "String" }).throw();
+    urlChecker.createError(urlChecker.isNotString, "url", { expected: "String" }).throw();
 
     const { json } = options;
 
     if (!json) json = {};
 
-    let response;
-
-    response = await got(url, { method: "POST", headers }).json();
-
-    return response;
+    return (await got(url, { method: "POST", headers, json }).json());
   };
 
   static GOT = got;

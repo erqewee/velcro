@@ -2,9 +2,9 @@
   "name": "wyvern",
   "version": "1.0.0",
   "description": "",
-  "main": "src/bot.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "cls && node src/bot.js",
+    "start": "clear && node src/process.js",
     "test": "node test.js"
   },
   "type": "module",
@@ -20,7 +20,7 @@
     "colorette": "^2.0.19",
     "discord-hybrid-sharding": "^2.1.0",
     "discord-logs": "^2.2.1",
-    "discord.js": "14.7.2-dev.1674475451-8b70f49.0",
+    "discord.js": "14.7.1",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "get-intrinsic": "^1.2.0",
@@ -31,7 +31,7 @@
     "rss-converter": "^1.1.6",
     "rss-parser": "^3.12.0",
     "stack-trace": "1.0.0-pre1",
-    "utf-8-validate": "^5.0.10",
+    "utf-8-validate": "^6.0.2",
     "uuid": "^9.0.0",
     "wio.db": "^4.0.22",
     "ws": "^8.12.0"

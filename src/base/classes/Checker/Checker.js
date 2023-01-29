@@ -27,7 +27,7 @@ export class Checker {
   isPermission(data) {
     const checker = new BaseChecker(data);
 
-    checker.error(checker.isNotString && checker.isNotBigInt && checker.isNotNumber, "data", { expected: ["String", "BigInt", "Number"] }).throw();
+    checker.createError(checker.isNotString && checker.isNotBigInt && checker.isNotNumber, "data", { expected: ["String", "BigInt", "Number"] }).throw();
 
     if (PermissionManager.has(data)) return true;
     else return false;
@@ -43,7 +43,7 @@ export class Checker {
 
     const checker = new BaseChecker(data);
 
-    checker.error(checker.isNotString, "data", { expected: "String" }).throw();
+    checker.createError(checker.isNotString, "data", { expected: "String" }).throw();
 
     if (Data.Bot.Developers.includes(data)) state = true;
 
