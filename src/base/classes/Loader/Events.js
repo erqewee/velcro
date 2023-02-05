@@ -4,9 +4,12 @@ export const Events = {
 
   EventLoaded: "eventLoaded",
   EventsReady: "eventsReady",
+  
+  SlashCommandLoaded: "slashCommandLoaded",
+  SlashCommandsReady: "slashCommandsReady",
 
-  CommandLoaded: "commandLoaded",
-  CommandsReady: "commandsReady",
+  ContextCommandLoaded: "contextCommandLoaded",
+  ContextCommandsReady: "contextCommandsReady",
 
   LanguageLoaded: "languageLoaded",
   LanguagesReady: "languagesReady",

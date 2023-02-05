@@ -32,8 +32,12 @@ export class InviteManager {
    * @returns {boolean}
    */
   async handleCache(debug = false) {
-    const debugChecker = new api.checker.BaseChecker(debug);
-    debugChecker.createError(!debugChecker.isBoolean, "debug", { expected: "Boolean", received: debugChecker }).throw();
+    const debugError = new api.checker.BaseChecker(debug).Error;
+    debugError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'debug'.")
+      .setCondition("isNotBoolean")
+      .setType("InvalidType")
+      .throw();
 
     let spinner = ora("[CacheManager(Invite)] Initiating caching.");
 
@@ -63,11 +67,19 @@ export class InviteManager {
    * @returns {Promise<Invite>}
    */
   async get(guildID, inviteCode) {
-    const guildChecker = new api.checker.BaseChecker(guildID);
-    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+    const guildError = new api.checker.BaseChecker(guildID).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guildId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const codeChecker = new api.checker.BaseChecker(code);
-    codeChecker.createError(!codeChecker.isString, "inviteCode", { expected: "String", received: codeChecker }).throw();
+    const inviteError = new api.checker.BaseChecker(inviteCode).Error;
+    inviteError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'inviteCode'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const guild = await GuildManager.get(guildID);
     const invite = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/invites/${inviteCode}`);
@@ -92,8 +104,12 @@ export class InviteManager {
     targetUserId: null,
     targetApplicationId: null
   }) {
-    const channelChecker = new api.checker.BaseChecker(channelID);
-    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker }).throw();
+    const channelError = new api.checker.BaseChecker(channelID).Error;
+    channelError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'channelId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const channel = await ChannelManager.get(channelID);
 
@@ -121,11 +137,19 @@ export class InviteManager {
    * @returns {number}
    */
   async delete(channelID, inviteCode) {
-    const channelChecker = new api.checker.BaseChecker(channelID);
-    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker }).throw();
+    const channelError = new api.checker.BaseChecker(channelID).Error;
+    channelError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'channelId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const inviteChecker = new api.checker.BaseChecker(inviteCode);
-    inviteChecker.createError(!inviteChecker.isString, "code", { expected: "String", received: inviteChecker }).throw();
+    const inviteError = new api.checker.BaseChecker(inviteCode).Error;
+    inviteError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'inviteCode'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const channel = await ChannelManager.get(channelID);
     DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channel.id}/invites/${inviteCode}`);
@@ -140,19 +164,27 @@ export class InviteManager {
    * @returns {Promise<Invite[]>}
    */
   async map(guildID, storage = []) {
-    const guildChecker = new api.checker.BaseChecker(guildID);
-    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+    const guildError = new api.checker.BaseChecker(guildID).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guildId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const storageChecker = new api.checker.BaseChecker(storage);
-    storageChecker.createError(!storageChecker.isArray, "storage", { expected: "Array", received: storageChecker }).throw();
+    const storageError = new api.checker.BaseChecker(storage).Error;
+    storageError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'storage'.")
+      .setCondition("isNotArray")
+      .setType("InvalidType")
+      .throw();
 
     const guild = await GuildManager.get(client.guilds.resolve(guildID));
 
     const invites = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/invites`);
 
-    const invitesArray = [];
+    const invitesArray = storage ? storage : [];
 
-    if (invites.length > 0) for (let index = 0; index < invites.length; index++) invitesArray.push(client.guilds.resolve(guild.id).invites.resolve(invites[index]));
+    if (invites.length > 0) for (let index = 0; index < invites.length; index++) invitesArray.push(invites[ index ]);
 
     return invitesArray;
   };

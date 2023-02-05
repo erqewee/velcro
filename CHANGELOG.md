@@ -6,6 +6,7 @@
 
 | Version           | State     |
 | ----------------- | --------- |
+| Release 1.0.11    | ✅ |
 | Release 1.0.9     | ✅ |
 | Release 1.0.5     | ✅ |
 | Release 1.0.2     | ❌ |
@@ -37,6 +38,10 @@
 - Critical fixes implemented in "Release 1.0.5" version. If you are using "Release 1.0.2" or "Lower". We strongly recommend that you upgrade.
 
 ## Patch Notes
+
+> Release 1.0.11 (02/05/2023)
+
+- Added cooldown.
 
 > Release 1.0.9 (01/27/2023)
 

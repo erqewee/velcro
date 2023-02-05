@@ -1,4 +1,4 @@
-import { Command } from "../../structures/export.js";
+import { SlashCommand } from "../../../structures/export.js";
 
 import { v4 as generateID } from "uuid";
 
@@ -19,7 +19,7 @@ const topics = [
   }
 ];
 
-export default class extends Command {
+export default class extends SlashCommand {
   constructor() {
     super({ enabled: true, mode: "Global" });
 
@@ -60,7 +60,7 @@ export default class extends Command {
           permissionOverwrites: [
             {
               id: g.id,
-              deny: [this.Permissions.ViewChannel]
+              deny: [ this.Permissions.ViewChannel ]
             }
           ]
         }).then((category) => {
@@ -89,7 +89,7 @@ export default class extends Command {
           permissionOverwrites: [
             {
               id: g.id,
-              deny: [this.Permissions.ViewChannel]
+              deny: [ this.Permissions.ViewChannel ]
             }
           ]
         }).then((category) => {
@@ -125,11 +125,11 @@ export default class extends Command {
           permissionOverwrites: [
             {
               id: g.id,
-              deny: [this.Permissions.ViewChannel]
+              deny: [ this.Permissions.ViewChannel ]
             },
             {
               id: m.id,
-              allow: [this.Permissions.ViewChannel]
+              allow: [ this.Permissions.ViewChannel ]
             }
           ]
         }).then(async (channel) => {
@@ -184,8 +184,8 @@ export default class extends Command {
             Member: m.id,
           });
 
-          await channel.send({ content: `${this.config.Emoji.Other.NOTEPAD} ${m} | ${supportRole}`, embeds: [ticketEmbed] });
-          await log.send({ embeds: [logEmbed] });
+          await channel.send({ content: `${this.config.Emoji.Other.NOTEPAD} ${m} | ${supportRole}`, embeds: [ ticketEmbed ] });
+          await log.send({ embeds: [ logEmbed ] });
 
           const row = new this.Row({
             components: [
@@ -197,7 +197,7 @@ export default class extends Command {
             ]
           });
 
-          return interaction.editReply({ content: `${this.config.Emoji.State.SUCCESS} Your ticket is created.`, components: [row], ephemeral: true });
+          return interaction.editReply({ content: `${this.config.Emoji.State.SUCCESS} Your ticket is created.`, components: [ row ], ephemeral: true });
         });
       } else if (topic === "general") {
         return g.channels.create({
@@ -208,11 +208,11 @@ export default class extends Command {
           permissionOverwrites: [
             {
               id: g.id,
-              deny: [this.Permissions.ViewChannel]
+              deny: [ this.Permissions.ViewChannel ]
             },
             {
               id: m.id,
-              allow: [this.Permissions.ViewChannel]
+              allow: [ this.Permissions.ViewChannel ]
             }
           ]
         }).then(async (channel) => {
@@ -267,8 +267,8 @@ export default class extends Command {
             Member: m.id,
           });
 
-          await channel.send({ content: `${this.config.Emoji.Other.NOTEPAD} ${m} | ${supportRole}`, embeds: [ticketEmbed] });
-          await log.send({ embeds: [logEmbed] });
+          await channel.send({ content: `${this.config.Emoji.Other.NOTEPAD} ${m} | ${supportRole}`, embeds: [ ticketEmbed ] });
+          await log.send({ embeds: [ logEmbed ] });
 
           const row = new this.Row({
             components: [
@@ -280,7 +280,7 @@ export default class extends Command {
             ]
           });
 
-          return interaction.editReply({ content: `${this.config.Emoji.State.SUCCESS} Your ticket is created.`, components: [row], ephemeral: true });
+          return interaction.editReply({ content: `${this.config.Emoji.State.SUCCESS} Your ticket is created.`, components: [ row ], ephemeral: true });
         });
       } else if (topic === "complaint") {
         return g.channels.create({
@@ -291,11 +291,11 @@ export default class extends Command {
           permissionOverwrites: [
             {
               id: g.id,
-              deny: [this.Permissions.ViewChannel]
+              deny: [ this.Permissions.ViewChannel ]
             },
             {
               id: m.id,
-              allow: [this.Permissions.ViewChannel]
+              allow: [ this.Permissions.ViewChannel ]
             }
           ]
         }).then(async (channel) => {
@@ -350,8 +350,8 @@ export default class extends Command {
             Member: m.id,
           });
 
-          await channel.send({ content: `${this.config.Emoji.Other.NOTEPAD} ${m} | ${supportRole}`, embeds: [ticketEmbed] });
-          await log.send({ embeds: [logEmbed] });
+          await channel.send({ content: `${this.config.Emoji.Other.NOTEPAD} ${m} | ${supportRole}`, embeds: [ ticketEmbed ] });
+          await log.send({ embeds: [ logEmbed ] });
 
           const row = new this.Row({
             components: [
@@ -363,7 +363,7 @@ export default class extends Command {
             ]
           });
 
-          return interaction.editReply({ content: `${this.config.Emoji.State.SUCCESS} Your ticket is created.`, components: [row], ephemeral: true });
+          return interaction.editReply({ content: `${this.config.Emoji.State.SUCCESS} Your ticket is created.`, components: [ row ], ephemeral: true });
         });
       };
     } else if (c === "delete") {
@@ -406,8 +406,8 @@ export default class extends Command {
           ]
         });
 
-        await log.send({ embeds: [logEmbed] });
-        
+        await log.send({ embeds: [ logEmbed ] });
+
         return interaction.editReply({ content: `${this.config.Emoji.State.WARNING} Support channel is not found. Ticket informations has been deleted from the database. (ID: ${id})` });
       };
 
@@ -439,7 +439,7 @@ export default class extends Command {
           ]
         });
 
-        await log.send({ embeds: [logEmbed] });
+        await log.send({ embeds: [ logEmbed ] });
 
         return db.del(`Guild_${g.id}.Tickets.ID_${id}`);
       });

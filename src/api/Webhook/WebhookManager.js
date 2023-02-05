@@ -17,8 +17,12 @@ export class WebhookManager {
    * @param {Webhook} webhook 
    */
   async get(webhook) {
-    const webhookChecker = new api.checker.BaseChecker(webhook);
-    webhookChecker.createError(!webhookChecker.isObject, "webhook", { expected: "Object", received: webhookChecker }).throw();
+    const webhookError = new api.checker.BaseChecker(webhook).Error;
+    webhookError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'webhook'.")
+      .setCondition("isNotObject")
+      .setType("InvalidType")
+      .throw();
 
     const fetched = await GET(`${api.config.BASE_URL}/webhooks/${webhook.id}`);
 
@@ -34,8 +38,12 @@ export class WebhookManager {
     name: null,
     avatar: null
   }) {
-    const channelChecker = new api.checker.BaseChecker(channel);
-    channelChecker.createError(!channelChecker.isObject, "channel", { expected: "Object", received: channelChecker }).throw();
+    const channelError = new api.checker.BaseChecker(channel).Error;
+    channelError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'channel'.")
+      .setCondition("isNotObject")
+      .setType("InvalidType")
+      .throw();
 
     const fetchedChannel = await ChannelManager.get(channel.id);
     const webhook = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${fetchedChannel.id}/webhooks`, {
@@ -68,8 +76,12 @@ export class WebhookManager {
     messageReference: {},
     stickerIds: []
   }) {
-    const webhookChecker = new api.checker.BaseChecker(webhook);
-    webhookChecker.createError(!webhookChecker.isObject, "webhook", { expected: "Object", received: webhookChecker }).throw();
+    const webhookError = new api.checker.BaseChecker(webhook).Error;
+    webhookError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'webhook'.")
+      .setCondition("isNotObject")
+      .setType("InvalidType")
+      .throw();
 
     const fetched = await this.get(webhook.id);
 
@@ -99,8 +111,12 @@ export class WebhookManager {
    * @returns {Promise<number>}
    */
   async delete(webhook) {
-    const webhookChecker = new api.checker.BaseChecker(webhook);
-    webhookChecker.createError(!webhookChecker.isObject, "webhook", { expected: "Object", received: webhookChecker }).throw();
+    const webhookError = new api.checker.BaseChecker(webhook).Error;
+    webhookError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'webhook'.")
+      .setCondition("isNotObject")
+      .setType("InvalidType")
+      .throw();
 
     const fetched = await this.get(webhook.id);
 

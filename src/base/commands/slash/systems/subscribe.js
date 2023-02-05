@@ -1,8 +1,8 @@
-import { Command } from "../../structures/export.js";
+import { SlashCommand } from "../../../structures/export.js";
 
-import { CacheManager } from "../../CacheManager.js";
+import { CacheManager } from "../../../CacheManager.js";
 
-export default class extends Command {
+export default class extends SlashCommand {
   constructor() {
     super({ enabled: true, mode: "Global" });
 
@@ -95,10 +95,10 @@ export default class extends Command {
 
         if (name.startsWith("🔰")) member.setNickname(name.slice(1));
 
-        const memberEmployee = memberArray.filter((value) => value.id === member.id)[0]?.employee ?? m.id;
+        const memberEmployee = memberArray.filter((value) => value.id === member.id)[ 0 ]?.employee ?? m.id;
         db.pull("Subscribe.Members", (data) => data.id === member.id);
 
-        const employeeData = employeeArray.filter((value) => value.id === memberEmployee)[0];
+        const employeeData = employeeArray.filter((value) => value.id === memberEmployee)[ 0 ];
         db.pull("Subscribe.Employees", (data) => data.id === employeeData?.id);
 
         db.push("Subscribe.Employees", {
@@ -150,8 +150,8 @@ export default class extends Command {
 
       if (db.has("Subscribe.Settings.PasswordButton")) {
         const messageData = await this.client.channels.resolve("942879226346999848").messages.fetch(db.fetch("Subscribe.Settings.PasswordButton"));
-        messageData.edit({ components: [passwordButton] });
-      } else this.client.channels.resolve("942879226346999848").send({ components: [passwordButton] }).then((message) => db.set("Subscribe.Settings.PasswordButton", message.id));
+        messageData.edit({ components: [ passwordButton ] });
+      } else this.client.channels.resolve("942879226346999848").send({ components: [ passwordButton ] }).then((message) => db.set("Subscribe.Settings.PasswordButton", message.id));
 
       return interaction.reply({ content: `${this.config.Emoji.State.SUCCESS} Başarılı!`, ephemeral: true });
     };
@@ -204,7 +204,7 @@ export default class extends Command {
         ]
       });
 
-      const checkBlackList = db.fetch("Subscribe.BlackList")?.filter((value) => value.id === member.id)[0];
+      const checkBlackList = db.fetch("Subscribe.BlackList")?.filter((value) => value.id === member.id)[ 0 ];
 
       if (checkBlackList?.date) {
         const time = checkBlackList.date;
@@ -261,7 +261,7 @@ export default class extends Command {
       member.roles.add(config.subscribe);
 
       if (interaction.channel.id === config.subscribeChannel) {
-        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === m.id)[0];
+        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === m.id)[ 0 ];
 
         db.pull("Subscribe.Employees", (data) => data.id === m.id);
 
@@ -280,7 +280,7 @@ export default class extends Command {
 
       if (member.roles.highest.id == config.subscribe) member.displayName.startsWith("🔰") ? null : member.setNickname(`🔰 ${member.displayName}`);
 
-      const subscribeCount = db.fetch(`Subscribe.Employees`)?.filter((value) => value.id === m.id)[0].count ?? 0;
+      const subscribeCount = db.fetch(`Subscribe.Employees`)?.filter((value) => value.id === m.id)[ 0 ].count ?? 0;
 
       const subEmbed = new this.Embed({
         title: `${client.user.username} - Abone Sistemi | Rol Verildi`,
@@ -333,8 +333,8 @@ export default class extends Command {
         }
       });
 
-      this.client.channels.resolve((await this.channels.get(config.log)).id).send({ embeds: [logEmbed] });
-      return interaction.reply({ embeds: [subEmbed] });
+      this.client.channels.resolve((await this.channels.get(config.log)).id).send({ embeds: [ logEmbed ] });
+      return interaction.reply({ embeds: [ subEmbed ] });
     } else if (c === "delete") {
       const user = options.getUser("mention");
       const member = this.members.cache.get(user.id);
@@ -356,7 +356,7 @@ export default class extends Command {
         ]
       });
 
-      const checkBlackList = db.fetch("Subscribe.BlackList")?.filter((value) => value.id === member.id)[0];
+      const checkBlackList = db.fetch("Subscribe.BlackList")?.filter((value) => value.id === member.id)[ 0 ];
 
       if (checkBlackList?.date) {
         const time = checkBlackList.date;
@@ -413,7 +413,7 @@ export default class extends Command {
 
       member.roles.remove(config.subscribe);
 
-      const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === m.id)[0];
+      const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === m.id)[ 0 ];
       db.pull("Subscribe.Employees", (data) => data.id === m.id);
       db.push("Subscribe.Employees", {
         count: employeeData ? employeeData.count - 1 : 0,
@@ -474,8 +474,8 @@ export default class extends Command {
         }
       });
 
-      this.client.channels.resolve((await this.channels.get(config.log)).id).send({ embeds: [logEmbed] });
-      return interaction.reply({ embeds: [subEmbed] });
+      this.client.channels.resolve((await this.channels.get(config.log)).id).send({ embeds: [ logEmbed ] });
+      return interaction.reply({ embeds: [ subEmbed ] });
     } else if (c === "state") {
       const user = options.getUser("mention");
       const member = this.client.guilds.resolve(guild.id).members.resolve(user.id);
@@ -501,10 +501,10 @@ export default class extends Command {
           ]
         });
 
-        const memberData = db.fetch("Subscribe.Members")?.filter((value) => value.id === member.id)[0];
+        const memberData = db.fetch("Subscribe.Members")?.filter((value) => value.id === member.id)[ 0 ];
         const date = memberData.date;
 
-        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === memberData.employee)[0];
+        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === memberData.employee)[ 0 ];
         const subscribeCount = Number(employeeData?.count ?? 0);
 
         const embed = new this.Embed({
@@ -527,9 +527,9 @@ export default class extends Command {
           }
         });
 
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply({ embeds: [ embed ] });
       } else {
-        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === member.id)[0];
+        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value.id === member.id)[ 0 ];
 
         const date = employeeData?.date ?? this.time(Date.now(), { onlyNumberOutput: true });
         const subscribeCount = Number(employeeData?.count ?? 0);
@@ -554,12 +554,12 @@ export default class extends Command {
           }
         });
 
-        return interaction.reply({ embeds: [embed] });
+        return interaction.reply({ embeds: [ embed ] });
       };
     } else if (c === "list") {
       const employees = new CacheManager();
 
-      await interaction.reply({ embeds: [new this.Embed({ description: `${this.config.Emoji.State.LOADING} Veriler yükleniyor...` })] });
+      await interaction.reply({ embeds: [ new this.Embed({ description: `${this.config.Emoji.State.LOADING} Veriler yükleniyor...` }) ] });
 
       const guild = await this.client.guilds.resolve((await this.client.channels.resolve(config.log)).guild.id);
 
@@ -568,7 +568,7 @@ export default class extends Command {
       const embeds = [];
 
       await Promise.all(guild.members.cache.filter((member) => member.roles.cache.has(config.employee)).map(async (member) => {
-        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value?.id === member.id)[0];
+        const employeeData = db.fetch("Subscribe.Employees")?.filter((value) => value?.id === member.id)[ 0 ];
 
         const subCount = Number(employeeData?.count ?? 0);
         const date = employeeData?.date;

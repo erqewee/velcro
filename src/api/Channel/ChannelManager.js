@@ -29,8 +29,12 @@ export class ChannelManager {
    * @returns {boolean}
    */
   async handleCache(debug = false) {
-    const debugChecker = new api.checker.BaseChecker(debug);
-    debugChecker.createError(!debugChecker.isBoolean, "debug", { expected: "Boolean", received: debugChecker }).throw();
+    const debugError = new api.checker.BaseChecker(debug).Error;
+    debugError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'debug'.")
+      .setCondition("isNotBoolean")
+      .setType("InvalidType")
+      .throw();
 
     let spinner = ora("[CacheManager(Channel)] Initiating caching.");
 
@@ -57,8 +61,12 @@ export class ChannelManager {
    * @returns {Promise<Channel>}
    */
   async get(channelID) {
-    const channelChecker = new api.checker.BaseChecker(channelID);
-    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker });
+    const channelError = new api.checker.BaseChecker(channelID).Error;
+    channelError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'channelId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const channelBase = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}`);
     const channel = client.channels.resolve(channelBase.id);
@@ -75,7 +83,7 @@ export class ChannelManager {
 
     const channelsArray = [];
 
-    for (let index = 0; index < channels.length; index++) channelsArray.push(client.channels.resolve(channels[index].id));
+    for (let index = 0; index < channels.length; index++) channelsArray.push(client.channels.resolve(channels[ index ].id));
 
     return channelsArray;
   };
@@ -104,8 +112,12 @@ export class ChannelManager {
     availableTags: [],
     defaultSortOrder: 0
   }) {
-    const guildChecker = new api.checker.BaseChecker(guildID);
-    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker });
+    const guildError = new api.checker.BaseChecker(guildID).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guildId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const createdChannel = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels`, {
       json: {
@@ -140,11 +152,19 @@ export class ChannelManager {
    * @returns {void}
    */
   delete(guildID, channelID) {
-    const guildChecker = new api.checker.BaseChecker(guildID);
-    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }); 
-    
-    const channelChecker = new api.checker.BaseChecker(channelID);
-    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker });
+    const guildError = new api.checker.BaseChecker(guildID).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guildId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
+
+    const channelError = new api.checker.BaseChecker(channelID).Error;
+    channelError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'channelId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}/channels/${channelID}`);
 
@@ -175,8 +195,12 @@ export class ChannelManager {
     availableTags: [],
     defaultSortOrder: 0
   }) {
-    const channelChecker = new api.checker.BaseChecker(channelID);
-    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker });
+    const channelError = new api.checker.BaseChecker(channelID).Error;
+    channelError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'channel'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const getChannel = await this.get(channelID);
     const guild = await GuildManager.get(client.guilds.resolve(getChannel.guild_id).id);
@@ -203,7 +227,7 @@ export class ChannelManager {
     });
 
     const channel = client.channels.resolve(editedChannel.id);
-    
+
     return channel;
   };
 };

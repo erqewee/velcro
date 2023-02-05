@@ -1,9 +1,9 @@
 import { Client as BaseClient, IntentsBitField as Intents, Partials } from "discord.js";
 
-import express from "express";
-
 import { Loader } from "./Loader/Loader.js";
 import { REST } from "./REST.js";
+
+import express from "express";
 
 import logs from "discord-logs";
 
@@ -24,7 +24,7 @@ export class Client extends BaseClient {
 
     this.#connect().then((client) => this.#uptime(client));
   };
-
+  
   TOKEN = Data.Bot.TOKEN;
 
   REST = new REST(this);
@@ -37,7 +37,7 @@ export class Client extends BaseClient {
       const storage = this.#LOADER.storage;
 
       // await this.REST.PUT();
-      // await this.REST.PUT(storage);
+      await this.REST.PUT(storage);
     });
 
     this.#LOADER.Setup();

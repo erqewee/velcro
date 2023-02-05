@@ -1,4 +1,5 @@
-export const English = {
+export default {
+  enabled: true,
   data: {
     permissions: {
       body: "{p}",
@@ -58,9 +59,16 @@ export const English = {
         loaded: "Events Loaded. ({loaded}/{total})"
       },
       commands: {
-        loading: "Commands Loading ({loaded}/{total})",
-        loadingError: "An error ocurred when loading commands. | {err}",
-        loaded: "Commands Loaded. ({loaded}/{total})"
+        slash:  {
+          loading: "Slash Commands Loading ({loaded}/{total})",
+          loadingError: "An error ocurred when loading slash commands. | {err}",
+          loaded: "Slash Commands Loaded. ({loaded}/{total})"
+        },
+        context: {
+          loading: "Context Commands Loading ({loaded}/{total})",
+          loadingError: "An error ocurred when loading context commands. | {err}",
+          loaded: "Context Commands Loaded. ({loaded}/{total})"
+        }
       },
       gateway: {
         connecting: "Connecting to Gateway ({processing}/{total})",
@@ -129,6 +137,11 @@ export const English = {
             }
           }
         }
+      }
+    },
+    commands: {
+      avatar: {
+        title: "{member}'s Avatar",
       }
     }
   }

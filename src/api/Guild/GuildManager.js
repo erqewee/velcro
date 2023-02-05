@@ -26,8 +26,12 @@ export class GuildManager {
    * @returns {boolean}
    */
   async handleCache(debug = false) {
-    const debugChecker = new api.checker.BaseChecker(debug);
-    debugChecker.createError(!debugChecker.isBoolean, "debug", { expected: "Boolean", received: debugChecker }).throw();
+    const debugError = new api.checker.BaseChecker(debug).Error;
+    debugError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'debug'.")
+      .setCondition("isNotBoolean")
+      .setType("InvalidType")
+      .throw();
 
     let spinner = ora("[CacheManager(Guild)] Initiating caching.");
 
@@ -50,12 +54,16 @@ export class GuildManager {
 
   /**
    * Discards the data of the specified server.
-   * @param {string} guildID 
+   * @param {object} guild 
    * @returns {Promise<Guild>} 
    */
   async get(guild) {
-    const guildChecker = new api.checker.BaseChecker(guild);
-    guildChecker.createError(!guildChecker.isObject, "guild", { expected: "Object" }).throw();
+    const guildError = new api.checker.BaseChecker(guild).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guild'.")
+      .setCondition("isNotObject")
+      .setType("InvalidType")
+      .throw();
 
     const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}`);
     const resolved = client.guilds.resolve(fetched.id);
@@ -83,8 +91,12 @@ export class GuildManager {
    * @returns {void}
    */
   leave(guildID) {
-    const guildChecker = new api.checker.BaseChecker(guild);
-    guildChecker.createError(!guildChecker.isString, "guild", { expected: "String", received: guildChecker }).throw();
+    const guildError = new api.checker.BaseChecker(guildID).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guildId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     DELETE(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`);
 
@@ -160,8 +172,12 @@ export class GuildManager {
     description: null,
     premiumProgressBarEnabled: false
   }) {
-    const guildChecker = new api.checker.BaseChecker(guild);
-    guildChecker.createError(!guildChecker.isString, "guild", { expected: "String", received: guildChecker }).throw();
+    const guildError = new api.checker.BaseChecker(guildID).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guildId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const editedGuild = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guildID}`, {
       json: {

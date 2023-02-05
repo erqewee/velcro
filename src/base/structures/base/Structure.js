@@ -1,13 +1,13 @@
 import Discord, {
-  ButtonStyle, ChannelType, PermissionsBitField,
-  EmbedBuilder, StringSelectMenuBuilder,
-  UserSelectMenuBuilder, ButtonBuilder,
-  ActionRowBuilder, TextInputBuilder,
-  TextInputStyle, ModalBuilder,
-  AttachmentBuilder, SlashCommandBuilder,
-  Client, WebhookClient
+  ChannelType, PermissionsBitField,
+  EmbedBuilder, StringSelectMenuBuilder, UserSelectMenuBuilder, ButtonBuilder, ActionRowBuilder, TextInputBuilder, ModalBuilder, AttachmentBuilder, SlashCommandBuilder, ContextMenuCommandBuilder,
+  TextInputStyle, ButtonStyle,
+  Client, WebhookClient,
+  ComponentType, ApplicationCommandType
 } from "discord.js";
 const { Interaction } = Discord;
+
+import { randomBytes, createCipheriv, createDecipheriv } from "node:crypto";
 
 import { Data, Emoji } from "../../../config/export.js";
 
@@ -23,8 +23,9 @@ import {
 import { deprecate as deprecated } from "node:util";
 
 import { Checker } from "../../export.js";
+import { Market } from "../../classes/Exchange/Market.js";
 
-import { CommandsCache, EventsCache, HandlersCache, LanguagesCache } from "../../classes/Loader/LoaderCache.js";
+import { CommandsCache, EventsCache, HandlersCache, LanguagesCache, CooldownsCache } from "../../classes/Loader/LoaderCache.js";
 
 import { Database } from "../../classes/Database/Database.js";
 const Economy = new Database("JSON", { path: "./src/base", dir: "databases", name: "Economy" });
@@ -34,8 +35,15 @@ const General = new Database("JSON", { path: "./src/base", dir: "databases", nam
 import lodash from "lodash";
 const { get } = lodash;
 
+import { s } from "@sapphire/shapeshift";
+
 export class Structure {
-  client = global.client;
+  /**
+   * @returns {Client}
+   */
+  get client() {
+    return global.client;
+  };
 
   Embed = EmbedBuilder;
   Button = ButtonBuilder;
@@ -48,12 +56,14 @@ export class Structure {
   Webhook = WebhookClient;
 
   SlashCommand = SlashCommandBuilder;
-  Command = this.SlashCommand;
+  ContextCommand = ContextMenuCommandBuilder;
 
+  CommandType = ApplicationCommandType;
   TextInputStyle = TextInputStyle;
   ChannelType = ChannelType;
   ButtonStyle = ButtonStyle;
   Permissions = PermissionsBitField.Flags;
+  Component = ComponentType;
 
   /**
    * Guild Manager
@@ -100,14 +110,59 @@ export class Structure {
    * Checker
    */
   checker = new Checker();
+
   /** 
    * Custom API (for custom requests)
    */
   api = new API();
 
-  loader = { commands: CommandsCache, events: EventsCache, handlers: HandlersCache, languages: LanguagesCache };
+  /**
+   * Market for Economy
+   */
+  market = new Market(Economy);
+
+  loader = { commands: CommandsCache, events: EventsCache, handlers: HandlersCache, languages: LanguagesCache, cooldowns: CooldownsCache };
   databases = { economy: Economy, subscribe: Subscribe, general: General };
   config = { Data, Emoji };
+
+  /**
+   * Encrypts the entered string.
+   * @param {string} message 
+   * @param {string} algorithm 
+   * @returns {{data: string, init: Buffer, key: Buffer}}
+   */
+  encrypt(message, algorithm = "aes-256-cbc") {
+    s.string.parse(message);
+    s.string.parse(algorithm);
+
+    const initVector = randomBytes(16);
+    const Securitykey = randomBytes(32);
+
+    const cipher = createCipheriv(algorithm, Securitykey, initVector);
+    let encryptedData = cipher.update(message, "utf-8", "hex");
+    encryptedData += cipher.final("hex");
+
+    return { data: encryptedData, init: initVector, key: Securitykey };
+  };
+
+  /**
+   * Decrypts the entered string.
+   * @param {string} data 
+   * @param {Buffer} key 
+   * @param {Buffer} init 
+   * @param {string} algorithm 
+   * @returns {{data: string}}
+   */
+  decrypt(data, key, init, algorithm = "aes-256-cbc") {
+    s.string.parse(data);
+    s.string.parse(algorithm);
+
+    const decipher = createDecipheriv(algorithm, key, init);
+    let decryptedData = decipher.update(data, "hex", "utf-8");
+    decryptedData += decipher.final("utf8");
+
+    return { data: decryptedData };
+  };
 
   /**
    * Set the function to deprecated.
@@ -116,18 +171,16 @@ export class Structure {
    * @returns {Function}
    */
   deprecate(functionStructure = function () { }, options = { name: "myCoolFunction()", code: 0, use: "myCoolGoldFunction()" }) {
-    const structureChecker = new Checker.BaseChecker(functionStructure);
-    structureChecker.createError(structureChecker.isNotFunction, "structure", "InvalidType", { expected: "Function" }).throw();
-
-    const nameChecker = new Checker.BaseChecker(options?.name);
-    nameChecker.createError(nameChecker.isNotString, "options#name", "InvalidType", { expected: "String" });
-
-    const codeChecker = new Checker.BaseChecker(options?.code);
-    codeChecker.createError(codeChecker.isNotNumber, "options#code", "InvalidType", { expected: "Number" });
+    const functionError = new this.checker.BaseChecker(functionStructure).Error;
+    functionError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'function'.")
+      .setCondition("isNotFunction")
+      .setType("InvalidType")
+      .throw();
 
     const deprecateFunction = deprecated(functionStructure, `${options.name.endsWith("()") ? options.name : options.name + "()"} is deprecated. Please use ${options.use.endsWith("()") ? options.use : options.use + "()"} instead.`, String(code));
 
-    return deprecateFunction;
+    return deprecateFunction();
   };
 
   /**
@@ -140,14 +193,12 @@ export class Structure {
   time(unixCode = Date.now(), options = { format: "R", onlyNumberOutput: false }) {
     const { format, onlyNumberOutput: OnO } = options;
 
-    const unixCodeChecker = new Checker.BaseChecker(unixCode);
-    unixCodeChecker.createError(unixCodeChecker.isNotNumber, "unixCode", "InvalidType", { expected: "Number" }).throw();
-
-    const formatChecker = new Checker.BaseChecker(format);
-    formatChecker.createError(formatChecker.isNotString, "format", "InvalidType", { expected: "String" }).throw();
-
-    const optionsChecker = new Checker.BaseChecker(options);
-    optionsChecker.createError(optionsChecker.isNotObject, "options", "InvalidType", { expected: "Object" }).throw();
+    const unixError = new this.checker.BaseChecker(unixCode).Error;
+    unixError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'unix'.")
+      .setCondition("isNotNumber")
+      .setType("InvalidType")
+      .throw();
 
     let formattedTime = Math.floor(unixCode / 1000);
 
@@ -173,11 +224,19 @@ export class Structure {
    * @returns {string}
    */
   code(text = "console.log('Hello World!');", type = "JS") {
-    const textChecker = new Checker.BaseChecker(text);
-    textChecker.createError(textChecker.isNotString, "text", "InvalidType", { expected: "String" }).throw();
+    const textError = new this.checker.BaseChecker(text).Error;
+    textError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'text'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const typeChecker = new Checker.BaseChecker(type);
-    typeChecker.createError(typeChecker.isNotString, "type", "InvalidType", { expected: "String" }).throw();
+    const typeError = new this.checker.BaseChecker(type).Error;
+    typeError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'type'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const output = `\`\`\`${type?.toLowerCase() ?? ""}\n${String(text)}\`\`\``;
 
@@ -194,29 +253,39 @@ export class Structure {
     const { locate: l, variables: v } = options;
 
     let locate = l;
-    if (!locate) locate = Data.LANG;
+    if (!locate) locate = this.loader.languages.fetch(Data.LANG) ? Data.LANG : this.loader.languages.keys()[ 0 ];
 
     let variables = v;
     if (!variables) variables = [];
 
-    const keyChecker = new Checker.BaseChecker(key);
-    keyChecker.createError(keyChecker.isNotString, "key", "InvalidType", { expected: "String" }).throw();
+    const keyError = new this.checker.BaseChecker(key).Error;
+    keyError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'key'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const locateChecker = new Checker.BaseChecker(locate);
-    locateChecker.createError(locateChecker.isNotString, "locate", "InvalidType", { expected: "String" }).throw();
+    const locateError = new this.checker.BaseChecker(locate).Error;
+    locateError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'locate'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const variableChecker = new Checker.BaseChecker(variables);
-    variableChecker.createError(variableChecker.isNotArray, "variable", "InvalidType", { expected: "Array" }).throw();
+    const variableError = new this.checker.BaseChecker(variables).Error;
+    variableError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'variables'.")
+      .setCondition("isNotArray")
+      .setType("InvalidType")
+      .throw();
 
     const requestedPathFormat = /^[a-z]+:[a-z]+(\.[a-z]+){0,15}$/;
     const requestedLocateFormat = /^[a-z]{2}(?:-[A-Z]{2})?$/;
 
-    const checker = new Checker.BaseChecker(" ");
+    s.string.regex(requestedPathFormat).parse(key);
+    s.string.regex(requestedLocateFormat).parse(locate);
 
-    checker.createError(!key.match(requestedPathFormat), "key", "Not Requested Format", { expected: ["data:events", "data:examples.source"], received: (key) }).throw();
-    checker.createError(!locate.match(requestedLocateFormat), "locate", "Not Requested Format", { expected: ["az-AZ", "tr", "xx", "xx-XX"], received: (locate) }).throw();
-
-    checker.createError(!this.loader.languages.has(locate), "locate", "Language Not Found", { expected: locate }).throw();
+    if (!this.loader.languages.has(locate)) locate = this.loader.languages.keys()[ 0 ];
 
     const translations = this.loader.languages.get(locate);
 
@@ -224,94 +293,30 @@ export class Structure {
 
     const translationSource = get(object, key.slice(5));
 
-    const sourceControlChecker = new Checker.BaseChecker(translationSource);
-    sourceControlChecker.createError(sourceControlChecker.isUndefined, "locate", "Language Not Found", { received: key }).throw();
+    const sourcerror = new this.checker.BaseChecker(translationSource).Error;
+    sourcerror.setName("ValidationError")
+      .setMessage("No language resource found.")
+      .setCondition("isUndefined")
+      .setType("InvalidType")
+      .throw();
 
     let translation = String(translationSource);
     for (let index = 0; index < variables.length; index++) {
-      const variable = variables[index];
+      const variable = variables[ index ];
 
-      const variableNameChecker = new Checker.BaseChecker(variable?.name);
-      variableNameChecker.createError(variableNameChecker.isNotString, "variable#name", "Not Found").throw();
+      const nameError = new this.checker.BaseChecker(variable?.name).Error;
+      nameError.setName("ValidationError")
+        .setMessage("An invalid type was specified for 'name'.")
+        .setCondition("isNotString")
+        .setType("InvalidType")
+        .throw();
 
-      checker.createError(!translation.includes(`{${variable.name}}`), "variable", "Not Found").throw();
+      if (!translation.includes(`{${variable.name}}`)) throw new Error("Varible not found.");
 
       translation = translation.replaceAll(`{${variable.name}}`, variable?.value ?? undefined);
     };
 
     return translation;
-  };
-
-  /**
-   * Get the first character of the entered string.
-   * @param {string} string 
-   */
-  first(string = "Hello World!") {
-    const stringChecker = new Checker.BaseChecker(string);
-    stringChecker.createError(stringChecker.isNotString, "string", "InvalidType", { expected: "String" }).throw();
-
-    let firstCharacter;
-
-    string.replace(/^\w/, (char) => firstCharacter = char);
-
-    return {
-      firstCharacter,
-
-      /**
-       * Converts the first character received to uppercase.
-       * @returns {string}
-       */
-      toUpper: function () {
-        const newString = (firstCharacter).toUpperCase() + string;
-
-        return newString;
-      },
-
-      /**
-       * Converts the first character received to lowercase.
-       * @returns {string}
-       */
-      toLower: function () {
-        const newString = (firstCharacter).toLowerCase() + string;
-
-        return newString;
-      }
-    };
-  };
-
-  /**
-   * Get the last character of the entered string.
-   * @param {string} string 
-   */
-  last(string = "Hello World!") {
-    const stringChecker = new Checker.BaseChecker(string);
-    stringChecker.createError(stringChecker.isNotString, "string", "InvalidType", { expected: "String" }).throw();
-
-    const lastCharacter = string.substring(0, (string.length - 1)) + string[(string.length - 1)];
-
-    return {
-      lastCharacter,
-
-      /**
-       * Converts the last character received to uppercase.
-       * @returns {string}
-       */
-      toUpper: function () {
-        const newString = lastCharacter.toUpperCase();
-
-        return newString;
-      },
-
-      /**
-       * Converts the last character received to lowercase.
-       * @returns {string}
-       */
-      toLower: function () {
-        const newString = lastCharacter.toLowerCase();
-
-        return newString;
-      }
-    };
   };
 
   /**
@@ -321,14 +326,26 @@ export class Structure {
    * @returns {Interaction}
    */
   async pagination(interaction, { embeds = [], buttons = [] }) {
-    const interactionChecker = new Checker.BaseChecker(interaction);
-    interactionChecker.createError(!interactionChecker.isObject, "interaction", "InvalidType", { expected: "Object", received: interactionChecker }).throw();
+    const interactionError = new this.checker.BaseChecker(interaction).Error;
+    interactionError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'interaction'.")
+      .setCondition("isNotObject")
+      .setType("InvalidType")
+      .throw();
 
-    const embedsChecker = new Checker.BaseChecker(embeds);
-    embedsChecker.createError(!embedsChecker.isArray, "embeds", "InvalidType", { expected: "Array", received: embedsChecker }).throw();
+    const embedsError = new this.checker.BaseChecker(embeds).Error;
+    embedsError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'embeds'.")
+      .setCondition("isNotArray")
+      .setType("InvalidType")
+      .throw();
 
-    const buttonsChecker = new Checker.BaseChecker(buttons);
-    buttonsChecker.createError(!buttonsChecker.isArray, "buttons", "InvalidType", { expected: "Array", received: buttonsChecker }).throw();
+    const buttonsError = new this.checker.BaseChecker(buttons).Error;
+    buttonsError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'buttons'.")
+      .setCondition("isNotArray")
+      .setType("InvalidType")
+      .throw();
 
     const first = new this.Button({
       style: ButtonStyle.Secondary,
@@ -361,7 +378,7 @@ export class Structure {
     });
 
     const buttonsRow = new this.Row({
-      components: [first, prev, del, next, last]
+      components: [ first, prev, del, next, last ]
     });
 
     let currentPage = 0;
@@ -389,8 +406,8 @@ export class Structure {
     let sendMessage;
 
     if (embeds.length === 0) {
-      if (interaction.deferred) return interaction.followUp({ embeds: [embeds[0]], components });
-      else sendMessage = interaction.replied ? await interaction.editReply({ embeds: [embeds[0]], components }) : await interaction.reply({ embeds: [embeds[0]], components });
+      if (interaction.deferred) return interaction.followUp({ embeds: [ embeds[ 0 ] ], components });
+      else sendMessage = interaction.replied ? await interaction.editReply({ embeds: [ embeds[ 0 ] ], components }) : await interaction.reply({ embeds: [ embeds[ 0 ] ], components });
     };
 
     embeds = embeds.map((embed, _index) => {
@@ -399,11 +416,11 @@ export class Structure {
       return embed.setFooter({ text: `Total: ${embeds.length} | Viewing: ${INDEX} | Remaining: ${embeds.length - INDEX}`, iconURL: interaction.guild?.iconURL() });
     });
 
-    if (interaction.deferred) sendMessage = await interaction.followUp({ embeds: [embeds[0]], components });
-    else sendMessage = interaction.replied ? await interaction.editReply({ embeds: [embeds[0]], components }) : await interaction.reply({ embeds: [embeds[0]], components });
+    if (interaction.deferred) sendMessage = await interaction.followUp({ embeds: [ embeds[ 0 ] ], components });
+    else sendMessage = interaction.replied ? await interaction.editReply({ embeds: [ embeds[ 0 ] ], components }) : await interaction.reply({ embeds: [ embeds[ 0 ] ], components });
 
     let filter = async (m) => {
-      const components = [new ActionRowBuilder({ components: [del] })];
+      const components = [ new ActionRowBuilder({ components: [ del ] }) ];
 
       let msg;
 
@@ -444,7 +461,7 @@ export class Structure {
           ];
           components.concat(buttons);
 
-          await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
+          await sendMessage.edit({ embeds: [ embeds[ currentPage ] ], components }).catch(() => { });
 
           break;
         };
@@ -465,7 +482,7 @@ export class Structure {
             ];
             components.concat(buttons);
 
-            await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
+            await sendMessage.edit({ embeds: [ embeds[ currentPage ] ], components }).catch(() => { });
           } else {
             currentPage = (embeds.length - 1);
 
@@ -482,19 +499,19 @@ export class Structure {
             ];
             components.concat(buttons);
 
-            await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
+            await sendMessage.edit({ embeds: [ embeds[ currentPage ] ], components }).catch(() => { });
           };
 
           break;
         };
         case "2": {
-          components[0].components.map((btn) => {
+          components[ 0 ].components.map((btn) => {
             btn.setDisabled(true);
             btn.setStyle(this.ButtonStyle.Secondary)
           });
 
           await sendMessage.edit({
-            embeds: [embeds[currentPage]],
+            embeds: [ embeds[ currentPage ] ],
             components
           }).catch(() => { });
 
@@ -517,7 +534,7 @@ export class Structure {
             ];
             components.concat(buttons);
 
-            await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
+            await sendMessage.edit({ embeds: [ embeds[ currentPage ] ], components }).catch(() => { });
           } else {
             currentPage = 0;
 
@@ -534,7 +551,7 @@ export class Structure {
             ];
             components.concat(buttons);
 
-            await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
+            await sendMessage.edit({ embeds: [ embeds[ currentPage ] ], components }).catch(() => { });
           };
 
           break;
@@ -555,7 +572,7 @@ export class Structure {
           ];
           components.concat(buttons);
 
-          await sendMessage.edit({ embeds: [embeds[currentPage]], components }).catch(() => { });
+          await sendMessage.edit({ embeds: [ embeds[ currentPage ] ], components }).catch(() => { });
 
           break;
         };
@@ -565,13 +582,13 @@ export class Structure {
     });
 
     collector.on("end", async () => {
-      components[0].components.map((btn) => {
+      components[ 0 ].components.map((btn) => {
         btn.setDisabled(true);
         btn.setStyle(this.ButtonStyle.Secondary);
       });
 
       await sendMessage.edit({
-        embeds: [embeds[0]],
+        embeds: [ embeds[ 0 ] ],
         components
       }).catch(() => { });
     });

@@ -1,4 +1,5 @@
-export const Turkish = {
+export default {
+  enabled: true,
   data: {
     permissions: {
       body: "{p}",
@@ -58,9 +59,16 @@ export const Turkish = {
         loaded: "Etkinlikler Yüklendi. ({loaded}/{total})"
       },
       commands: {
-        loading: "Komutlar Yükleniyor ({loaded}/{total})",
-        loadingError: "Komutlar yüklenirken bir hata oluştu. | {err}",
-        loaded: "Komutlar Yüklendi. ({loaded}/{total})"
+        slash: {
+          loading: "Slash Komutları Yükleniyor ({loaded}/{total})",
+          loadingError: "Slash Komutları yüklenirken bir hata oluştu. | {err}",
+          loaded: "Slash Komutları Yüklendi. ({loaded}/{total})",
+        },
+        context: {
+          loading: "Bağlam Komutları Yükleniyor ({loaded}/{total})",
+          loadingError: "Bağlam Komutları yüklenirken bir hata oluştu. | {err}",
+          loaded: "Bağlam Komutları Yüklendi. ({loaded}/{total})",
+        }
       },
       languages: {
         loading: "Diller Yükleniyor ({loaded}/{total})",
@@ -141,6 +149,11 @@ export const Turkish = {
             }
           }
         }
+      }
+    },
+    commands: {
+      avatar: {
+        title: "{member} Kullanıcısının Avatarı",
       }
     }
   }

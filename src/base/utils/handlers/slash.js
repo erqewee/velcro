@@ -10,7 +10,7 @@ export default class extends Handler {
   };
 
   async execute(interaction) {
-    if (!this.loader.commands.has(interaction.commandName)) return;
+    if (!this.loader.commands.slash.has(interaction.commandName)) return;
 
     const client = interaction.client;
     const member = interaction.member;
@@ -19,7 +19,7 @@ export default class extends Handler {
     const options = interaction.options;
     const commandName = String(options.getSubcommand(false)).toLowerCase();
 
-    const command = this.loader.commands.get(interaction.commandName);
+    const command = this.loader.commands.slash.get(interaction.commandName);
 
     if (command.permissions.length > 0) {
       const requiredPermissions = [];
@@ -71,8 +71,26 @@ export default class extends Handler {
       }), ephemeral: true
     });
 
-    await command.execute({ interaction: interaction, options: options, member: member, channel: channel, guild: guild, command: commandName })
-      .catch((err) => command.error({ interaction: interaction, error: err, command: command }).catch((err) => this.error({ error: err })));
+    if (this.loader.cooldowns.has(`${member.id}_${command.data.name}`)) {
+      const cooldown = this.loader.cooldowns.fetch(`${member.id}_${command.data.name}`);
+      const date = new Date();
+
+      const remaining = (new Date(cooldown - date).getTime() / 1000).toFixed();
+
+      return interaction.reply({ content: `${this.config.Emoji.State.WARNING} Wait '${remaining} Seconds' to use this command again.` });
+    };
+
+    command.execute({ interaction: interaction, options: options, member: member, channel: channel, guild: guild, command: commandName })
+      .then(() => {
+        if (this.checker.isOwner(member.id)) return;
+
+        const date = new Date();
+        date.setSeconds(date.getSeconds() + command.cooldown);
+
+        this.loader.cooldowns.set(`${member.id}_${command.data.name}`, date);
+
+        setTimeout(() => this.loader.cooldowns.delete(`${member.id}_${command.data.name}`), (command.cooldown * 1000));
+      }).catch((err) => command.error({ interaction: interaction, error: err, command: command }).catch((err) => this.error({ error: err })))
 
     return void 0;
   };

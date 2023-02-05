@@ -29,8 +29,12 @@ export class MemberManager {
    * @returns {boolean}
    */
   async handleCache(debug = false) {
-    const debugChecker = new api.checker.BaseChecker(debug);
-    debugChecker.createError(!debugChecker.isBoolean, "debug", { expected: "Boolean", received: debugChecker }).throw();
+    const debugError = new api.checker.BaseChecker(debug).Error;
+    debugError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'debug'.")
+      .setCondition("isNotBoolean")
+      .setType("InvalidType")
+      .throw();
 
     let spinner = ora("[CacheManager(Member)] Initiating caching.");
 
@@ -60,11 +64,19 @@ export class MemberManager {
    * @returns {Promise<GuildMember>}
    */
   async get(guildID, memberID) {
-    const guildChecker = new api.checker.BaseChecker(guildID);
-    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+    const guildError = new api.checker.BaseChecker(guildID).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guildId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const memberChecker = new api.checker.BaseChecker(memberID);
-    memberChecker.createError(!memberChecker.isString, "memberId", { expected: "String", received: memberChecker }).throw();
+    const memberError = new api.checker.BaseChecker(memberID).Error;
+    memberError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'memberId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const guild = await GuildManager.get(guildID);
     const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
@@ -86,11 +98,19 @@ export class MemberManager {
       deleteMessageDays: 14,
       deleteMessageSeconds: 604800
     }) {
-      const guildChecker = new api.checker.BaseChecker(guildID);
-      guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
-
-      const memberChecker = new api.checker.BaseChecker(memberID);
-      memberChecker.createError(!memberChecker.isString, "memberId", { expected: "String", received: memberChecker }).throw();
+      const guildError = new api.checker.BaseChecker(guildID).Error;
+      guildError.setName("ValidationError")
+        .setMessage("An invalid type was specified for 'guildId'.")
+        .setCondition("isNotString")
+        .setType("InvalidType")
+        .throw();
+  
+      const memberError = new api.checker.BaseChecker(memberID).Error;
+      memberError.setName("ValidationError")
+        .setMessage("An invalid type was specified for 'memberId'.")
+        .setCondition("isNotString")
+        .setType("InvalidType")
+        .throw();
 
       const guild = await GuildManager.get(guildID);
       const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
@@ -115,11 +135,19 @@ export class MemberManager {
      * @returns {Promise<User>}
      */
     remove: async function (guildID, memberID) {
-      const guildChecker = new api.checker.BaseChecker(guildID);
-      guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
-
-      const memberChecker = new api.checker.BaseChecker(memberID);
-      memberChecker.createError(!memberChecker.isString, "memberId", { expected: "String", received: memberChecker }).throw();
+      const guildError = new api.checker.BaseChecker(guildID).Error;
+      guildError.setName("ValidationError")
+        .setMessage("An invalid type was specified for 'guildId'.")
+        .setCondition("isNotString")
+        .setType("InvalidType")
+        .throw();
+  
+      const memberError = new api.checker.BaseChecker(memberID).Error;
+      memberError.setName("ValidationError")
+        .setMessage("An invalid type was specified for 'memberId'.")
+        .setCondition("isNotString")
+        .setType("InvalidType")
+        .throw();
 
       const guild = await GuildManager.get(guildID);
       const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
@@ -138,11 +166,19 @@ export class MemberManager {
      * @returns {Promise<GuildBan>} 
      */
     get: async function (guildID, memberID) {
-      const guildChecker = new api.checker.BaseChecker(guildID);
-      guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
-
-      const memberChecker = new api.checker.BaseChecker(memberID);
-      memberChecker.createError(!memberChecker.isString, "memberId", { expected: "String", received: memberChecker }).throw();
+      const guildError = new api.checker.BaseChecker(guildID).Error;
+      guildError.setName("ValidationError")
+        .setMessage("An invalid type was specified for 'guildId'.")
+        .setCondition("isNotString")
+        .setType("InvalidType")
+        .throw();
+  
+      const memberError = new api.checker.BaseChecker(memberID).Error;
+      memberError.setName("ValidationError")
+        .setMessage("An invalid type was specified for 'memberId'.")
+        .setCondition("isNotString")
+        .setType("InvalidType")
+        .throw();
 
       const guild = await GuildManager.get(guildID);
       const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${memberID}`);
@@ -158,8 +194,12 @@ export class MemberManager {
      * @returns {Promise<GuildBan[]>}
      */
     map: async function (guildID) {
-      const guildChecker = new api.checker.BaseChecker(guildID);
-      guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+      const guildError = new api.checker.BaseChecker(guildID).Error;
+      guildError.setName("ValidationError")
+        .setMessage("An invalid type was specified for 'guildId'.")
+        .setCondition("isNotString")
+        .setType("InvalidType")
+        .throw();
 
       const guild = await GuildManager.get(guildID);
 
@@ -167,7 +207,7 @@ export class MemberManager {
 
       const bannedArray = [];
 
-      if (bans.length > 0) for (let index = 0; index < bans.length; index++) bannedArray.push(bans[index]);
+      if (bans.length > 0) for (let index = 0; index < bans.length; index++) bannedArray.push(bans[ index ]);
 
       return bannedArray;
     }
@@ -188,11 +228,19 @@ export class MemberManager {
     channelId: null,
     communicationDisabledUntil: null
   }) {
-    const guildChecker = new api.checker.BaseChecker(guildID);
-    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+    const guildError = new api.checker.BaseChecker(guildID).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guildId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const memberChecker = new api.checker.BaseChecker(memberID);
-    memberChecker.createError(!memberChecker.isString, "memberId", { expected: "String", received: memberChecker }).throw();
+    const memberError = new api.checker.BaseChecker(memberID).Error;
+    memberError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'memberId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const guild = await GuildManager.get(guildID);
     const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/guilds/${guild.id}/members/${memberID}`);
@@ -219,8 +267,12 @@ export class MemberManager {
    * @returns {Promise<GuildMember[]>}
    */
   async map(guildID) {
-    const guildChecker = new api.checker.BaseChecker(guildID);
-    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+    const guildError = new api.checker.BaseChecker(guildID).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guildId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const guild = await GuildManager.get(guildID);
 
@@ -228,7 +280,7 @@ export class MemberManager {
 
     const membersArray = [];
 
-    if (members.length > 0) for (let index = 0; index < members.length; index++) membersArray.push(client.guilds.resolve(guild.id).members.resolve(members[index].id));
+    if (members.length > 0) for (let index = 0; index < members.length; index++) membersArray.push(client.guilds.resolve(guild.id).members.resolve(members[ index ].id));
 
     return membersArray;
   };
@@ -243,8 +295,12 @@ export class MemberManager {
     query: null,
     limit: 1
   }) {
-    const guildChecker = new api.checker.BaseChecker(guildID);
-    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();
+    const guildError = new api.checker.BaseChecker(guildID).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guildId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const guild = await GuildManager.get(guildID);
 
@@ -257,7 +313,7 @@ export class MemberManager {
 
     const indexedArray = [];
 
-    if (indexed.length > 0) for (let index = 0; index < indexed.length; index++) indexedArray.push(client.guilds.resolve(guild.id).members.resolve(indexed[index].id));
+    if (indexed.length > 0) for (let index = 0; index < indexed.length; index++) indexedArray.push(client.guilds.resolve(guild.id).members.resolve(indexed[ index ].id));
 
     return indexedArray;
   };

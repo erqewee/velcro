@@ -20,8 +20,12 @@ export class VoiceManager {
    * @returns {VoiceConnection}
    */
   create(channel) {
-    const channelChecker = new api.checker.BaseChecker(channel);
-    channelChecker.createError(!channelChecker.isObject, "channel", { expected: "Object", received: channelChecker }).throw();
+    const channelError = new api.checker.BaseChecker(channel).Error;
+    channelError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'channel'.")
+      .setCondition("isNotObject")
+      .setType("InvalidType")
+      .throw();
 
     const voiceChannel = client.channels.resolve(channel.id);
     const connect = joinVoiceChannel({ channelId: voiceChannel.id, guildId: voiceChannel.guild.id, adapterCreator: voiceChannel.guild.voiceAdapterCreator });
@@ -35,8 +39,12 @@ export class VoiceManager {
    * @returns {Promise<VoiceConnection | undefined>}
    */
   async get(guild) {
-    const guildChecker = new api.checker.BaseChecker(guild);
-    guildChecker.createError(!guildChecker.isObject, "guild", { expected: "Object", received: guildChecker }).throw();
+    const guildError = new api.checker.BaseChecker(guild).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guild'.")
+      .setCondition("isNotObject")
+      .setType("InvalidType")
+      .throw();
 
     const connectionGuild = await GuildManager.get(guild);
     const connection = getVoiceConnection(connectionGuild.id);

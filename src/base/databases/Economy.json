@@ -1,1 +1,49 @@
-{}
+{
+    "Exchange": {
+        "Data_$": {
+            "Prices": {
+                "OLD": 6.97,
+                "NEW": 5.67
+            },
+            "Decreased": 1.3,
+            "State": {
+                "Emote": "<a:down:796384140416516156>",
+                "Difference": "-1.30",
+                "Last": [
+                    "UP",
+                    "DOWN"
+                ]
+            },
+            "Increased": 1.09
+        },
+        "Data_€": {
+            "Prices": {
+                "OLD": 14.11,
+                "NEW": 16.06
+            },
+            "Increased": 1.95,
+            "State": {
+                "Emote": "<a:up:796384146142134282>",
+                "Difference": "+1.95",
+                "Last": [
+                    "UP",
+                    "UP"
+                ]
+            },
+            "Decreased": 1.18
+        },
+        "Data_₺": {
+            "Prices": {
+                "OLD": 13.2,
+                "NEW": 14.47
+            },
+            "Increased": 1.27,
+            "State": {
+                "Emote": "<a:up:796384146142134282>",
+                "Difference": "+1.27",
+                "Last": [
+                    "UP",
+                    "UP"
+                ]
+            },
+            "Decrease

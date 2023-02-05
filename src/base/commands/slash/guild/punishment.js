@@ -1,4 +1,4 @@
-import { Command } from "../../structures/export.js";
+import { SlashCommand } from "../../../structures/export.js";
 
 import ms from "ms";
 
@@ -200,7 +200,7 @@ const times = [
   }
 ];
 
-export default class extends Command {
+export default class extends SlashCommand {  
   constructor() {
     super({ enabled: false, mode: "Global" });
 

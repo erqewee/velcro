@@ -6,10 +6,13 @@ import { REST } from "./classes/REST.js";
 import { Survey } from "./classes/Survey.js";
 import { YouTube } from "./classes/YouTube.js";
 import { Loader } from "./classes/Loader/Loader.js";
+import { Market } from "./classes/Exchange/Market.js";
+import { Player } from "./classes/Music/DisTube.js";
 // CLASSES
 
 // STRUCTURES
-import { Command } from "./structures/export.js";
+import { SlashCommand } from "./structures/export.js";
+import { ContextCommand } from "./structures/export.js";
 import { Handler } from "./structures/export.js";
 import { Event } from "./structures/export.js";
 import { Structure } from "./structures/export.js";
@@ -49,7 +52,7 @@ import database_debug from "./utils/events/database/debug.js";
 import memberAdd from "./utils/events/guild/memberAdd.js";
 import memberRemove from "./utils/events/guild/memberRemove.js";
 
-import interaction from "./utils/handlers/interaction.js";
+import interaction from "./utils/handlers/slash.js";
 
 import password_button from "./utils/events/interactions/password-button.js";
 import button from "./utils/events/interactions/button.js";
@@ -67,9 +70,9 @@ import register from "./utils/events/util/register.js";
 
 // EXPORTER
 export {
-  Client, Database, Checker, REST, Survey, YouTube, Loader, // CLASSES
+  Client, Database, Checker, REST, Survey, YouTube, Loader, Player, Market, // CLASSES
 
-  Command, Handler, Event, Structure, // STRUCTURES
+  SlashCommand, ContextCommand, Handler, Event, Structure, // STRUCTURES
 
   CacheManager, // HELPERS
 

@@ -18,24 +18,44 @@ export class Database extends EventEmitter {
 
     const { path, dir, name, debug } = databaseOptions;
 
-    const typeChecker = new Checker(type);
-    typeChecker.createError(typeChecker.isNotString, "type", { expected: "String" }).throw();
+    const typeError = new Checker(type).Error;
+    typeError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'type'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const pathChecker = new Checker(path);
-    pathChecker.createError(pathChecker.isNotString, "path", { expected: "String" }).throw();
+    const pathError = new Checker(path).Error;
+    pathError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'path'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const dirChecker = new Checker(dir);
-    dirChecker.createError(dirChecker.isNotString, "dir", { expected: "String" }).throw();
+    const dirError = new Checker(dir).Error;
+    dirError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'dir'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const nameChecker = new Checker(name);
-    nameChecker.createError(nameChecker.isNotString, "name", { expected: "String" }).throw();
+    const nameError = new Checker(name).Error;
+    nameError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'name'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const debugChecker = new Checker(debug);
-    debugChecker.createError(debugChecker.isNotBoolean, "debug", { expected: "Boolean" }).throw();
+    const debugError = new Checker(debug).Error;
+    debugError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'debug'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     this.path = path;
     this.dir = dir;
-    this.name = name.split(".json")[0];
+    this.name = name.split(".json")[ 0 ];
 
     this.debug = debug;
 
@@ -53,8 +73,12 @@ export class Database extends EventEmitter {
   Events = Events;
 
   set(key = "ErqeweeDevelopment.Discord", value = "https://discord.gg/ZwhgJvXqm9") {
-    const keyChecker = new Checker(key);
-    keyChecker.createError(keyChecker.isNotString, "key", { expected: "String" }).throw();
+    const keyError = new Checker(key).Error;
+    keyError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'key'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     this.emit(this.Events.DataSaveRequest, key, value, this.name);
 
@@ -63,7 +87,7 @@ export class Database extends EventEmitter {
 
     this.emit(this.Events.DataSaved, key, value, data, this.name);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();
@@ -74,8 +98,12 @@ export class Database extends EventEmitter {
   };
 
   del(key = "ErqeweeDevelopment", deleteAllOptions = { enabled: false }) {
-    const keyChecker = new Checker(key);
-    keyChecker.createError(keyChecker.isNotString, "key", { expected: "String" }).throw();
+    const keyError = new Checker(key).Error;
+    keyError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'key'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const { enabled } = deleteAllOptions;
 
@@ -86,7 +114,7 @@ export class Database extends EventEmitter {
 
     this.emit(this.Events.DataDeleted, key, data, this.name);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();
@@ -97,11 +125,19 @@ export class Database extends EventEmitter {
   };
 
   add(key = "ErqeweeDevelopment.Projects.COUNT", value = 1) {
-    const keyChecker = new Checker(key);
-    keyChecker.createError(keyChecker.isNotString, "key", { expected: "String" }).throw();
+    const keyError = new Checker(key).Error;
+    keyError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'key'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const valueChecker = new Checker(value);
-    valueChecker.createError(valueChecker.isNotNumber, "value", { expected: "Number" }).throw();
+    const valueError = new Checker(value).Error;
+    valueError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'value'.")
+      .setCondition("isNotNumber")
+      .setType("InvalidType")
+      .throw();
 
     this.emit(this.Events.DataAddRequest, key, value, this.name);
 
@@ -111,7 +147,7 @@ export class Database extends EventEmitter {
 
     this.emit(this.Events.DataAdded, key, value, oldData, newData, this.name);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();
@@ -122,11 +158,19 @@ export class Database extends EventEmitter {
   };
 
   sub(key = "ErqeweeDevelopment.Projects.COUNT", value = 1) {
-    const keyChecker = new Checker(key);
-    keyChecker.createError(keyChecker.isNotString, "key", { expected: "String" }).throw();
+    const keyError = new Checker(key).Error;
+    keyError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'key'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const valueChecker = new Checker(value);
-    valueChecker.createError(valueChecker.isNotNumber, "value", { expected: "Number" }).throw();
+    const valueError = new Checker(value).Error;
+    valueError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'value'.")
+      .setCondition("isNotNumber")
+      .setType("InvalidType")
+      .throw();
 
     this.emit(this.Events.DataSubtractRequest, key, value, this.name);
 
@@ -136,7 +180,7 @@ export class Database extends EventEmitter {
 
     this.emit(this.Events.DataSubtracted, key, value, oldData, newData, this.name);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();
@@ -147,9 +191,6 @@ export class Database extends EventEmitter {
   };
 
   push(key = "ErqeweeDevelopment.Projects.Active", value = "Wyvern") {
-    const keyChecker = new Checker(key);
-    keyChecker.createError(keyChecker.isNotString, "key", { expected: "String" }).throw();
-
     this.emit(this.Events.DataPushRequest, key, value, this.name);
 
     const oldData = this.fetch(key);
@@ -158,7 +199,7 @@ export class Database extends EventEmitter {
 
     this.emit(this.Events.DataPushed, key, value, oldData, newData, this.name);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();
@@ -169,11 +210,19 @@ export class Database extends EventEmitter {
   };
 
   pull(key = "ErqeweeDevelopment.Projects.Active", callback = (data) => data === "Wyvern") {
-    const keyChecker = new Checker(key);
-    keyChecker.createError(keyChecker.isNotString, "key", { expected: "String" }).throw();
+    const keyError = new Checker(key).Error;
+    keyError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'key'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const callbackChecker = new Checker(callback);
-    callbackChecker.createError(callbackChecker.isNotFunction, "callback", { expected: "Function" }).throw();
+    const callbackError = new Checker(callback).Error;
+    callbackError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'callback'.")
+      .setCondition("isNotFunction")
+      .setType("InvalidType")
+      .throw();
 
     this.emit(this.Events.DataPullRequest, key, callback, this.name);
 
@@ -183,7 +232,7 @@ export class Database extends EventEmitter {
 
     this.emit(this.Events.DataPulled, key, callback, oldData, newData, this.name);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();
@@ -194,8 +243,12 @@ export class Database extends EventEmitter {
   };
 
   fetch(key = "ErqeweeDevelopment", fetchAllOptions = { enabled: false, limit: 3 }) {
-    const keyChecker = new Checker(key);
-    keyChecker.createError(keyChecker.isNotString, "key", { expected: "String" }).throw();
+    const keyError = new Checker(key).Error;
+    keyError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'key'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const { limit, enabled } = fetchAllOptions;
 
@@ -211,7 +264,7 @@ export class Database extends EventEmitter {
 
     this.emit(this.Events.DataFetched, key, fetch, available, this.name);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();
@@ -222,8 +275,12 @@ export class Database extends EventEmitter {
   };
 
   has(key = "ErqeweeDevelopment") {
-    const keyChecker = new Checker(key);
-    keyChecker.createError(keyChecker.isNotString, "key", { expected: "String" }).throw();
+    const keyError = new Checker(key).Error;
+    keyError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'key'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     this.emit(this.Events.DataCheckRequest, key, this.name);
 
@@ -236,7 +293,7 @@ export class Database extends EventEmitter {
 
     this.emit(this.Events.DataChecked, key, data, available, this.name);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();
@@ -249,8 +306,12 @@ export class Database extends EventEmitter {
   exists = this.has;
 
   filter(callback = (value, index = 0, array = []) => { }) {
-    const callbackChecker = new Checker(callback);
-    callbackChecker.createError(callbackChecker.isNotFunction, "callback", { expected: "Function" }).throw();
+    const callbackError = new Checker(callback).Error;
+    callbackError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'callback'.")
+      .setCondition("isNotFunction")
+      .setType("InvalidType")
+      .throw();
 
     this.emit(this.Events.DataFilterRequest, callback, this.name);
 
@@ -258,7 +319,7 @@ export class Database extends EventEmitter {
 
     this.emit(this.Events.DataFiltered, filter, callback, this.name);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();
@@ -269,8 +330,12 @@ export class Database extends EventEmitter {
   };
 
   sort(callback = (a, b) => { }) {
-    const callbackChecker = new Checker(callback);
-    callbackChecker.createError(callbackChecker.isNotFunction, "callback", { expected: "Function" }).throw();
+    const callbackError = new Checker(callback).Error;
+    callbackError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'callback'.")
+      .setCondition("isNotFunction")
+      .setType("InvalidType")
+      .throw();
 
     this.emit(this.Events.DataSortRequest, callback, this.name);
 
@@ -278,7 +343,7 @@ export class Database extends EventEmitter {
 
     this.emit(this.Events.DataSorted, sort, callback, this.name);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();
@@ -289,12 +354,16 @@ export class Database extends EventEmitter {
   };
 
   toJSON(limit) {
-    const limitChecker = new Checker(limit);
-    limitChecker.createError(limitChecker.isNotNumber, "limit", { expected: "Number" }).throw();
+    const limitError = new Checker(limit).Error;
+    limitError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'limit'.")
+      .setCondition("isNotNumber")
+      .setType("InvalidType")
+      .throw();
 
     const json = this.database.toJSON(limit);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();
@@ -305,8 +374,12 @@ export class Database extends EventEmitter {
   };
 
   backup(path) {
-    const pathChecker = new Checker(path);
-    pathChecker.createError(pathChecker.isNotString, "path", { expected: "String" }).throw();
+    const pathError = new Checker(path).Error;
+    pathError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'path'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const fullPath = this.database.path;
 
@@ -324,7 +397,7 @@ export class Database extends EventEmitter {
   destroy() {
     this.emit(this.Events.DatabaseDestroyRequest, this.name);
 
-    const stack = get()[1];
+    const stack = get()[ 1 ];
     const path = stack.getFileName();
     const line = stack.getLineNumber();
     const column = stack.getColumnNumber();

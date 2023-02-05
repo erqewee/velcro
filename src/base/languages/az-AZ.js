@@ -1,4 +1,5 @@
-export const Azerbaijan = {
+export default {
+  enabled: false,
   data: {
     permissions: {
       body: "{p}",
@@ -134,6 +135,11 @@ export const Azerbaijan = {
             }
           }
         }
+      }
+    },
+    commands: {
+      avatar: {
+        title: "{member}'s Avatar",
       }
     }
   }

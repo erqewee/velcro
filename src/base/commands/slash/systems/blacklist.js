@@ -1,8 +1,8 @@
-import { Command } from "../../structures/export.js";
+import { SlashCommand } from "../../../structures/export.js";
 
-import { CacheManager } from "../../CacheManager.js";
+import { CacheManager } from "../../../CacheManager.js";
 
-export default class extends Command {
+export default class extends SlashCommand {
   constructor() {
     super({ enabled: true, mode: "Global" });
 

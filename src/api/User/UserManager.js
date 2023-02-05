@@ -17,8 +17,12 @@ export class UserManager {
    * @returns {Promise<User>}
    */
   async get(userID) {
-    const userChecker = new api.checker.BaseChecker(userID);
-    userChecker.createError(!userChecker.isString, "userId", { expected: "String", received: userChecker }).throw();
+    const userError = new api.checker.BaseChecker(userID).Error;
+    userError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'userId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/users/${userID}`);
 

@@ -12,9 +12,16 @@ export default {
   LANG: "en-US",
 
   Configurations: {
-    VOICE_CHANNELS: [ "1068184876047663241" ],
+    VOICE_CHANNELS: [],
     SUPPORT_SERVER: "1068184874797764618",
     LOG_CHANNEL: "1068829043090280471",
     YOUTUBE_CHANNEL: "UCjtU9nHOAo6XpJCF9qb-1Ow"
+  },
+
+  Player: {
+    Spotify: {
+      ID: process.env[ "SPOTFIY_CLIENT_ID" ],
+      SECRET: process.env[ "SPOTIFY_CLIENT_SECRET" ]
+    }
   }
 };

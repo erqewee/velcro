@@ -16,6 +16,8 @@ export default class extends Event {
   };
 
   async execute() {
+    this.market.updatePrices();
+    
     this.members.handleCache();
     this.invites.handleCache();
     this.guilds.handleCache();
@@ -46,17 +48,18 @@ export default class extends Event {
     const date = this.time(Date.now(), { onlyNumberOutput: true });
 
     const client = this.client;
-    const db = this.databases.subscribe;
-    const youtube = new YouTube(this.client, this.config.Data.Configurations.YOUTUBE_CHANNEL, db);
+    const sdb = this.databases.subscribe;
+    const edb = this.databases.economy;
+    const youtube = new YouTube(this.client, this.config.Data.Configurations.YOUTUBE_CHANNEL, sdb);
 
     const guild = client.guilds.resolve(this.config.Data.Configurations.SUPPORT_SERVER);
 
     const config = {
-      employee: db.fetch(`Subscribe.Settings.EmployeeRole`),
-      log: db.fetch(`Subscribe.Settings.LogChannel`),
-      password: db.fetch(`Subscribe.Settings.Password`),
-      subscribe: db.fetch(`Subscribe.Settings.SubscribeRole`),
-      subscribeChannel: db.fetch(`Subscribe.Settings.SubscribeChannel`)
+      employee: sdb.fetch(`Subscribe.Settings.EmployeeRole`),
+      log: sdb.fetch(`Subscribe.Settings.LogChannel`),
+      password: sdb.fetch(`Subscribe.Settings.Password`),
+      subscribe: sdb.fetch(`Subscribe.Settings.SubscribeRole`),
+      subscribeChannel: sdb.fetch(`Subscribe.Settings.SubscribeChannel`)
     };
 
     const voiceChannels = this.config.Data.Configurations.VOICE_CHANNELS;
@@ -76,17 +79,17 @@ export default class extends Event {
     const configDef = this.config;
 
     setInterval(() => {
-      const subscribes = db.fetch("Subscribe.Members");
+      const subscribes = sdb.fetch("Subscribe.Members");
       if (!subscribes || subscribes.length < 1) return;
 
       subscribes.map(async (data) => {
         const user = await client.users.fetch(data.id);
 
-        const fetchData = db.fetch("Subscribe.Members")?.filter((value) => value.id === user.id)[ 0 ];
+        const fetchData = sdb.fetch("Subscribe.Members")?.filter((value) => value.id === user.id)[ 0 ];
 
         if (fetchData?.employee && !guild.members.cache.get(user.id)) {
-          db.pull("Subscribe.Members", (value) => value.id === user.id);
-          db.push("Subscribe.BlackList", { id: user.id, reason: "Automatic Process", employee: client.user.id, date: date });
+          sdb.pull("Subscribe.Members", (value) => value.id === user.id);
+          sdb.push("Subscribe.BlackList", { id: user.id, reason: "Automatic Process", employee: client.user.id, date: date });
 
           const embed = new Embed({
             title: this.translate("data:events.ready.blacklist.title", { variables: [ { name: "client.user.tag", value: client.user.tag } ] }),
@@ -125,11 +128,11 @@ export default class extends Event {
           if (!name.startsWith("🔰")) member.setNickname(`🔰 ${name}`);
         };
 
-        const fetchData = db.fetch("Subscribe.Members")?.filter((data) => data.id === member.id)[ 0 ];
+        const fetchData = sdb.fetch("Subscribe.Members")?.filter((data) => data.id === member.id)[ 0 ];
 
-        if (member.roles.cache.has(config.subscribe) && !fetchData?.employee) db.push("Subscribe.Members", { id: member.id, employee: client.user.id, date: date });
+        if (member.roles.cache.has(config.subscribe) && !fetchData?.employee) sdb.push("Subscribe.Members", { id: member.id, employee: client.user.id, date: date });
         if (!member.roles.cache.has(config.subscribe) && fetchData?.employee) {
-          db.pull("Subscribe.Members", (data) => data.id === member.id);
+          sdb.pull("Subscribe.Members", (data) => data.id === member.id);
 
           const name = String(member.displayName);
           if (name.startsWith("🔰")) member.setNickname(name.slice(1));

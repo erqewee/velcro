@@ -25,9 +25,12 @@ export class Checker {
    * @returns {boolean}
    */
   isPermission(data) {
-    const checker = new BaseChecker(data);
-
-    checker.createError(checker.isNotString && checker.isNotBigInt && checker.isNotNumber, "data", { expected: ["String", "BigInt", "Number"] }).throw();
+    const dataError = new BaseChecker(data).Error
+    dataError.setName("ValidationError")
+    .setMessage("An invalid type was specified for 'data'.")
+    .setCondition("isNotString", "isNotBigInt", "isNotNumber")
+    .setType("InvalidType")
+    .throw();
 
     if (PermissionManager.has(data)) return true;
     else return false;
@@ -41,9 +44,12 @@ export class Checker {
   isOwner(data) {
     let state = false;
 
-    const checker = new BaseChecker(data);
-
-    checker.createError(checker.isNotString, "data", { expected: "String" }).throw();
+    const dataError = new BaseChecker(data).Error
+    dataError.setName("ValidationError")
+    .setMessage("An invalid type was specified for 'data'.")
+    .setCondition("isNotString")
+    .setType("InvalidType")
+    .throw();
 
     if (Data.Bot.Developers.includes(data)) state = true;
 

@@ -1,10 +1,4 @@
-import {
-  InvalidType,
-  InvalidChannel, InvalidGuild, InvalidRole,
-  NotFound, LanguageNotFound,
-  NotRequestedFormat,
-  DataLimitExceeded
-} from "../../structures/base/error/Error.js";
+import { ErrorBuilder } from "../../structures/base/error/ErrorBuilder.js";
 
 import { StringChecker } from "./String.js";
 import { BooleanChecker } from "./Boolean.js";
@@ -15,6 +9,11 @@ import { ObjectChecker } from "./Object.js";
 import { NumberChecker } from "./Number.js";
 
 const upperFirst = (str = "string!") => String(str).replace(/^\w/, (c) => c.toUpperCase());
+
+import { s } from "@sapphire/shapeshift";
+import { isNumber, isFunction } from "@sapphire/utilities";
+import lodash from "lodash";
+const { isArray, isSymbol, isObject } = lodash;
 
 export default class BaseChecker {
   /**
@@ -38,9 +37,9 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isBoolean() {
-    if (this.isNull || this.isUndefined) return false;
+    if (this.isNull) return false;
 
-    if (typeof this.data == "boolean") return true;
+    if (s.boolean.is(this.data)) return true;
     else return false;
   };
 
@@ -49,9 +48,9 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isString() {
-    if (this.isNull || this.isUndefined) return false;
+    if (this.isNull) return false;
 
-    if (typeof this.data == "string") return true;
+    if (s.string.is(this.data)) return true;
     else return false;
   };
 
@@ -60,9 +59,9 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isObject() {
-    if (this.isNull || this.isUndefined) return false;
+    if (this.isNull) return false;
 
-    if (typeof this.data == "object") return true;
+    if (isObject(this.data)) return true;
     else return false;
   };
 
@@ -71,9 +70,9 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isSymbol() {
-    if (this.isNull || this.isUndefined) return false;
+    if (this.isNull) return false;
 
-    if (typeof this.data == "symbol") return true;
+    if (isSymbol(this.data)) return true;
     else return false;
   };
 
@@ -82,9 +81,9 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isArray() {
-    if (this.isNull || this.isUndefined) return false;
+    if (this.isNull) return false;
 
-    if (Array.isArray(this.data)) return true;
+    if (isArray(this.data)) return true;
     else return false;
   };
 
@@ -93,9 +92,9 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isNumber() {
-    if (this.isNull || this.isUndefined) return false;
+    if (this.isNull) return false;
 
-    if (typeof this.data == "number") return true;
+    if (isNumber(this.data)) return true;
     else return false;
   };
 
@@ -104,9 +103,9 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isFunction() {
-    if (this.isNull || this.isUndefined) return false;
+    if (this.isNull) return false;
 
-    if (typeof this.data == "function") return true;
+    if (isFunction(this.data)) return true;
     else return false;
   };
 
@@ -115,7 +114,7 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isUndefined() {
-    if (typeof this.data == "undefined" || this.data == "undefined" || this.data == undefined) return true;
+    if (this.data == "undefined" || this.data == undefined) return true;
     else return false;
   };
 
@@ -124,7 +123,7 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isNull() {
-    if (this.data == null || this.data == "null" || this.data == null) return true;
+    if (this.data == "null" || this.data == null) return true;
     else return false;
   };
 
@@ -133,9 +132,9 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isBigInt() {
-    if (this.isNull || this.isUndefined) return false;
+    if (this.isNull) return false;
 
-    if (typeof this.data == "bigint") return true;
+    if (s.bigint.is(this.data)) return true;
     else return false;
   };
 
@@ -144,7 +143,7 @@ export default class BaseChecker {
    * @returns {boolean}
    */
   get isAvailable() {
-    if (this.isNull || this.isUndefined) return false;
+    if (this.isNull) return false;
     else return true;
   };
 
@@ -248,59 +247,6 @@ export default class BaseChecker {
   };
 
   /**
-   * Creates a new Error.
-   * @param {boolean} condition 
-   * @param {string} argument 
-   * @param {{errorType?: string, expected?: string, received?: string | null}} options
-   * @returns {{throw: () => void}}
-   */
-  createError(condition, argument, options = { errorType: "InvalidType", expected: "String", received: null }) {
-    const { errorType: eType, expected: e, received: r } = options;
-
-    let errorType = eType;
-    if (!errorType) errorType = "InvalidType";
-
-    let expected = e;
-    if (!expected) expected = "String";
-
-    let received = r;
-    if (!received) received = this.toString();
-
-    if (typeof argument !== "string") throw new InvalidType("argument", { expected: "String", received: upperFirst(typeof argument) });
-    if (typeof errorType !== "string") throw new InvalidType("type", { expected: "String", received: upperFirst(typeof errorType) });
-
-    const type = (errorType.replace(/ /g, "_")).toUpperCase();
-
-    const fetched = upperFirst(received);
-
-    let error = new InvalidType(argument, { expected, received: fetched });
-
-    if (type === "INVALID_ROLE") error = new InvalidRole(argument);
-    else if (type === "INVALID_CHANNEL") error = new InvalidChannel(argument);
-    else if (type === "INVALID_GUILD") error = new InvalidGuild(argument);
-    else if (type === "NOT_FOUND") error = new NotFound(argument);
-    else if (type === "NOT_REQUESTED_FORMAT") error = new NotRequestedFormat(argument, { expected, received: fetched });
-    else if (type === "LANGUAGE_NOT_FOUND") error = new LanguageNotFound(argument, { locate: expected, path: fetched });
-    else if (type === "DATA_LIMIT_EXCEEDED") error = new DataLimitExceeded(argument, expected, fetched);
-
-    const isNotUndefined = this.isNotUndefined;
-    const isNotNull = this.isNotNull;
-    /**
-     * Send the created error to the console.
-     * @returns {void}
-     */
-    function throwError() {
-      if (typeof condition !== "boolean") throw new InvalidType("condition", { expected: "Boolean", received: upperFirst(typeof condition) });
-
-      if (condition === true && isNotUndefined && isNotNull) throw error;
-    };
-
-    return {
-      throw: throwError
-    };
-  };
-
-  /**
    * Default type of the "this.data" value.
    * @param {boolean} upperFirstChar
    * @returns {string}
@@ -312,11 +258,13 @@ export default class BaseChecker {
     else if (this.isBigInt) type = "bigint";
     else if (this.isBoolean) type = "boolean";
     else if (this.isFunction) type = "function";
-    else if (this.isNull || this.isUndefined) type = undefined;
+    else if (this.isNull) type = null;
     else if (this.isNumber) type = "number";
     else if (this.isObject) type = "object";
     else if (this.isSymbol) type = "symbol";
 
     return (upperFirstChar ? upperFirst(type) : type);
   };
+
+  Error = new ErrorBuilder(this);
 };

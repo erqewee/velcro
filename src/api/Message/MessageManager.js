@@ -21,11 +21,19 @@ export class MessageManager {
    * @returns {Promise<Message>}
    */
   async get(channelID, messageID) {
-    const channelChecker = new api.checker.BaseChecker(channelID);
-    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker }).throw();
+    const channelError = new api.checker.BaseChecker(channelID).Error;
+    channelError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'channelId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const messageChecker = new api.checker.BaseChecker(messageID);
-    messageChecker.createError(!messageChecker.isString, "messageId", { expected: "String", received: messageChecker }).throw();
+    const messageError = new api.checker.BaseChecker(messageID).Error;
+    messageError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'messageId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const fetched = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`);
 
@@ -51,11 +59,19 @@ export class MessageManager {
     payloadJSON: null,
     attachments: []
   }) {
-    const channelChecker = new api.checker.BaseChecker(channelID);
-    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker }).throw();
+    const channelError = new api.checker.BaseChecker(channelID).Error;
+    channelError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'channelId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const messageChecker = new api.checker.BaseChecker(messageID);
-    messageChecker.createError(!messageChecker.isString, "messageId", { expected: "String", received: messageChecker }).throw();
+    const messageError = new api.checker.BaseChecker(messageID).Error;
+    messageError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'messageId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const patched = await PATCH(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages/${messageID}`, {
       json: {
@@ -95,8 +111,12 @@ export class MessageManager {
     messageReference: {},
     stickers: []
   }) {
-    const channelChecker = new api.checker.BaseChecker(channelID);
-    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker }).throw();
+    const channelError = new api.checker.BaseChecker(channelID).Error;
+    channelError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'channelId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const posted = await POST(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
       json: {
@@ -132,8 +152,12 @@ export class MessageManager {
     before: null,
     after: null
   }) {
-    const channelChecker = new api.checker.BaseChecker(channelID);
-    channelChecker.createError(!channelChecker.isString, "channelId", { expected: "String", received: channelChecker }).throw();
+    const channelError = new api.checker.BaseChecker(channelID).Error;
+    channelError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'channelId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const messages = await GET(`${api.config.BASE_URL}/${api.config.VERSION}/channels/${channelID}/messages`, {
       json: {
@@ -146,7 +170,7 @@ export class MessageManager {
 
     const messagesArray = [];
 
-    if (messages.length > 0) for (let index = 0; index < messages.length; index++) messagesArray.push(await client.channels.resolve(channelID).messages.fetch(messages[index].id));
+    if (messages.length > 0) for (let index = 0; index < messages.length; index++) messagesArray.push(await client.channels.resolve(channelID).messages.fetch(messages[ index ].id));
 
     return messagesArray;
   };
@@ -157,8 +181,12 @@ export class MessageManager {
    * @returns {Promise<Message>}
    */
   async pin(message) {
-    const messageChecker = new api.checker.BaseChecker(message);
-    messageChecker.createError(!messageChecker.isObject, "message", { expected: "Object", received: messageChecker }).throw();
+    const messageError = new api.checker.BaseChecker(message).Error;
+    messageError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'message'.")
+      .setCondition("isNotObject")
+      .setType("InvalidType")
+      .throw();
 
     const channel = await ChannelManager.get(message.channel.id);
     const fetched = await this.get(channel.id, message.id);
@@ -176,9 +204,13 @@ export class MessageManager {
    * @returns {number}
    */
   async unpin(message) {
-    const messageChecker = new api.checker.BaseChecker(message);
-    messageChecker.createError(!messageChecker.isObject, "message", { expected: "Object", received: messageChecker }).throw();
-    
+    const messageError = new api.checker.BaseChecker(message).Error;
+    messageError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'message'.")
+      .setCondition("isNotObject")
+      .setType("InvalidType")
+      .throw();
+
     const channel = await ChannelManager.get(message.channel.id);
     const fetched = await this.get(channel.id, message.id);
 

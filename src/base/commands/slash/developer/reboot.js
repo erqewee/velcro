@@ -1,8 +1,8 @@
-import { Command } from "../../structures/export.js";
+import { SlashCommand } from "../../../structures/export.js";
 
-import { Loader } from "../../classes/Loader/Loader.js";
+import { Loader } from "../../../classes/Loader/Loader.js";
 
-export default class extends Command {
+export default class extends SlashCommand {
   constructor() {
     super({ enabled: true, mode: "Developer" });
 

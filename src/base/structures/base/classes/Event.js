@@ -71,12 +71,16 @@ export class Event extends EventStructure {
    * @returns {string}
    */
   setName(name = null) {
-    const nameChecker = new this.checker.BaseChecker(name);
-    nameChecker.createError(nameChecker.isNotString, "name", { expected: "String" }).throw();
+    const nameError = new this.checker.BaseChecker(name).Error;
+    nameError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'name'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     this.name = name;
 
-    return name;
+    return this;
   };
 
   /**
@@ -85,12 +89,16 @@ export class Event extends EventStructure {
    * @returns {boolean}
    */
   setEnabled(state = true) {
-    const stateChecker = new this.checker.BaseChecker(state);
-    stateChecker.createError(stateChecker.isNotBoolean, "state", { expected: "Boolean" }).throw();
+    const stateError = new this.checker.BaseChecker(state).Error;
+    stateError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'state'.")
+      .setCondition("isNotBoolean")
+      .setType("InvalidType")
+      .throw();
 
     this.enabled = state;
 
-    return state;
+    return this;
   };
 
   /**
@@ -99,10 +107,16 @@ export class Event extends EventStructure {
    * @returns {string[]}
    */
   setModes(...modes) {
-    const modesChecker = new this.checker.BaseChecker(modes);
-    modesChecker.createError(modesChecker.isNotArray, "modes", { expected: "Array" }).throw();
+    const modesError = new this.checker.BaseChecker(modes).Error;
+    modesError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'modes'.")
+      .setCondition("isNotArray")
+      .setType("InvalidType")
+      .throw();
 
     const availableModes = [ "once", "process", "database", "language", "client" ];
+
+    const settedModes = [];
 
     for (let index = 0; index < modes.length; index++) {
       let mode = modes[ index ].toLowerCase();
@@ -115,10 +129,12 @@ export class Event extends EventStructure {
         else this[ mode ] = true;
       } else return console.log(`Error[Structure[${this.constructor.name}[Modes[${mode}]]]]: An invalid mode was provided.`);
 
-      this.modes.push({ mode, enabled: this[ mode ] });
+      settedModes.push({ mode, enabled: this[ mode ] });
     };
 
-    return this.modes;
+    this.modes = settedModes;
+    
+    return this;
   };
 
   /**
@@ -127,12 +143,16 @@ export class Event extends EventStructure {
    * @returns {string}
    */
   setType(type = "ChatCommand") {
-    const typeChecker = new this.checker.BaseChecker(type);
-    typeChecker.createError(typeChecker.isNotString, "type", { expected: "String" }).throw();
+    const typeError = new this.checker.BaseChecker(type).Error;
+    typeError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'type'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     this.type = type;
 
-    return type;
+    return this;
   };
 
   /**
@@ -141,12 +161,16 @@ export class Event extends EventStructure {
    * @returns {Function}
    */
   setExecute(callback = () => { }) {
-    const callbackChecker = new this.checker.BaseChecker(type);
-    callbackChecker.createError(callbackChecker.isNotFunction, "callback", { expected: "Function" }).throw();
+    const callbackError = new this.checker.BaseChecker(callback).Error;
+    callbackError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'callback'.")
+      .setCondition("isNotFunction")
+      .setType("InvalidType")
+      .throw();
 
     this.execute = callback;
 
-    return callback;
+    return this;
   };
 
   /**
@@ -155,8 +179,12 @@ export class Event extends EventStructure {
    * @returns {number}
    */
   #defineProperty(...propertyData) {
-    const propertyDataChecker = new this.checker.BaseChecker(propertyData);
-    propertyDataChecker.createError(propertyDataChecker.isNotArray, "propertyData", { expected: "Array" }).throw();
+    const propertyDataError = new this.checker.BaseChecker(propertyData).Error;
+    propertyDataError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'propertyData'.")
+      .setCondition("isNotArray")
+      .setType("InvalidType")
+      .throw();
 
     let processed = 0;
 
@@ -182,8 +210,12 @@ export class Event extends EventStructure {
    * @returns {{ getProperty: ({ key: string }[]) => results: { key: string, value: any }[], editProperty: (propertyEditData: { value: any }[], debug?: boolean) => { key: string, oldValue: any, newValue: any}[]}}
    */
   setProperty(...propertyData) {
-    const propertyDataChecker = new this.checker.BaseChecker(propertyData);
-    propertyDataChecker.createError(propertyDataChecker.isNotArray, "propertyData", { expected: "Array" }).throw();
+    const propertyDataError = new this.checker.BaseChecker(propertyData).Error;
+    propertyDataError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'propertyData'.")
+      .setCondition("isNotArray")
+      .setType("InvalidType")
+      .throw();
 
     const properties = [];
 
@@ -197,7 +229,7 @@ export class Event extends EventStructure {
 
     this.#defineProperty(...properties);
 
-    return { getProperty: this.getProperty };
+    return this;
   };
 
   /**
@@ -206,8 +238,12 @@ export class Event extends EventStructure {
    * @returns {{ results: { key: string, value: any }[], editProperty: (propertyEditData: { value: any }[], debug?: boolean) => { key: string, oldValue: any, newValue: any}[] }}
    */
   getProperty(...propertyData) {
-    const propertyDataChecker = new this.checker.BaseChecker(propertyData);
-    propertyDataChecker.createError(propertyDataChecker.isNotArray, "propertyData", { expected: "Array" }).throw();
+    const propertyDataError = new this.checker.BaseChecker(propertyData).Error;
+    propertyDataError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'propertyData'.")
+      .setCondition("isNotArray")
+      .setType("InvalidType")
+      .throw();
 
     const results = [];
 
@@ -230,8 +266,12 @@ export class Event extends EventStructure {
      * @returns {{ key: string, oldValue: any, newValue: any }[]}
      */
     function editProperty(debug = false, ...propertyEditData) {
-      const propertyEditDataChecker = new this.checker.BaseChecker(propertyEditData);
-      propertyEditDataChecker.createError(propertyEditDataChecker.isNotArray, "propertyEditData", { expected: "Array" }).throw();
+      const propertyEditDataError = new this.checker.BaseChecker(propertyEditData).Error;
+      propertyEditDataError.setName("ValidationError")
+        .setMessage("An invalid type was specified for 'propertyEditData'.")
+        .setCondition("isNotArray")
+        .setType("InvalidType")
+        .throw();
 
       const data = [];
 
@@ -261,8 +301,12 @@ export class Event extends EventStructure {
    * @param {{ url?: string, id?: string, token?: string}} options 
    */
   createWebhook(options = { url: null, id: null, token: null }) {
-    const optionsChecker = new this.checker.BaseChecker(options);
-    optionsChecker.createError(optionsChecker.isNotObject, "options", { expected: "Object", received: optionsChecker }).throw();
+    const optionsError = new this.checker.BaseChecker(options).Error;
+    optionsError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'options'.")
+      .setCondition("isNotObject")
+      .setType("InvalidType")
+      .throw();
 
     const { id, token, url } = options;
 

@@ -1,11 +1,12 @@
-import { Command } from "../../structures/export.js";
+import { SlashCommand } from "../../../structures/export.js";
 
-import got from "got";
+import { fetch, FetchMethods as Methods, FetchResultTypes as Types } from "@sapphire/fetch";
 
-import { CacheManager } from "../../CacheManager.js";
+import { CacheManager } from "../../../CacheManager.js";
+
 const cache = new CacheManager();
 
-export default class extends Command {
+export default class extends SlashCommand {
   constructor() {
     super({ enabled: false, mode: "Global" });
 
@@ -28,7 +29,7 @@ export default class extends Command {
 
     await interaction.reply({ content: `${this.config.Emoji.State.LOADING} Searching...` });
 
-    const npm = await got(`https://registry.npmjs.org/${name}`, { method: "GET" }).json();
+    const npm = await fetch(`https://registry.npmjs.org/${name}`, { method: Methods.Get }, Types.JSON);
 
     const embeds = [];
 
@@ -37,15 +38,15 @@ export default class extends Command {
 
       if (key === "created" && key === "modified") return;
 
-      const version = npm.versions[key];
+      const version = npm.versions[ key ];
 
       await Promise.all(Object.keys(version.dependencies).map((depend) => dependencies.push(depend)));
 
 
     }));
 
-    const latest_version = npm["dist-tags"]?.latest;
-    const dev_version = npm["dist-tags"]?.dev;
+    const latest_version = npm[ "dist-tags" ]?.latest;
+    const dev_version = npm[ "dist-tags" ]?.dev;
 
     embeds.push(new this.Embed({
       title: `${this.client.user.username} - NPM Results | ${name}`,

@@ -1,6 +1,6 @@
-import { Command } from "../../structures/export.js";
+import { SlashCommand } from "../../../structures/export.js";
 
-import { Survey } from "../../classes/Survey.js";
+import { Survey } from "../../../classes/Survey.js";
 
 const choices = [
   {
@@ -13,7 +13,7 @@ const choices = [
   }
 ];
 
-export default class extends Command {
+export default class extends SlashCommand {
   constructor() {
     super({ enabled: false, mode: "Global" });
 

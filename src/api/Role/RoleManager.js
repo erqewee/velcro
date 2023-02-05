@@ -19,11 +19,19 @@ export class RoleManager {
    * @returns {Promise<Role>}
    */
   async get(guildID, roleID) {
-    const guildChecker = new api.checker.BaseChecker(guildID);
-    guildChecker.createError(!guildChecker.isString, "guildId", { expected: "String", received: guildChecker }).throw();    
+    const guildError = new api.checker.BaseChecker(guildID).Error;
+    guildError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'guildId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const roleChecker = new api.checker.BaseChecker(roleID);
-    roleChecker.createError(!roleChecker.isString, "roleId", { expected: "String", received: roleChecker }).throw();
+    const roleError = new api.checker.BaseChecker(roleID).Error;
+    roleError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'roleId'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const guild = await GuildManager.get(client.guilds.resolve(guildID));
     const role = client.guilds.resolve(guild.id).roles.resolve(roleID);

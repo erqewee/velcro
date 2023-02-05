@@ -49,8 +49,12 @@ export class Loader extends EventEmitter {
    * @returns {Promise<void>}
    */
   async Handler(runner) {
-    const runnerChecker = new Checker(runner);
-    runnerChecker.createError(runnerChecker.isNotString, "runner", { expected: "String" }).throw();
+    const runnerError = new Checker(runner).Error;
+    runnerError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'runner'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const path = this.#resolve("./src/base/utils/handlers");
 
@@ -78,8 +82,12 @@ export class Loader extends EventEmitter {
           if (handler?.run) runCommand = "run";
           else if (runner && handler?.[ runner ]) runCommand = runner;
 
-          const runCommandChecker = new Checker(handler?.[ runCommand ]);
-          runCommandChecker.createError(runCommandChecker.isNotFunction, "runner", { expected: "Function" }).throw();
+          const runnerCommandError = new Checker(handler?.[ runCommand ]).Error;
+          runnerCommandError.setName("ValidationError")
+            .setMessage("An invalid type was specified for 'runnerCommand'.")
+            .setCondition("isNotFunction")
+            .setType("InvalidType")
+            .throw();
 
           let runType = "on";
           if (handler?.once) runType = "once";
@@ -133,8 +141,12 @@ export class Loader extends EventEmitter {
    * @returns {Promise<void>}
    */
   async Event(runner) {
-    const runnerChecker = new Checker(runner);
-    runnerChecker.createError(runnerChecker.isNotString, "runner", { expected: "String" }).throw();
+    const runnerError = new Checker(runner).Error;
+    runnerError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'runner'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
     const path = this.#resolve("./src/base/utils/events");
 
@@ -168,8 +180,12 @@ export class Loader extends EventEmitter {
             if (event?.run) runCommand = "run";
             else if (runner && event?.[ runner ]) runCommand = runner;
 
-            const runCommandChecker = new Checker(event?.[ runCommand ]);
-            runCommandChecker.createError(runCommandChecker.isNotFunction, "runner", { expected: "Function" }).throw();
+            const runnerCommandError = new Checker(event?.[ runCommand ]).Error;
+            runnerCommandError.setName("ValidationError")
+              .setMessage("An invalid type was specified for 'runnerCommand'.")
+              .setCondition("isNotFunction")
+              .setType("InvalidType")
+              .throw();
 
             let runType = "on";
             if (event?.once) runType = "once";
@@ -183,7 +199,7 @@ export class Loader extends EventEmitter {
               else if (event?.type === "Button" && listeners.map((listener) => listener?.customId && listener.isButton())) return await event[ runCommand ](...listeners).catch(fetchErrors);
               else if (event?.type === "Modal" && listeners.map((listener) => listener?.customId && listener.isModalSubmit())) return await event[ runCommand ](...listeners).catch(fetchErrors);
               else if (event?.type === "ChatCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isChatInputCommand())) return await event[ runCommand ](...listeners).catch(fetchErrors);
-              else if (event?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isChatInputCommand && listener?.isContextMenuCommand())) return await event[ runCommand ](...listeners).catch(fetchErrors);
+              else if (event?.type === "ContextCommand" && listeners.map((listener) => !listener?.customId && listener?.isUserContextMenuCommand && listener?.isUserContextMenuCommand())) return await event[ runCommand ](...listeners).catch(fetchErrors);
 
               else return await event[ runCommand ](...listeners).catch(fetchErrors);
             });
@@ -227,19 +243,23 @@ export class Loader extends EventEmitter {
   };
 
   /**
-   * Install commands.
+   * Install slash commands.
    * @param {string} runner 
    * @returns {Promise<void>}
    */
-  async Command(runner) {
-    const runnerChecker = new Checker(runner);
-    runnerChecker.createError(runnerChecker.isNotString, "runner", { expected: "String" }).throw();
+  async SlashCommand(runner) {
+    const runnerError = new Checker(runner).Error;
+    runnerError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'runner'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
 
-    const path = this.#resolve("./src/base/commands");
+    const path = this.#resolve("./src/base/commands/slash");
 
     let body = {};
 
-    const spinner = ora(strc.translate("data:loader.commands.loading")).start();
+    const spinner = ora(strc.translate("data:loader.commands.slash.loading")).start();
 
     const source = this.#read(path).filter((dir) => this.#isFolder(`${path}/${dir}`));
 
@@ -257,17 +277,17 @@ export class Loader extends EventEmitter {
       for (let index2 = 0; index2 < commands.length; index2++) {
         const file = commands[ index2 ];
 
-        await (import(`../../commands/${dir}/${file}`)).then((commandSource) => {
+        await (import(`../../commands/slash/${dir}/${file}`)).then((commandSource) => {
           const command = new (commandSource).default();
 
           if (command.data?.name && command?.enabled) {
-            this.commands.set(command.data.name, command);
+            this.commands.slash.set(command.data.name, command);
 
             this.storage.push(command.data);
             commandsData.push(command.data);
 
             loaded++;
-            spinner.text = strc.translate("data:loader.commands.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
+            spinner.text = strc.translate("data:loader.commands.slash.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
 
             body = {
               path: path,
@@ -278,7 +298,7 @@ export class Loader extends EventEmitter {
               loaded: loaded
             };
 
-            this.emit(this.Events.CommandLoaded, body);
+            this.emit(this.Events.SlashCommandLoaded, body);
           };
         }).catch((err) => {
           this.emit(this.Events.Error, {
@@ -287,14 +307,91 @@ export class Loader extends EventEmitter {
             body: body
           });
 
-          spinner.fail(strc.translate("data:loader.commands.loadingError", { variables: [ { name: "err", value: err } ] }));
+          spinner.fail(strc.translate("data:loader.commands.slash.loadingError", { variables: [ { name: "err", value: err } ] }));
         });
       };
     };
 
-    this.emit(this.Events.CommandsReady, commandsData, loaded, total);
+    this.emit(this.Events.SlashCommandsReady, commandsData, loaded, total);
 
-    spinner.succeed(strc.translate("data:loader.commands.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
+    spinner.succeed(strc.translate("data:loader.commands.slash.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
+
+    return void loaded;
+  };
+
+  /**
+   * Install context commands.
+   * @param {string} runner 
+   * @returns {Promise<void>}
+   */
+  async ContextCommand(runner) {
+    const runnerError = new Checker(runner).Error;
+    runnerError.setName("ValidationError")
+      .setMessage("An invalid type was specified for 'runner'.")
+      .setCondition("isNotString")
+      .setType("InvalidType")
+      .throw();
+
+    const path = this.#resolve("./src/base/commands/context");
+
+    let body = {};
+
+    const spinner = ora(strc.translate("data:loader.commands.context.loading")).start();
+
+    const source = this.#read(path).filter((dir) => this.#isFolder(`${path}/${dir}`));
+
+    let total = 0;
+    let loaded = 0;
+
+    const commandsData = [];
+
+    for (let index = 0; index < source.length; index++) {
+      const dir = source[ index ];
+
+      const commands = this.#read(`${path}/${dir}`);
+      total += commands.length;
+
+      for (let index2 = 0; index2 < commands.length; index2++) {
+        const file = commands[ index2 ];
+
+        await (import(`../../commands/context/${dir}/${file}`)).then((commandSource) => {
+          const command = new (commandSource).default();
+
+          if (command.data?.name && command?.enabled) {
+            this.commands.context.set(command.data.name, command);
+
+            this.storage.push(command.data);
+            commandsData.push(command.data);
+
+            loaded++;
+            spinner.text = strc.translate("data:loader.commands.context.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
+
+            body = {
+              path: path,
+              dir: dir,
+              file: file,
+              name: command.data.name,
+              total,
+              loaded
+            };
+
+            this.emit(this.Events.ContextCommandLoaded, body);
+          };
+        }).catch((err) => {
+          this.emit(this.Events.Error, {
+            type: "COMMAND",
+            error: err,
+            body: body
+          });
+
+          spinner.fail(strc.translate("data:loader.commands.context.loadingError", { variables: [ { name: "err", value: err } ] }));
+        });
+      };
+    };
+
+    this.emit(this.Events.ContextCommandsReady, commandsData, loaded, total);
+
+    spinner.succeed(strc.translate("data:loader.commands.context.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
 
     return void loaded;
   };
@@ -318,10 +415,16 @@ export class Loader extends EventEmitter {
       try {
         const { code, source } = language;
 
+        if (source?.enabled === false) break;
+
         const directCode = code.split("-")[ 0 ].toLowerCase();
 
-        const sourceChecker = new Checker(source?.data);
-        sourceChecker.createError(sourceChecker.isNotObject, "source", { expected: "Object" }).throw();
+        const sourceError = new Checker(source?.data).Error;
+        sourceError.setName("ValidationError")
+          .setMessage("An invalid type was specified for 'source'.")
+          .setCondition("isNotObject")
+          .setType("InvalidType")
+          .throw();
 
         this.languages.set(code, source.data);
         this.languages.set(directCode, source.data);
@@ -333,8 +436,8 @@ export class Loader extends EventEmitter {
           code: code,
           directCode: directCode,
           source: source,
-          total: total,
-          loaded: loaded
+          total,
+          loaded
         };
 
         this.emit(this.Events.LanguageLoaded, body);
@@ -365,15 +468,16 @@ export class Loader extends EventEmitter {
 
     const spinner = ora(strc.translate("data:loader.gateway.connecting")).start();
 
-    await this.Event().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 2 }, { name: "total", value: 5 } ] }));
-    await this.Handler().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 3 }, { name: "total", value: 5 } ] }));
+    await this.Event().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 2 }, { name: "total", value: 6 } ] }));
+    await this.Handler().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 3 }, { name: "total", value: 6 } ] }));
     // await WAIT();
-    await this.Command().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 4 }, { name: "total", value: 5 } ] }));
+    await this.SlashCommand().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 4 }, { name: "total", value: 6 } ] }));
+    await this.ContextCommand().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 5 }, { name: "total", value: 6 } ] }));
 
     this.client.login(this.client.TOKEN).then(() => {
       this.emit("ready", 0);
 
-      spinner.succeed(strc.translate("data:loader.gateway.connected", { variables: [ { name: "processing", value: 5 }, { name: "total", value: 5 } ] }));
+      spinner.succeed(strc.translate("data:loader.gateway.connected", { variables: [ { name: "processing", value: 6 }, { name: "total", value: 6 } ] }));
     }).catch((err) => spinner.fail(strc.translate("data:loader.gateway.connectionError", { variables: [ { name: "err", value: err } ] })));
 
     return;
