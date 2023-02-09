@@ -1,6 +1,6 @@
 [![Code Checker (CodeQL)](https://github.com/erqewee/wyvern/actions/workflows/codeql.yml/badge.svg)](https://github.com/erqewee/wyvern/actions/workflows/codeql.yml)
 
-# Vlexrr
+# Velcro
 - WE COMING!
 
 # Changelog
