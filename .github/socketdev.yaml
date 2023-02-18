@@ -1,9 +1,8 @@
 version: 2
 
 projectIgnorePaths:
-  - ignored-folder
-  - foo/bar/package.json
-
+  - .github
+  
 issueRules:
   unresolvedRequire: false
 
