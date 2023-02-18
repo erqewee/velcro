@@ -1,0 +1,13 @@
+version: 2
+
+projectIgnorePaths:
+  - ignored-folder
+  - foo/bar/package.json
+
+issueRules:
+  unresolvedRequire: false
+
+githubApp:
+  enabled: true
+  pullRequestAlertsEnabled: true
+  projectReportsEnabled: true
