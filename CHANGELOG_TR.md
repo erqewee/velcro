@@ -5,7 +5,9 @@
 ## Sürümler
 
 | Sürüm             | Durum     |
-| ----------------- | ----------|
+| ----------------- | --------- |
+| Release 1.0.14    | ✅ |
+| Release 1.0.11    | ✅ |
 | Release 1.0.9     | ✅ |
 | Release 1.0.5     | ✅ |
 | Release 1.0.2     | ❌ |
@@ -37,6 +39,27 @@
 - "Release 1.0.5" sürümü ile kritik düzeltmeler uygulandı. Eğer "Release 1.0.0" veya "Release 1.0.2" sürümünü kullanıyorsanız yükseltme yapmanızı kesinlikle öneririz.
 
 ## Yama Notları
+
+> Release 1.0.14 (03/04/2023)
+
+- <details>
+    <summary>Yenilikler</summary>
+    <i>Sürüm yöneticisi eklendi (Deneysel Özellik)</i>
+  </details>
+- <details>
+    <summary>Değişiklikler</summary>
+    <i>Yükleyici güncellendi. (Bazı iyileştirmeler.)</i>
+    <br>
+    <i>Yapılara yeni fonksiyonlar eklendi.</i>
+  </details>
+- <details>
+    <summary>Düzeltmeler</summary>
+    <i>Bu güncelleme herhangi bir düzeltme içermiyor.</i>
+  </details>
+
+> Release 1.0.11 (02/05/2023)
+
+- Added cooldown.
 
 > Release 1.0.9 (01/26/2023)
 

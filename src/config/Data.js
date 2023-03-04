@@ -23,5 +23,9 @@ export default {
       ID: process.env[ "SPOTFIY_CLIENT_ID" ],
       SECRET: process.env[ "SPOTIFY_CLIENT_SECRET" ]
     }
+  },
+
+  Loader: {
+    DETAILS: false
   }
 };

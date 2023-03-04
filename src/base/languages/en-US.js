@@ -50,29 +50,27 @@ export default {
       nodeError: "The project is not compatible with this NodeJS version.",
       handlers: {
         loading: "Handlers Loading ({loaded}/{total})",
-        loadingError: "An error ocurred when loading handlers. | {err}",
+        loadingError: "An error ocurred when loading Handlers. | {err}",
         loaded: "Handlers Loaded. ({loaded}/{total})"
       },
       events: {
         loading: "Events Loading ({loaded}/{total})",
-        loadingError: "An error ocurred when loading events. | {err}",
+        loadingError: "An error ocurred when loading Events. | {err}",
         loaded: "Events Loaded. ({loaded}/{total})"
       },
       commands: {
-        slash:  {
-          loading: "Slash Commands Loading ({loaded}/{total})",
-          loadingError: "An error ocurred when loading slash commands. | {err}",
-          loaded: "Slash Commands Loaded. ({loaded}/{total})"
-        },
-        context: {
-          loading: "Context Commands Loading ({loaded}/{total})",
-          loadingError: "An error ocurred when loading context commands. | {err}",
-          loaded: "Context Commands Loaded. ({loaded}/{total})"
-        }
+        loading: "Commands Loading ({loaded}/{total})",
+        loadingError: "An error ocurred when loading Commands. | {err}",
+        loaded: "Commands Loaded. ({loaded}/{total})"
+      },
+      languages: {
+        loading: "Languages Loading ({loaded}/{total})",
+        loadingError: "An error ocurred when loading Languages. | {err}",
+        loaded: "Languages Loaded. ({loaded}/{total})"
       },
       gateway: {
         connecting: "Connecting to Gateway ({processing}/{total})",
-        connectionError: "An error ocurred when connecting to gateway. | {err}",
+        connectionError: "An error ocurred when connecting to Gateway. | {err}",
         connected: "Connected to Gateway. ({processing}/{total})"
       }
     },

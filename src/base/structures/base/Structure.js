@@ -1,5 +1,5 @@
 import Discord, {
-  ChannelType, PermissionsBitField,
+  ChannelType, PermissionsBitField as Permissions, IntentsBitField as Intents, Partials, resolveColor, Colors,
   EmbedBuilder, StringSelectMenuBuilder, UserSelectMenuBuilder, ButtonBuilder, ActionRowBuilder, TextInputBuilder, ModalBuilder, AttachmentBuilder, SlashCommandBuilder, ContextMenuCommandBuilder,
   TextInputStyle, ButtonStyle,
   Client, WebhookClient,
@@ -23,7 +23,9 @@ import {
 import { deprecate as deprecated } from "node:util";
 
 import { Checker } from "../../export.js";
+
 import { Market } from "../../classes/Exchange/Market.js";
+import { VersionManager } from "../../classes/Version/Manager.js";
 
 import { CommandsCache, EventsCache, HandlersCache, LanguagesCache, CooldownsCache } from "../../classes/Loader/LoaderCache.js";
 
@@ -62,7 +64,7 @@ export class Structure {
   TextInputStyle = TextInputStyle;
   ChannelType = ChannelType;
   ButtonStyle = ButtonStyle;
-  Permissions = PermissionsBitField.Flags;
+  Permissions = Permissions.Flags;
   Component = ComponentType;
 
   /**
@@ -121,9 +123,77 @@ export class Structure {
    */
   market = new Market(Economy);
 
+  /**
+   * Version Manager
+   */
+  versions = new VersionManager();
+
   loader = { commands: CommandsCache, events: EventsCache, handlers: HandlersCache, languages: LanguagesCache, cooldowns: CooldownsCache };
   databases = { economy: Economy, subscribe: Subscribe, general: General };
   config = { Data, Emoji };
+
+  /**
+   * Resolves intents.
+   * @param  {...string|number} collection 
+   * @returns {number[]} 
+   */
+  resolveIntents(...collection) {
+    let result = [];
+
+    const bitfield = new Intents();
+
+    for (let index = 0; index < collection.length; index++) {
+      const value = collection[ index ];
+
+      if (!bitfield.has(value)) return;
+
+      result.push(Intents.Flags[ value ]);
+    };
+
+    return result;
+  };
+
+  /**
+   * Resolves partials.
+   * @param  {...any} collection 
+   * @returns {Partials[]}
+   */
+  resolvePartials(...collection) {
+    let result = [];
+
+    const bitfield = Partials;
+
+    for (let index = 0; index < collection.length; index++) {
+      const value = collection[ index ];
+
+      if (!bitfield[ value ]) return;
+
+      result.push(bitfield[ value ]);
+    };
+
+    return result;
+  };
+
+  /**
+   * Resolves colors.
+   * @param  {...Colors} collection 
+   * @returns {}
+   */
+  resolveColors(...collection) {
+    let result = [];
+
+    const bitfield = Colors;
+
+    for (let index = 0; index < collection.length; index++) {
+      const value = collection[ index ];
+
+      if (!bitfield[ value ]) return;
+
+      result.push(bitfield[ value ]);
+    };
+
+    return result;
+  };
 
   /**
    * Encrypts the entered string.
@@ -253,7 +323,7 @@ export class Structure {
     const { locate: l, variables: v } = options;
 
     let locate = l;
-    if (!locate) locate = this.loader.languages.fetch(Data.LANG) ? Data.LANG : this.loader.languages.keys()[ 0 ];
+    if (!locate) locate = (Data.LANG ? (this.loader.languages.fetch(Data.LANG) ? Data.LANG : this.loader.languages.keys()[ 0 ]) : this.loader.languages.keys()[ 0 ]);
 
     let variables = v;
     if (!variables) variables = [];
@@ -288,10 +358,7 @@ export class Structure {
     if (!this.loader.languages.has(locate)) locate = this.loader.languages.keys()[ 0 ];
 
     const translations = this.loader.languages.get(locate);
-
-    const object = new Object(translations);
-
-    const translationSource = get(object, key.slice(5));
+    const translationSource = get(translations, key.slice(5));
 
     const sourcerror = new this.checker.BaseChecker(translationSource).Error;
     sourcerror.setName("ValidationError")
@@ -311,9 +378,9 @@ export class Structure {
         .setType("InvalidType")
         .throw();
 
-      if (!translation.includes(`{${variable.name}}`)) throw new Error("Varible not found.");
+      if (!translation.includes(`{${variable.name}}`)) throw new Error("INVALID_VARIABLE", `'${variable.name}' named variable is not available.`);
 
-      translation = translation.replaceAll(`{${variable.name}}`, variable?.value ?? undefined);
+      translation = translation.replaceAll(`{${variable.name}}`, variable?.value);
     };
 
     return translation;

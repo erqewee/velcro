@@ -6,6 +6,7 @@
 
 | Version           | State     |
 | ----------------- | --------- |
+| Release 1.0.14    | ✅ |
 | Release 1.0.11    | ✅ |
 | Release 1.0.9     | ✅ |
 | Release 1.0.5     | ✅ |
@@ -38,6 +39,23 @@
 - Critical fixes implemented in "Release 1.0.5" version. If you are using "Release 1.0.2" or "Lower". We strongly recommend that you upgrade.
 
 ## Patch Notes
+
+> Release 1.0.14 (03/04/2023)
+
+- <details>
+    <summary>News</summary>
+    <i>Added version manager (Experimental Feature)</i>
+  </details>
+- <details>
+    <summary>Changes</summary>
+    <i>Loader updated. (Some improves.)</i>
+    <br>
+    <i>Added new function into Structures.</i>
+  </details>
+- <details>
+    <summary>Fixes</summary>
+    <i>This update is not contains any fixes.</i>
+  </details>
 
 > Release 1.0.11 (02/05/2023)
 

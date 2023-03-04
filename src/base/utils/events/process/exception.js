@@ -2,7 +2,7 @@ import { Event } from "../../../structures/export.js";
 
 export default class extends Event {
   constructor() {
-    super({ enabled: false, modes: ["Process"] });
+    super({ enabled: true, modes: ["Process"] });
 
     this.setName("uncaughtException");
   };

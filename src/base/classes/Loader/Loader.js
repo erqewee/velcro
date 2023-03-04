@@ -1,5 +1,6 @@
 import { statSync, readdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { URL } from "node:url";
+const resolve = (path) => ((new URL(path, import.meta.url).pathname).substring(1));
 
 import { CommandsCache, EventsCache, HandlersCache, LanguagesCache } from "./LoaderCache.js";
 import { Events as LoaderEvents } from "./Events.js";
@@ -10,16 +11,17 @@ import EventEmitter from "node:events";
 
 import ora from "ora";
 
+import AsciiTable from "ascii-table";
+
 import { Checker as BaseChecker } from "../Checker/Checker.js";
 const Checker = BaseChecker.BaseChecker;
 
-import { Translations } from "../../languages/Translations.js";
 const strc = new Structure();
 const dbs = strc.databases;
 
 import { NodeVersion } from "../../structures/base/error/Error.js";
 
-const WAIT = async () => new Promise((resolve) => setTimeout(resolve, 1000));
+import Data from "../../../config/Data.js";
 
 export class Loader extends EventEmitter {
   constructor(client = null, databases = [ dbs.economy, dbs.general, dbs.subscribe ]) {
@@ -45,10 +47,15 @@ export class Loader extends EventEmitter {
 
   /**
    * Install handlers.
+   * @param {boolean} detailedMode
    * @param {string} runner 
    * @returns {Promise<void>}
    */
-  async Handler(runner) {
+  async Handler(detailedMode, runner) {
+    const table = new AsciiTable("Handler Loader");
+
+    table.setHeading("Name", "Loaded", "Cached", "Runner", "Once", "Type");
+
     const runnerError = new Checker(runner).Error;
     runnerError.setName("ValidationError")
       .setMessage("An invalid type was specified for 'runner'.")
@@ -56,19 +63,20 @@ export class Loader extends EventEmitter {
       .setType("InvalidType")
       .throw();
 
-    const path = this.#resolve("./src/base/utils/handlers");
+    const path = resolve("../../utils/handlers");
 
     let body = {};
+    let spinner = null;
 
-    const spinner = ora(strc.translate("data:loader.handlers.loading")).start();
+    if (!detailedMode) spinner = ora(strc.translate("data:loader.handlers.loading")).start();
 
-    const source = this.#read(path).filter((file) => this.#isFile(`${path}/${file}`) && file.endsWith(".js"));
+    const source = this.read(path).filter((file) => file.endsWith(".js"));
 
     let total = source.length;
     let loaded = 0;
 
     for (let index = 0; index < source.length; index++) {
-      const file = source[ index ];
+      const file = source[ index ]
 
       await (import(`../../utils/handlers/${file}`)).then((handlerSource) => {
         const handler = new (handlerSource).default();
@@ -104,7 +112,7 @@ export class Loader extends EventEmitter {
           });
 
           loaded++;
-          spinner.text = strc.translate("data:loader.handlers.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
+          if (spinner) spinner.text = strc.translate("data:loader.handlers.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
 
           body = {
             path: path,
@@ -115,6 +123,8 @@ export class Loader extends EventEmitter {
             loaded: loaded
           };
 
+          if (detailedMode) table.addRow(handler.name, "Yes", this.handlers.has(handler.name) ? "Yes" : "No", runCommand, handler?.once ? "Yes" : "No", handler?.type ?? "None");
+
           this.emit(this.Events.HandlerLoaded, body);
         };
       }).catch((err) => {
@@ -124,23 +134,33 @@ export class Loader extends EventEmitter {
           body: body
         });
 
-        spinner.fail(strc.translate("data:loader.handlers.loadingError", { variables: [ { name: "err", value: err } ] }));
+        if (spinner) spinner.fail(strc.translate("data:loader.handlers.loadingError", { variables: [ { name: "err", value: err } ] }));
       });
     };
 
     this.emit(this.Events.HandlersReady, loaded, total);
 
-    spinner.succeed(strc.translate("data:loader.handlers.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
+    if (detailedMode) {
+      console.log(table.toString());
+      table.clearRows();
+    };
+
+    if (spinner) spinner.succeed(strc.translate("data:loader.handlers.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
 
     return void total;
   };
 
   /**
    * Install events.
+   * @param {boolean} detailedMode
    * @param {string} runner 
    * @returns {Promise<void>}
    */
-  async Event(runner) {
+  async Event(detailedMode, runner) {
+    const table = new AsciiTable("Event Loader");
+
+    table.setHeading("Name", "Loaded", "Cached", "Runner", "Once", "Type", "Structure");
+
     const runnerError = new Checker(runner).Error;
     runnerError.setName("ValidationError")
       .setMessage("An invalid type was specified for 'runner'.")
@@ -148,21 +168,22 @@ export class Loader extends EventEmitter {
       .setType("InvalidType")
       .throw();
 
-    const path = this.#resolve("./src/base/utils/events");
+    const path = resolve("../../utils/events");
 
     let body = {};
+    let spinner = null;
 
-    const spinner = ora(strc.translate("data:loader.events.loading")).start();
+    if (!detailedMode) spinner = ora(strc.translate("data:loader.events.loading")).start();
 
     let total = 0;
     let loaded = 0;
 
-    const source = this.#read(path).filter((dir) => this.#isFolder(`${path}/${dir}`));
+    const source = this.read(path).filter((dir) => this.statSync(`${path}/${dir}`).isFolder);
 
     for (let index = 0; index < source.length; index++) {
       const dir = source[ index ];
 
-      const events = this.#read(`${path}/${dir}`).filter((file) => this.#isFile(`${path}/${dir}/${file}`) && file.endsWith(".js"));
+      const events = this.read(`${path}/${dir}`).filter((file) => file.endsWith(".js"));
       total += events.length;
 
       for (let size = 0; size < events.length; size++) {
@@ -207,7 +228,7 @@ export class Loader extends EventEmitter {
             if (event.database && !event._client && !event.process) this.databases.map((database) => database[ runType ](event.name, async (...args) => await event[ runCommand ](...args).catch(fetchErrors)));
 
             loaded++;
-            spinner.text = strc.translate("data:loader.events.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
+            if (spinner) spinner.text = strc.translate("data:loader.events.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
 
             body = {
               path: path,
@@ -221,6 +242,15 @@ export class Loader extends EventEmitter {
               once: event.once
             };
 
+            const getStructure = () => {
+              if (event.database) return "Database";
+              else if (event.process) return "Process";
+              else if (event._client) return "Client";
+              else return "None";
+            };
+
+            if (detailedMode) table.addRow(event.name, "Yes", this.events.has(event.name) ? "Yes" : "No", runCommand, event?.once ? "Yes" : "No", event?.type ?? "None", getStructure());
+
             this.emit(this.Events.EventLoaded, body);
           };
         }).catch((err) => {
@@ -230,272 +260,254 @@ export class Loader extends EventEmitter {
             body: body
           });
 
-          spinner.fail(strc.translate("data:loader.events.loadingError", { variables: [ { name: "err", value: err } ] }));
+          if (spinner) spinner.fail(strc.translate("data:loader.events.loadingError", { variables: [ { name: "err", value: err } ] }));
         });
-      }
+      };
     };
 
     this.emit(this.Events.EventsReady, loaded, total);
 
-    spinner.succeed(strc.translate("data:loader.events.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
+    if (detailedMode) {
+      console.log(table.toString());
+      table.clearRows();
+    };
+
+    if (spinner) spinner.succeed(strc.translate("data:loader.events.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
 
     return void total;
   };
 
   /**
-   * Install slash commands.
-   * @param {string} runner 
+   * Install commands.
+   * @param {boolean} detailedMode
    * @returns {Promise<void>}
    */
-  async SlashCommand(runner) {
-    const runnerError = new Checker(runner).Error;
-    runnerError.setName("ValidationError")
-      .setMessage("An invalid type was specified for 'runner'.")
-      .setCondition("isNotString")
-      .setType("InvalidType")
-      .throw();
+  async Command(detailedMode) {
+    const table = new AsciiTable("Command Loader");
 
-    const path = this.#resolve("./src/base/commands/slash");
-
-    let body = {};
-
-    const spinner = ora(strc.translate("data:loader.commands.slash.loading")).start();
-
-    const source = this.#read(path).filter((dir) => this.#isFolder(`${path}/${dir}`));
+    table.setHeading("Name", "Type", "Loaded", "Cached");
 
     let total = 0;
     let loaded = 0;
 
     const commandsData = [];
 
-    for (let index = 0; index < source.length; index++) {
-      const dir = source[ index ];
+    const folders = [ "slash", "context" ];
 
-      const commands = this.#read(`${path}/${dir}`);
-      total += commands.length;
+    let spinner = null;
 
-      for (let index2 = 0; index2 < commands.length; index2++) {
-        const file = commands[ index2 ];
+    if (!detailedMode) spinner = ora(strc.translate("data:loader.commands.loading")).start();
 
-        await (import(`../../commands/slash/${dir}/${file}`)).then((commandSource) => {
-          const command = new (commandSource).default();
+    for (let i = 0; i < folders.length; i++) {
+      const folder = folders[ i ];
 
-          if (command.data?.name && command?.enabled) {
-            this.commands.slash.set(command.data.name, command);
+      const path = resolve(`../../commands/${folder}`);
 
-            this.storage.push(command.data);
-            commandsData.push(command.data);
+      let body = {};
 
-            loaded++;
-            spinner.text = strc.translate("data:loader.commands.slash.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
+      const source = this.read(path).filter((dir) => this.statSync(`${path}/${dir}`).isFolder);
 
-            body = {
-              path: path,
-              dir: dir,
-              file: file,
-              name: command.data.name,
-              total: total,
-              loaded: loaded
+      for (let index = 0; index < source.length; index++) {
+        const dir = source[ index ];
+
+        const commands = this.read(`${path}/${dir}`).filter((file) => file.endsWith(".js"));
+        total += commands.length;
+
+        for (let index2 = 0; index2 < commands.length; index2++) {
+          const file = commands[ index2 ];
+
+          await (import(`../../commands/${folder}/${dir}/${file}`)).then((commandSource) => {
+            const command = new (commandSource).default();
+
+            if (command.data?.name && command?.enabled) {
+              this.commands[ folder ].set(command.data.name, command);
+
+              this.storage.push(command.data);
+              commandsData.push(command.data);
+
+              loaded++;
+              if (spinner) spinner.text = strc.translate("data:loader.commands.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
+
+              body = {
+                path: path,
+                dir: dir,
+                file: file,
+                name: command.data.name,
+                total,
+                loaded
+              };
+
+              if (detailedMode) table.addRow(command.data.name, folder === "slash" ? "Slash" : "Context", "Yes", this.commands[ folder === "slash" ? "slash" : "context" ].has(command.data.name) ? "Yes" : "No");
+
+              this.emit(this.Events.CommandLoaded, body);
             };
+          }).catch((err) => {
+            this.emit(this.Events.Error, {
+              type: "COMMAND",
+              error: err,
+              body: body
+            });
 
-            this.emit(this.Events.SlashCommandLoaded, body);
-          };
-        }).catch((err) => {
-          this.emit(this.Events.Error, {
-            type: "COMMAND",
-            error: err,
-            body: body
+            if (spinner) spinner.fail(strc.translate("data:loader.commands.loadingError", { variables: [ { name: "err", value: err } ] }));
           });
-
-          spinner.fail(strc.translate("data:loader.commands.slash.loadingError", { variables: [ { name: "err", value: err } ] }));
-        });
+        };
       };
     };
 
-    this.emit(this.Events.SlashCommandsReady, commandsData, loaded, total);
+    this.emit(this.Events.CommandsReady, commandsData, loaded, total);
 
-    spinner.succeed(strc.translate("data:loader.commands.slash.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
-
-    return void loaded;
-  };
-
-  /**
-   * Install context commands.
-   * @param {string} runner 
-   * @returns {Promise<void>}
-   */
-  async ContextCommand(runner) {
-    const runnerError = new Checker(runner).Error;
-    runnerError.setName("ValidationError")
-      .setMessage("An invalid type was specified for 'runner'.")
-      .setCondition("isNotString")
-      .setType("InvalidType")
-      .throw();
-
-    const path = this.#resolve("./src/base/commands/context");
-
-    let body = {};
-
-    const spinner = ora(strc.translate("data:loader.commands.context.loading")).start();
-
-    const source = this.#read(path).filter((dir) => this.#isFolder(`${path}/${dir}`));
-
-    let total = 0;
-    let loaded = 0;
-
-    const commandsData = [];
-
-    for (let index = 0; index < source.length; index++) {
-      const dir = source[ index ];
-
-      const commands = this.#read(`${path}/${dir}`);
-      total += commands.length;
-
-      for (let index2 = 0; index2 < commands.length; index2++) {
-        const file = commands[ index2 ];
-
-        await (import(`../../commands/context/${dir}/${file}`)).then((commandSource) => {
-          const command = new (commandSource).default();
-
-          if (command.data?.name && command?.enabled) {
-            this.commands.context.set(command.data.name, command);
-
-            this.storage.push(command.data);
-            commandsData.push(command.data);
-
-            loaded++;
-            spinner.text = strc.translate("data:loader.commands.context.loading", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] });
-
-            body = {
-              path: path,
-              dir: dir,
-              file: file,
-              name: command.data.name,
-              total,
-              loaded
-            };
-
-            this.emit(this.Events.ContextCommandLoaded, body);
-          };
-        }).catch((err) => {
-          this.emit(this.Events.Error, {
-            type: "COMMAND",
-            error: err,
-            body: body
-          });
-
-          spinner.fail(strc.translate("data:loader.commands.context.loadingError", { variables: [ { name: "err", value: err } ] }));
-        });
-      };
+    if (detailedMode) {
+      console.log(table.toString());
+      table.clearRows();
     };
 
-    this.emit(this.Events.ContextCommandsReady, commandsData, loaded, total);
-
-    spinner.succeed(strc.translate("data:loader.commands.context.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
+    if (spinner) spinner.succeed(strc.translate("data:loader.commands.loaded", { variables: [ { name: "loaded", value: loaded }, { name: "total", value: total } ] }));
 
     return void loaded;
   };
 
   /**
    * Install languages
-   * @returns {void}
+   * @param {boolean} detailedMode
+   * @returns {Promise<void>}
    */
-  Language() {
+  async Language(detailedMode) {
+    const table = new AsciiTable("Language Loader");
+
+    table.setHeading("Code", "Direct Code", "Enabled", "Loaded", "Cached");
+
     let body = {};
 
-    const spinner = ora("Languages Loading").start();
-    const languages = new Translations().Languages;
+    const path = resolve("../../languages");
 
-    let total = languages.length;
+    let spinner = null;
+
+    if (!detailedMode) spinner = ora("Languages Loading").start();
+
+    const source = this.read(path).filter((file) => this.statSync(`${path}/${file}`).isFile);
+
+    let total = source.length;
     let loaded = 0;
 
-    for (let index = 0; index < languages.length; index++) {
-      const language = languages[ index ];
+    for (let index = 0; index < source.length; index++) {
+      const file = source[ index ]
 
-      try {
-        const { code, source } = language;
+      await (import(`../../languages/${file}`)).then((language) => {
+        const { enabled, data } = language.default;
 
-        if (source?.enabled === false) break;
-
+        const code = file.split(".js")[ 0 ];
         const directCode = code.split("-")[ 0 ].toLowerCase();
 
-        const sourceError = new Checker(source?.data).Error;
-        sourceError.setName("ValidationError")
-          .setMessage("An invalid type was specified for 'source'.")
-          .setCondition("isNotObject")
-          .setType("InvalidType")
-          .throw();
+        if (enabled) {
 
-        this.languages.set(code, source.data);
-        this.languages.set(directCode, source.data);
+          const dataError = new Checker(data).Error;
+          dataError.setName("ValidationError")
+            .setMessage("An invalid type was specified for 'data'.")
+            .setCondition("isNotObject")
+            .setType("InvalidType")
+            .throw();
 
-        loaded++;
-        spinner.text = `Languages Loading (${loaded}/${total})`;
+          this.languages.set(code, data);
+          this.languages.set(directCode, data);
 
-        body = {
-          code: code,
-          directCode: directCode,
-          source: source,
-          total,
-          loaded
+          loaded++;
+          if (spinner) spinner.text = `Languages Loading (${loaded}/${total})`;
+
+          body = {
+            code: code,
+            directCode: directCode,
+            source: data,
+            total,
+            loaded
+          };
+
+          if (detailedMode) table.addRow(code, directCode, "Yes", "Yes", this.languages.has(code) ? "Yes" : "No");
+
+          this.emit(this.Events.LanguageLoaded, body);
+        } else {
+          if (detailedMode) table.addRow(code, directCode, "No", "No", this.languages.has(code) ? "Yes" : "No");
         };
-
-        this.emit(this.Events.LanguageLoaded, body);
-      } catch (err) {
+      }).catch((err) => {
         this.emit(this.Events.Error, {
           type: "LANG",
           error: err,
           body: body
         });
 
-        spinner.fail("An error ocurred when loading languages. | {err}".replace("{err}", err));
-      };
+        if (spinner) spinner.fail("An error ocurred when loading languages. | {err}".replace("{err}", err));
+      });
     };
 
     this.emit(this.Events.LanguagesReady, loaded, total);
 
-    spinner.succeed(`Languages Loaded. (${loaded}/${total})`);
+    if (detailedMode) {
+      console.log(table.toString());
+      table.clearRows();
+    };
+
+    if (spinner) spinner.succeed(`Languages Loaded. (${loaded}/${total})`);
 
     return void loaded;
   };
 
   /**
    * Setup all utils for bot.
+   * @param {boolean} detailedMode
    * @returns {Promise<void>}
    */
-  async Setup() {
-    this.Language();
+  async Setup(detailedMode = Data.Loader.DETAILS) {
+    let processing = 1;
 
-    const spinner = ora(strc.translate("data:loader.gateway.connecting")).start();
+    await this.Language(detailedMode);
+    processing++;
 
-    await this.Event().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 2 }, { name: "total", value: 6 } ] }));
-    await this.Handler().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 3 }, { name: "total", value: 6 } ] }));
-    // await WAIT();
-    await this.SlashCommand().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 4 }, { name: "total", value: 6 } ] }));
-    await this.ContextCommand().then(() => spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: 5 }, { name: "total", value: 6 } ] }));
+    let spinner;
+    if (!detailedMode) spinner = ora(strc.translate("data:loader.gateway.connecting")).start();
 
-    this.client.login(this.client.TOKEN).then(() => {
+    await this.Event(detailedMode).then(() => {
+      processing++;
+      if (spinner) spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: processing }, { name: "total", value: 5 } ] })
+    });
+
+    await this.Handler(detailedMode).then(() => {
+      processing++;
+      if (spinner) spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: processing }, { name: "total", value: 5 } ] });
+    });
+
+    await this.Command(detailedMode).then(() => {
+      processing++;
+      if (spinner) spinner.text = strc.translate("data:loader.gateway.connecting", { variables: [ { name: "processing", value: processing }, { name: "total", value: 5 } ] })
+    });
+
+    await this.client.login(this.client.TOKEN).then(() => {
       this.emit("ready", 0);
 
-      spinner.succeed(strc.translate("data:loader.gateway.connected", { variables: [ { name: "processing", value: 6 }, { name: "total", value: 6 } ] }));
-    }).catch((err) => spinner.fail(strc.translate("data:loader.gateway.connectionError", { variables: [ { name: "err", value: err } ] })));
+      spinner?.succeed(strc.translate("data:loader.gateway.connected", { variables: [ { name: "processing", value: processing }, { name: "total", value: 5 } ] }));
+    }).catch((err) => spinner?.fail(strc.translate("data:loader.gateway.connectionError", { variables: [ { name: "err", value: err } ] })));
 
-    return;
+    return void 0;
   };
 
-  #isFile(path) {
-    return (statSync(this.#resolve(path)).isFile());
+  /**
+   * @param {string} path 
+   * @returns 
+   * @protected
+   */
+  statSync(path) {
+    const target = statSync("C:/" + resolve(path));
+
+    return {
+      isFile: target.isFile(),
+      isFolder: target.isDirectory()
+    };
   };
 
-  #isFolder(path) {
-    return (statSync(this.#resolve(path)).isDirectory());
-  };
-
-  #resolve(path = "./src") {
-    return (resolve(path));
-  };
-
-  #read(path) {
-    return (readdirSync(this.#resolve(path)));
+  /**
+   * @param {string} path 
+   * @returns {string}
+   * @protected
+   */
+  read(path) {
+    return (readdirSync("C:/" + resolve(path)));
   };
 };

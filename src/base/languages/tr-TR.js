@@ -59,16 +59,9 @@ export default {
         loaded: "Etkinlikler Yüklendi. ({loaded}/{total})"
       },
       commands: {
-        slash: {
-          loading: "Slash Komutları Yükleniyor ({loaded}/{total})",
-          loadingError: "Slash Komutları yüklenirken bir hata oluştu. | {err}",
-          loaded: "Slash Komutları Yüklendi. ({loaded}/{total})",
-        },
-        context: {
-          loading: "Bağlam Komutları Yükleniyor ({loaded}/{total})",
-          loadingError: "Bağlam Komutları yüklenirken bir hata oluştu. | {err}",
-          loaded: "Bağlam Komutları Yüklendi. ({loaded}/{total})",
-        }
+        loading: "Komutlar Yükleniyor ({loaded}/{total})",
+        loadingError: "Komutlar yüklenirken bir hata oluştu. | {err}",
+        loaded: "Komutlar Yüklendi. ({loaded}/{total})"
       },
       languages: {
         loading: "Diller Yükleniyor ({loaded}/{total})",

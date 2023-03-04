@@ -8,6 +8,7 @@ import { YouTube } from "./classes/YouTube.js";
 import { Loader } from "./classes/Loader/Loader.js";
 import { Market } from "./classes/Exchange/Market.js";
 import { Player } from "./classes/Music/DisTube.js";
+import { VersionManager } from "./classes/Version/Manager.js";
 // CLASSES
 
 // STRUCTURES
@@ -70,7 +71,7 @@ import register from "./utils/events/util/register.js";
 
 // EXPORTER
 export {
-  Client, Database, Checker, REST, Survey, YouTube, Loader, Player, Market, // CLASSES
+  Client, Database, Checker, REST, Survey, YouTube, Loader, Player, Market, VersionManager, // CLASSES
 
   SlashCommand, ContextCommand, Handler, Event, Structure, // STRUCTURES
 

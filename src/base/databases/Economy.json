@@ -2,52 +2,39 @@
     "Exchange": {
         "Data_$": {
             "Prices": {
-                "OLD": 20.61,
-                "NEW": 22.16
+                "OLD": 9.26,
+                "NEW": 9.43
             },
-            "Decreased": 0.64,
+            "Decreased": 0.74,
             "State": {
                 "Emote": "<a:up:796384146142134282>",
-                "Difference": "+1.55",
-                "Last": [
-                    "DOWN",
-                    "UP",
-                    "UP"
-                ]
+                "Difference": "+0.17"
             },
-            "Increased": 1.55
+            "Increased": 0.17
         },
         "Data_€": {
             "Prices": {
-                "OLD": 17.38,
-                "NEW": 16.17
+                "OLD": 3.54,
+                "NEW": 4.93
             },
-            "Increased": 1.63,
+            "Increased": 1.39,
             "State": {
-                "Emote": "<a:down:796384140416516156>",
-                "Difference": "-1.21",
-                "Last": [
-                    "UP",
-                    "DOWN"
-                ]
+                "Emote": "<a:up:796384146142134282>",
+                "Difference": "+1.39"
             },
-            "Decreased": 1.21
+            "Decreased": 0.67
         },
         "Data_₺": {
             "Prices": {
-                "OLD": 21.8,
-                "NEW": 21.39
+                "OLD": 11.19,
+                "NEW": 12.48
             },
-            "Increased": 0.61,
+            "Increased": 1.29,
             "State": {
-                "Emote": "<a:down:796384140416516156>",
-                "Difference": "-0.41",
-                "Last": [
-                    "DOWN",
-                    "DOWN"
-                ]
+                "Emote": "<a:up:796384146142134282>",
+                "Difference": "+1.29"
             },
-            "Decreased": 0.41
+            "Decreased": 0.28
         }
     }
 }
