@@ -29,7 +29,7 @@
     "colorette": "^2.0.19",
     "discord-hybrid-sharding": "^2.1.0",
     "discord-logs": "^2.2.1",
-    "discord.js": "14.7.1",
+    "discord.js": "14.9.0",
     "distube": "^4.0.4",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
